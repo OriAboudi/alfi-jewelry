@@ -72,7 +72,7 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
           pointerEvents: "none",
         }}
       >
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#bd7355" strokeWidth="2" strokeLinecap="round">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--c-accent)" strokeWidth="2" strokeLinecap="round">
           <circle cx="11" cy="11" r="7" />
           <line x1="21" y1="21" x2="16.2" y2="16.2" />
           <line x1="11" y1="8" x2="11" y2="14" />

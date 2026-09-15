@@ -29,7 +29,7 @@ export function OrderProgress({ order }) {
 
   if (cancelled) {
     return (
-      <div style={css("background:#fbeae4;border-radius:14px;padding:18px 20px;color:#a85a44;font-weight:600;text-align:center;")}>
+      <div style={css("background:var(--c-danger-bg);border-radius:14px;padding:18px 20px;color:var(--c-danger);font-weight:600;text-align:center;")}>
         ההזמנה בוטלה
       </div>
     );
@@ -37,13 +37,13 @@ export function OrderProgress({ order }) {
 
   return (
     <div style={css("display:flex;justify-content:space-between;position:relative;")}>
-      <div style={css("position:absolute;top:12px;right:5%;left:5%;height:2px;background:#e0cdbd;z-index:0;")} />
+      <div style={css("position:absolute;top:12px;right:5%;left:5%;height:2px;background:var(--c-line-strong);z-index:0;")} />
       {stages.map((s, i) => (
         <div key={i} style={css("position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;flex:1;")}>
-          <div style={css(`width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:${s.done ? "#bd7355" : s.current ? "#fff" : "#f3e8dd"};border:2px solid ${s.done || s.current ? "#bd7355" : "#dcc6b4"};`)}>
+          <div style={css(`width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:${s.done ? "var(--c-accent)" : s.current ? "#fff" : "var(--c-line-soft)"};border:2px solid ${s.done || s.current ? "var(--c-accent)" : "#dcc6b4"};`)}>
             {s.done ? "✓" : ""}
           </div>
-          <div style={css(`margin-top:8px;font-size:12.5px;text-align:center;font-weight:${s.done || s.current ? 700 : 500};color:${s.done || s.current ? "#3a2c25" : "#a89486"};`)}>{s.title}</div>
+          <div style={css(`margin-top:8px;font-size:12.5px;text-align:center;font-weight:${s.done || s.current ? 700 : 500};color:${s.done || s.current ? "var(--c-ink)" : "#a89486"};`)}>{s.title}</div>
         </div>
       ))}
     </div>
