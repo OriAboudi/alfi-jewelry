@@ -26,14 +26,13 @@ export function StoreProvider({ children }) {
     content: SEED_CONTENT,
     collections: SEED_COLLECTIONS,
     user: null,
-    allOrders: [],
     users: [],
     cart: loadCart(),
     catFilter: "הכל",
     adminForm: { email: "", password: "" },
     adminError: "",
     adminBusy: false,
-    adminTab: "products",
+    adminTab: "dashboard",
     draft: null,
     draftCol: null,
     cdraft: null,
@@ -148,15 +147,17 @@ export function StoreProvider({ children }) {
 
   const goAdmin = useCallback(async () => {
     try {
-      const [allOrders, users, products, content, collections] = await Promise.all([
-        store.orders.listAll(), store.users.list(), store.products.list(), store.content.get(), store.collections.list(),
+      // Orders are no longer bulk-fetched here — the Orders tab paginates
+      // its own data directly from store.js (see src/screens/admin/OrdersTab.jsx).
+      const [users, products, content, collections] = await Promise.all([
+        store.users.list(), store.products.list(), store.content.get(), store.collections.list(),
       ]);
       setState((s) => ({
-        allOrders, users,
+        users,
         products: products && products.length ? products : s.products,
         collections: collections && collections.length ? collections : s.collections,
         content: { ...s.content, ...content },
-        adminTab: "products",
+        adminTab: "dashboard",
         cdraft: { ...s.content, ...content },
       }));
     } catch { /* ignore */ }
@@ -234,8 +235,7 @@ export function StoreProvider({ children }) {
   const refreshProducts = useCallback(async () => { setState({ products: await store.products.list() }); }, [setState]);
   const setTab = useCallback((t) => {
     setState((s) => (t === "content" ? { adminTab: t, contentSaved: false, cdraft: { ...s.content } } : { adminTab: t, contentSaved: false }));
-    if (t === "orders" || t === "users") {
-      store.orders.listAll().then((allOrders) => setState({ allOrders })).catch(() => {});
+    if (t === "users") {
       store.users.list().then((users) => setState({ users })).catch(() => {});
     }
   }, [setState]);
@@ -272,7 +272,7 @@ export function StoreProvider({ children }) {
   const cancelCol = useCallback(() => setState({ draftCol: null }), [setState]);
   const saveCol = useCallback(async () => {
     const d = { ...ref.current.draftCol };
-    const payload = { title: d.title, subtitle: d.subtitle, image: d.image, description: d.description };
+    const payload = { title: d.title, subtitle: d.subtitle, image: d.image, description: d.description, category_filter: d.category_filter || null };
     try {
       if (d._new) await store.collections.create(payload);
       else await store.collections.update(d.id, payload);
@@ -300,10 +300,9 @@ export function StoreProvider({ children }) {
   // src/lib/store.js orders.updateStatus.
   const setOrderStatus = useCallback(async (id, status) => {
     try {
-      const updated = await store.orders.updateStatus(id, status);
-      setState((s) => ({ allOrders: s.allOrders.map((o) => (o.id === id ? updated : o)) }));
-    } catch (e) { alert("עדכון הסטטוס נכשל: " + e.message); }
-  }, [setState]);
+      return await store.orders.updateStatus(id, status);
+    } catch (e) { alert("עדכון הסטטוס נכשל: " + e.message); return null; }
+  }, []);
 
   /* ---------- image upload (admin only) ---------- */
   const uploadImage = useCallback((file) => store.storage.uploadImage(file), []);

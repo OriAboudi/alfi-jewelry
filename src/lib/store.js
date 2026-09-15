@@ -150,6 +150,9 @@ const local = {
       return { rows: rows.slice(start, start + pageSize), count };
     },
     async get(id) { return read(LS.products, []).find((p) => String(p.id) === String(id)) || null; },
+    async lowStock(threshold) {
+      return read(LS.products, []).filter((p) => Number(p.stock) <= threshold).sort((a, b) => a.stock - b.stock);
+    },
     async create(data) {
       const items = read(LS.products, []);
       const id = items.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0) + 1;
@@ -219,6 +222,8 @@ const local = {
       if (!o) throw new Error("הזמנה לא נמצאה");
       return { ...o, history: [] };
     },
+    // Dev-only stand-in — status history isn't tracked in the local backend.
+    async history() { return []; },
   },
   users: {
     async list() { return read(LS.users, []).map((u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, created_at: u.created_at })); },
@@ -325,6 +330,11 @@ function makeSupabase() {
         return { rows: data || [], count: count || 0 };
       },
       async get(id) { const { data, error } = await sb.from("products").select("*").eq("id", id).single(); if (error) throw error; return data; },
+      async lowStock(threshold) {
+        const { data, error } = await sb.from("products").select("*").lte("stock", threshold).order("stock");
+        if (error) throw error;
+        return data || [];
+      },
       async create(d) { const { data, error } = await sb.from("products").insert(d).select().single(); if (error) throw error; return data; },
       async update(id, p) { const { data, error } = await sb.from("products").update(p).eq("id", id).select().single(); if (error) throw error; return data; },
       async remove(id) { const { error } = await sb.from("products").delete().eq("id", id); if (error) throw error; },
@@ -380,6 +390,13 @@ function makeSupabase() {
         if (error) throw new Error(error.message || "טעינת ההזמנה נכשלה");
         if (data?.error) throw new Error(data.error);
         return data.order;
+      },
+      // Admin-only — relies on the "order_status_history admin read" RLS
+      // policy, so this simply returns [] for a non-admin session.
+      async history(id) {
+        const { data, error } = await sb.from("order_status_history").select("status, changed_at, notified").eq("order_id", id).order("changed_at", { ascending: true });
+        if (error) throw error;
+        return data || [];
       },
     },
     users: {

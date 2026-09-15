@@ -40,7 +40,7 @@ export function Catalog() {
         </aside>
         <div>
           <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid #ecdccd;")}>
-            <span style={css("font-size:14.5px;color:#8a766a;")}>{products.length} מוצרים</span>
+            <span style={css("font-size:14.5px;color:#8a766a;")}>{list.length} מוצרים</span>
             <span style={css("font-size:14.5px;color:#6e5648;cursor:pointer;")}>מיון: מומלצים ▾</span>
           </div>
           <div className="r-grid3" style={css("display:grid;grid-template-columns:repeat(3,1fr);gap:24px;")}>

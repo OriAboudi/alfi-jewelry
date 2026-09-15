@@ -220,8 +220,26 @@ Takbull תומכים ב‑Apple Pay דרך אימות דומיין סטנדרט�
 ## ניהול הזמנות בפאנל האדמין
 
 בלשונית "הזמנות", כפתור "פרטים" בכל שורה פותח חלון עם כל הפרטים — לקוח, כתובת,
-פריטים, סכומים, וסטטוס תשלום — וכולל את בורר הסטטוס כדי לעדכן אותו במקום אחד.
-כל שינוי סטטוס מוצג ללקוח מיד בקישור המעקב שלו (שניהם קוראים מאותה טבלת `orders`).
+פריטים, סכומים, סטטוס תשלום וציר זמן סטטוסים — וכולל את בורר הסטטוס כדי לעדכן
+אותו במקום אחד. שינוי סטטוס עובר תמיד דרך ה‑Edge Function `update-order-status`
+(לא כתיבה ישירה לטבלה), ששולחת ללקוח מייל עדכון (Resend) ומוסיפה שורה לטבלת
+`order_status_history` — כך שינוי סטטוס אף פעם לא "שקט". הלקוח רואה את אותו
+עדכון מיד בקישור המעקב שלו.
+
+הלשונית "הזמנות" ולשונית "מוצרים" מסוננות/מדופדפות בצד שרת (חיפוש, סינון, עמודים)
+במקום לטעון את כל הטבלה לדפדפן — ראו `src/lib/store.js` (`orders.listAll(params)`,
+`products.list(params)`). לשונית "סקירה כללית" (Dashboard) מציגה הכנסות, מספר
+הזמנות, פילוח לפי סטטוס, מוצרים נמכרים ביותר והתראות מלאי נמוך — מחושבים בפונקציות
+Postgres (`supabase/add-order-stats-rpc.sql`) כדי שלא יהיה צורך לטעון כל ההזמנות.
+
+**קבצי מפתח:** `supabase/functions/update-order-status/`, `supabase/add-order-status-notifications.sql`,
+`supabase/add-order-stats-rpc.sql`, `supabase/add-admin-indexes.sql`, `src/screens/admin/*`.
+
+פרסום הפונקציה החדשה (אותו `--no-verify-jwt` כמו כל הפונקציות האחרות, ואותה הגנה
+בפועל דרך `isAdminRequest` בקוד):
+```bash
+supabase functions deploy update-order-status --no-verify-jwt
+```
 
 ## מלאי (Inventory)
 
