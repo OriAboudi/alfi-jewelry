@@ -38,7 +38,6 @@
   .r-fields2 .r-field-span2 { grid-column: 1 / -1 !important; }
   .r-footer-grid { grid-template-columns: 1fr !important; text-align: center; }
   .r-footer-links { align-items: center !important; }
-  .r-title-lg { font-size: 32px !important; }
   .r-admin-row { flex-wrap: wrap !important; }
   .r-cart-thumb { width: 78px !important; height: 94px !important; }
 }

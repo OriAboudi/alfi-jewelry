@@ -36,14 +36,14 @@ export function AdminShell() {
   return (
     <div className="r-container" style={css("max-width:1180px;margin:30px auto;padding:40px;background:rgba(250,245,239,.82);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);border-radius:22px;box-shadow:0 24px 70px rgba(70,50,40,.12);")}>
       <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:10px;")}>
-        <h1 style={css("font-family:'Frank Ruhl Libre',serif;font-weight:300;font-size:38px;")}>מערכת ניהול</h1>
-        <span style={css("font-size:13.5px;color:#8a766a;")}>מחובר כ‑{user ? user.name : ""} · <span onClick={logout} style={css("color:#a85a44;cursor:pointer;")}>יציאה</span></span>
+        <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:38px;")}>מערכת ניהול</h1>
+        <span style={css("font-size:13.5px;color:var(--c-ink-mute);")}>מחובר כ‑{user ? user.name : ""} · <span onClick={logout} style={css("color:var(--c-danger);cursor:pointer;")}>יציאה</span></span>
       </div>
-      <p style={css("font-size:14.5px;color:#8a766a;margin-bottom:24px;")}>כל שינוי נשמר מיידית. במצב מסד אמיתי — נשמר בענן.</p>
+      <p style={css("font-size:14.5px;color:var(--c-ink-mute);margin-bottom:24px;")}>כל שינוי נשמר מיידית. במצב מסד אמיתי — נשמר בענן.</p>
 
-      <div style={css("display:flex;gap:8px;margin-bottom:28px;border-bottom:1px solid #ecdccd;padding-bottom:0;overflow-x:auto;")}>
+      <div style={css("display:flex;gap:8px;margin-bottom:28px;border-bottom:1px solid var(--c-line);padding-bottom:0;overflow-x:auto;")}>
         {ADMIN_TABS.map(([k, label]) => (
-          <button key={k} onClick={() => setTab(k)} style={css(`border:none;background:none;cursor:pointer;font-size:15px;font-weight:600;padding:12px 18px;white-space:nowrap;color:${adminTab === k ? "#bd7355" : "#8a766a"};border-bottom:2px solid ${adminTab === k ? "#bd7355" : "transparent"};`)}>{label}</button>
+          <button key={k} onClick={() => setTab(k)} style={css(`border:none;background:none;cursor:pointer;font-size:15px;font-weight:600;padding:12px 18px;white-space:nowrap;color:${adminTab === k ? "var(--c-accent)" : "var(--c-ink-mute)"};border-bottom:2px solid ${adminTab === k ? "var(--c-accent)" : "transparent"};`)}>{label}</button>
         ))}
       </div>
 
