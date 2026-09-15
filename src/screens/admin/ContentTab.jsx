@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../../lib/css.js";
 import { AdminImageField } from "../../components/AdminImageField.jsx";
+import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
 import { Field, Area, lbl } from "./shared.jsx";
 
@@ -14,7 +15,14 @@ export function ContentTab() {
       <div style={css("display:flex;flex-direction:column;gap:18px;")}>
         <Field label="תווית באנר (Hero)" value={cd.heroBadge} onChange={(v) => setCdraft("heroBadge", v)} />
         <Field label="טקסט כפתור הבאנר" value={cd.heroCtaLabel} onChange={(v) => setCdraft("heroCtaLabel", v)} />
-        <div><label style={css(lbl)}>תמונת באנר עמוד הבית</label><AdminImageField value={cd.heroImage} onChange={(v) => setCdraft("heroImage", v)} /></div>
+        <div>
+          <label style={css(lbl)}>תמונות באנר עמוד הבית (סליידר, עד 5)</label>
+          <AdminGalleryField
+            images={cd.heroImages && cd.heroImages.length ? cd.heroImages : (cd.heroImage ? [cd.heroImage] : [])}
+            onChange={(imgs) => setCdraft("heroImages", imgs)}
+          />
+          <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>תמונה אחת = באנר קבוע. יותר מתמונה אחת = הבאנר עובר אוטומטית בין התמונות.</div>
+        </div>
         <div style={css("height:1px;background:#ecdccd;margin:6px 0;")} />
         <Field label="כותרת מקטע נבחרים" value={cd.featuredTitle} onChange={(v) => setCdraft("featuredTitle", v)} />
         <Field label="כותרת מקטע ״הסיפור שלנו״" value={cd.aboutTitle} onChange={(v) => setCdraft("aboutTitle", v)} />

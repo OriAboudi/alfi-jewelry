@@ -88,7 +88,7 @@ export function Catalog() {
                   </div>
                   <div style={css("display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;")}>
                     <div style={css("font-family:var(--font-serif);font-size:18px;")}>{p.name}</div>
-                    <div style={css("font-size:15px;color:var(--c-ink-mute);")}>{fmt(p.price)}</div>
+                    <div style={css("font-size:15px;color:var(--c-accent);font-weight:600;")}>{fmt(p.price)}</div>
                   </div>
                 </div>
               ))}

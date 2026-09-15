@@ -123,6 +123,12 @@
 .sticky-mobile-spacer { display: none; }
 @media (max-width: 859px) { .sticky-mobile-spacer { display: block; height: 84px; } }
 
+/* ---------- card slider arrows ----------
+   Hidden on phone/tablet widths — native touch swipe is the primary
+   interaction there; arrow buttons are a desktop/mouse convenience. */
+.r-slider-arrow { display: none; }
+@media (min-width: 860px) { .r-slider-arrow { display: flex; } }
+
 /* ---------- responsive grids (mobile-first) ---------- */
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }
 .grid-3 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }

@@ -121,7 +121,7 @@ export function Product() {
                   {!p.image && <div style={css("width:46%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 200deg,#f3ece4,#d6c8b6,#f7f2ec,#cabfae,#e8e0d4,#f3ece4);box-shadow:0 8px 20px rgba(0,0,0,.12),inset 0 2px 8px rgba(0,0,0,.12);")} />}
                 </div>
                 <div style={css("font-family:var(--font-serif);font-size:16px;margin-top:12px;")}>{p.name}</div>
-                <div style={css("font-size:14px;color:var(--c-ink-mute);")}>{fmt(p.price)}</div>
+                <div style={css("font-size:14px;color:var(--c-accent);font-weight:600;")}>{fmt(p.price)}</div>
               </div>
             ))}
           </div>

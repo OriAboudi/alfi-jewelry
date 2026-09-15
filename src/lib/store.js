@@ -44,6 +44,7 @@ export const SEED_COLLECTIONS = [
 export const SEED_CONTENT = {
   heroBadge: "❀ קולקציה חדשה",
   heroImage: "",
+  heroImages: [],
   heroCtaLabel: "לצפייה בקולקציה",
   authHeadline: "כל פרח מספר סיפור.",
   authTagline: "תכשיטי כסף סטרלינג 925 בעבודת יד, בהשראת עולם הצומח — עדינים, חמים ונצחיים.",

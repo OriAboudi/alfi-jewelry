@@ -1,52 +1,10 @@
-:root {
-  --terracotta: #bd7355;
-}
-
+/* Global resets/typography/focus states now live in src/styles/base.css
+   (token-driven). This file only keeps the legacy screens' spacing resets
+   and the !important breakpoint overrides for pages not yet migrated to
+   src/styles/utilities.css. */
 * {
-  box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-html,
-body {
-  background: #faf5ef;
-}
-
-body {
-  font-family: "Assistant", sans-serif;
-  color: #3a2c25;
-}
-
-::selection {
-  background: #bd7355;
-  color: #fff;
-}
-
-input,
-button,
-select,
-textarea {
-  font-family: inherit;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: #bd7355 !important;
-}
-
-::placeholder {
-  color: #c4b1a4;
-}
-
-button {
-  font-family: inherit;
-}
-
-img {
-  max-width: 100%;
 }
 
 /* ---------- Responsive overrides ----------

@@ -28,19 +28,25 @@
   --c-ink-mute: #8a766a;
   --c-ink-faint: #a89486;
 
-  --c-accent: #bd7355;
-  --c-accent-dark: #a85a44;
-  --c-accent-soft: #fbf1e9;
+  --c-accent: #b5602f;
+  --c-accent-dark: #8a3e22;
+  --c-accent-soft: #f6ddc0;
   --c-accent-contrast: #ffffff;
+
+  /* Second jewel tone (antique gold) — used sparingly for premium accents
+     (featured ribbons, active slider dots) so the palette reads as two
+     metals, not one flat hue repeated everywhere. */
+  --c-gold: #9c7a2e;
+  --c-gold-soft: #f1e2b8;
 
   --c-line: #ecdccd;
   --c-line-soft: #f3e8dd;
   --c-line-strong: #e0cdbd;
 
-  --c-success: #6f8556;
-  --c-success-bg: #eaf0e3;
-  --c-danger: #a85a44;
-  --c-danger-bg: #fbeae4;
+  --c-success: #5f7a45;
+  --c-success-bg: #e3edd6;
+  --c-danger: #a3402a;
+  --c-danger-bg: #f9dcd1;
 
   /* ---------- typography ---------- */
   --font-serif: 'Frank Ruhl Libre', serif;
