@@ -101,19 +101,37 @@ alfi-react/
 └─ src/
    ├─ main.jsx                איתחול React
    ├─ App.jsx                 ניתוב בין המסכים + חזית האתר
-   ├─ index.css               איפוסים וגופנים
+   ├─ index.css               התאמות פריסה ישנות (r-* breakpoints) לעמודים שטרם הועברו
+   ├─ styles/                 ★ מערכת העיצוב — tokens.css (משתני צבע/ריווח/טיפוגרפיה/רדיוס),
+   │                            base.css (איפוסים גלובליים), utilities.css (glass-card,
+   │                            btn-primary, container, גריד מובייל‑first, sticky-mobile-bar)
    ├─ lib/
    │   ├─ store.js            ★ שכבת הנתונים — כל גישה למסד עוברת כאן
    │   ├─ css.js              עזר להמרת סגנון אינליין לאובייקט React
    │   ├─ format.js           עיצוב מחיר ותאריך
    │   └─ ui.js               עזרי תמונה/תצוגה
    ├─ context/StoreContext.jsx  מצב גלובלי (משתמש, עגלה, מוצרים, פעולות)
-   ├─ components/             Header, Footer, AdminImageField, קישוטים
-   └─ screens/                כל המסכים (בית, קטלוג, מוצר, עגלה, אדמין...)
+   ├─ components/             Header, Footer, HeroSlider, CardSlider, AdminImageField, קישוטים
+   └─ screens/                כל המסכים (בית, קטלוג, מוצר, עגלה, admin/ — פאנל הניהול)
 ```
 
 **נקודת ההחלפה היחידה:** `src/lib/store.js`. כל ה‑UI מדבר רק עם האובייקט `store`,
 כך שמעבר בין מקומי לענן לא משנה אף שורת ממשק.
+
+## עיצוב — טוקנים, סליידרים ומובייל‑first
+
+הסגנון עבר מסגנונות אינליין חוזרים (`css()` string) למערכת טוקנים אמיתית ב‑
+`src/styles/tokens.css` (צבע, ריווח, טיפוגרפיה נוזלית עם `clamp()`, רדיוס, צל) —
+כל שינוי עתידי לפלטה נעשה במקום אחד. `utilities.css` מכיל מחלקות אמיתיות
+(`glass-card`, `btn-primary`/`btn-secondary`, `container`, `grid-3`/`grid-4`)
+במקום שכפול אותו מחרוזת סגנון בכל מסך. כל מדיה־קוורי חדש הוא מובייל‑first
+(`min-width`), עם יעד מגע מינימלי 44px.
+
+**סליידרים (עמוד הבית):**
+- `HeroSlider` — הבאנר הראשי עובר אוטומטית בין `content.heroImages` (עד 5 תמונות,
+  נערך בלשונית "תוכן האתר" באדמין). תמונה אחת = באנר קבוע, כמו קודם.
+- `CardSlider` — מקטע "פורחים השבוע" הוא קרוסלה הניתנת לגלילה (מגע טבעי בנייד,
+  חצים בדסקטופ) במקום רשת קבועה, ומציג עד 8 מוצרים במקום 4.
 
 ---
 
