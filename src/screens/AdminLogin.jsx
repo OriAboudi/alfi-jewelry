@@ -6,7 +6,7 @@ export function AdminLogin() {
   const { adminForm, adminError, adminBusy, setAdminField, submitAdminLogin } = useStore();
 
   return (
-    <div style={css("min-height:100vh;display:flex;align-items:center;justify-content:center;background:#faf5ef;")}>
+    <div style={css("min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--c-bg);")}>
       <div style={css("width:100%;max-width:360px;padding:40px;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(70,50,40,.12);")}>
         <div style={css("text-align:center;margin-bottom:28px;")}>
           <div style={css("font-family:'Frank Ruhl Libre',serif;font-size:24px;letter-spacing:.14em;")}>ALFI</div>

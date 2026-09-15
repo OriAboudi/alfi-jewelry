@@ -17,7 +17,9 @@
  *  All media queries in this codebase are mobile-first (min-width).
  * ========================================================================== */
 :root {
-  /* ---------- color ---------- */
+  /* ---------- color ----------
+     Silver-jewelry brand — single warm terracotta/copper accent (no gold:
+     the store sells silver only). Background is the original light cream. */
   --c-bg: #faf5ef;
   --c-surface: #ffffff;
   --c-surface-glass: rgba(250, 245, 239, .78);
@@ -32,12 +34,6 @@
   --c-accent-dark: #8a3e22;
   --c-accent-soft: #f6ddc0;
   --c-accent-contrast: #ffffff;
-
-  /* Second jewel tone (antique gold) — used sparingly for premium accents
-     (featured ribbons, active slider dots) so the palette reads as two
-     metals, not one flat hue repeated everywhere. */
-  --c-gold: #9c7a2e;
-  --c-gold-soft: #f1e2b8;
 
   --c-line: #ecdccd;
   --c-line-soft: #f3e8dd;

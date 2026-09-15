@@ -32,7 +32,7 @@ export function Area({ label, value, onChange, rows = 3, placeholder }) {
 export function Overlay({ onClose, maxWidth = 560, children }) {
   return (
     <div onClick={onClose} style={css("position:fixed;inset:0;z-index:80;background:rgba(58,44,37,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;")}>
-      <div onClick={(e) => e.stopPropagation()} dir="rtl" style={css(`background:#faf5ef;border-radius:20px;width:100%;max-width:${maxWidth}px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.3);`)}>
+      <div onClick={(e) => e.stopPropagation()} dir="rtl" style={css(`background:var(--c-bg);border-radius:20px;width:100%;max-width:${maxWidth}px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:var(--shadow-modal);`)}>
         {children}
       </div>
     </div>

@@ -44,7 +44,7 @@ export function HeroSlider({ images, autoplayMs = 5500, children }) {
               onClick={() => goTo(i)}
               aria-label={`שקופית ${i + 1}`}
               aria-current={i === active}
-              style={css(`width:${i === active ? "22px" : "8px"};height:8px;border-radius:var(--r-pill);border:none;cursor:pointer;background:${i === active ? "var(--c-gold)" : "rgba(255,255,255,.7)"};transition:width var(--dur) var(--ease),background var(--dur) var(--ease);padding:0;`)}
+              style={css(`width:${i === active ? "22px" : "8px"};height:8px;border-radius:var(--r-pill);border:none;cursor:pointer;background:${i === active ? "var(--c-accent)" : "rgba(255,255,255,.7)"};transition:width var(--dur) var(--ease),background var(--dur) var(--ease);padding:0;`)}
             />
           ))}
         </div>

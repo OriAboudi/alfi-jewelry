@@ -29,7 +29,7 @@ export function Collections() {
             <div style={css("padding:22px 22px 26px;")}>
               <h2 style={css("font-family:var(--font-serif);font-size:22px;margin-bottom:8px;")}>{col.title}</h2>
               <p style={css("font-size:14.5px;color:var(--c-ink-soft);margin-bottom:16px;line-height:1.6;")}>{col.description}</p>
-              <span style={css("font-size:14px;color:var(--c-gold);font-weight:700;")}>לצפייה בקולקציה ←</span>
+              <span style={css("font-size:14px;color:var(--c-accent);font-weight:700;")}>לצפייה בקולקציה ←</span>
             </div>
           </div>
         ))}

@@ -38,7 +38,7 @@ export function Story() {
       </section>
       <section style={css("background:var(--c-line-soft);margin-top:var(--sp-7);")}>
         <div className="container" style={css("max-width:1100px;margin:0 auto;padding:70px var(--sp-5);text-align:center;")}>
-          <div style={css("font-size:48px;color:var(--c-gold);font-family:var(--font-serif);line-height:.5;margin-bottom:18px;")}>”</div>
+          <div style={css("font-size:48px;color:var(--c-accent);font-family:var(--font-serif);line-height:.5;margin-bottom:18px;")}>”</div>
           <p style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);line-height:1.35;max-width:720px;margin:0 auto;")}>{C.storyQuote}</p>
         </div>
       </section>

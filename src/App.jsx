@@ -33,9 +33,9 @@ const SCREENS = {
 const CHROMELESS = new Set(["admin", "admin-login"]);
 
 const PAGE_BG =
-  "font-family:'Assistant',sans-serif;color:#3a2c25;" +
+  "font-family:var(--font-sans);color:var(--c-ink);" +
   "background:linear-gradient(rgba(250,245,239,.42),rgba(250,245,239,.55)),url(floral-bg.jpg) center top/cover fixed;" +
-  "background-color:#faf5ef;min-height:100vh;font-weight:400;line-height:1.65;-webkit-font-smoothing:antialiased;";
+  "background-color:var(--c-bg);min-height:100vh;font-weight:400;line-height:1.65;-webkit-font-smoothing:antialiased;";
 
 export default function App() {
   const { screen } = useStore();

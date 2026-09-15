@@ -41,7 +41,7 @@ export function Product() {
             ) : (
               <div style={css("width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 60% 25%,#f7e4d8,#ecd0bc);")}>
                 <div style={css("width:44%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 210deg,#f3ece4,#d6c8b6,#f7f2ec,#cabfae,#e8e0d4,#f3ece4);box-shadow:0 24px 50px rgba(0,0,0,.16),inset 0 3px 12px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;")}>
-                  <div style={css("width:52%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 60% 30%,#faf5ef,#e3c2a8);box-shadow:inset 0 2px 8px rgba(0,0,0,.12);")} />
+                  <div style={css("width:52%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 60% 30%,var(--c-bg),#e3c2a8);box-shadow:inset 0 2px 8px rgba(0,0,0,.12);")} />
                 </div>
               </div>
             )}

@@ -34,7 +34,7 @@ export function AdminShell() {
   const TabComponent = TAB_COMPONENTS[adminTab] || DashboardTab;
 
   return (
-    <div className="r-container" style={css("max-width:1180px;margin:30px auto;padding:40px;background:rgba(250,245,239,.82);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);border-radius:22px;box-shadow:0 24px 70px rgba(70,50,40,.12);")}>
+    <div className="r-container glass-card" style={css("max-width:1180px;margin:30px auto;padding:40px;")}>
       <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:10px;")}>
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:38px;")}>מערכת ניהול</h1>
         <span style={css("font-size:13.5px;color:var(--c-ink-mute);")}>מחובר כ‑{user ? user.name : ""} · <span onClick={logout} style={css("color:var(--c-danger);cursor:pointer;")}>יציאה</span></span>

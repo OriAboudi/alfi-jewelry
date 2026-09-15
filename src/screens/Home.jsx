@@ -65,7 +65,7 @@ export function Home() {
             <div className="eyebrow" style={css("margin-bottom:8px;")}>{C.featuredKicker}</div>
             <h2 className="title-h2" style={css("font-size:var(--fs-h1);")}>{C.featuredTitle}</h2>
           </div>
-          <span onClick={() => go("catalog")} style={css("cursor:pointer;font-size:15px;color:var(--c-ink-mute);border-bottom:1px solid var(--c-gold);padding-bottom:2px;")}>לכל המוצרים ←</span>
+          <span onClick={() => go("catalog")} style={css("cursor:pointer;font-size:15px;color:var(--c-ink-mute);border-bottom:1px solid var(--c-accent);padding-bottom:2px;")}>לכל המוצרים ←</span>
         </div>
         <CardSlider>
           {featured.map((p) => (
@@ -74,7 +74,7 @@ export function Home() {
                 {!p.image && <Disc style="width:48%;aspect-ratio:1;" />}
                 <span style={css("position:absolute;top:10px;right:10px;background:#fff;font-size:11px;padding:4px 9px;border-radius:var(--r-pill);color:#8a6a58;letter-spacing:.03em;")}>{p.category}</span>
                 {Number(p.stock) === 0 && <span style={css("position:absolute;top:10px;left:10px;background:var(--c-danger-bg);color:var(--c-danger);font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:var(--r-pill);")}>אזל במלאי</span>}
-                {p.featured && <span style={css("position:absolute;bottom:10px;right:10px;background:var(--c-gold);color:#fff;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);letter-spacing:.03em;")}>נבחרת</span>}
+                {p.featured && <span style={css("position:absolute;bottom:10px;right:10px;background:var(--c-accent);color:#fff;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);letter-spacing:.03em;")}>נבחרת</span>}
               </div>
               <div style={css("font-family:var(--font-serif);font-size:17px;margin-bottom:4px;margin-top:12px;")}>{p.name}</div>
               <div style={css("font-size:15px;color:var(--c-accent);font-weight:600;")}>{fmt(p.price)}</div>
