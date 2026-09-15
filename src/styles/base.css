@@ -1,0 +1,50 @@
+/* =============================================================================
+ *  ALFI · Base — resets, global typography, focus states.
+ *  Loaded alongside (not instead of) src/index.css during the incremental
+ *  migration: index.css keeps the legacy !important overrides that screens
+ *  not yet migrated still depend on; new mobile-first rules live here and in
+ *  utilities.css. Once every screen is migrated, index.css's r-* overrides
+ *  can be deleted (tracked in the redesign plan).
+ * ========================================================================== */
+@import "./tokens.css";
+
+* { box-sizing: border-box; }
+
+html, body { background: var(--c-bg); }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--c-ink);
+  line-height: 1.65;
+}
+
+::selection { background: var(--c-accent); color: #fff; }
+::placeholder { color: var(--c-ink-faint); }
+
+input, button, select, textarea { font-family: inherit; }
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--c-accent) !important;
+  box-shadow: 0 0 0 3px rgba(189, 115, 85, .14);
+}
+
+a { color: inherit; text-decoration: none; }
+
+img { max-width: 100%; display: block; }
+
+/* A real, visible focus ring for keyboard navigation on interactive
+   non-form elements (buttons/links styled as buttons) — inline styles
+   across the app rarely set one. */
+button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
+  outline: 2px solid var(--c-accent);
+  outline-offset: 2px;
+}
+
+/* Touch targets: anything meant to be tapped should be at least --tap
+   (44px) in its smallest dimension on touch devices. */
+@media (pointer: coarse) {
+  button, .tap-target, select, input[type="checkbox"], input[type="radio"] {
+    min-height: var(--tap);
+  }
+}

@@ -1,0 +1,137 @@
+/* =============================================================================
+ *  ALFI · Utilities — real classes for patterns that were previously
+ *  identical inline-style strings copy-pasted across Catalog/Collections/
+ *  Product/Cart/Checkout/Status/Admin. Mobile-first: base rule is the phone
+ *  layout, min-width media queries add complexity for larger screens.
+ * ========================================================================== */
+@import "./tokens.css";
+
+/* ---------- layout shell ---------- */
+.container {
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: var(--sp-4);
+}
+@media (min-width: 560px) { .container { padding-inline: var(--sp-5); } }
+@media (min-width: 860px) { .container { padding-inline: var(--sp-6); } }
+
+/* Frosted "glass" card — the app's signature elevated-panel look. */
+.glass-card {
+  background: var(--c-surface-glass);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  border-radius: var(--r-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-line);
+  border-radius: var(--r-lg);
+}
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-2);
+  border: none;
+  border-radius: var(--r-md);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  cursor: pointer;
+  min-height: var(--tap);
+  padding: 13px 26px;
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--c-accent);
+  color: var(--c-accent-contrast);
+}
+.btn-primary:hover { box-shadow: var(--shadow-md); }
+
+.btn-secondary {
+  background: var(--c-surface);
+  color: var(--c-ink);
+  border: 1px solid var(--c-line-strong);
+}
+.btn-secondary:hover { border-color: var(--c-accent); }
+
+.btn-ghost {
+  background: var(--c-line-soft);
+  color: var(--c-ink);
+}
+
+.btn-block { width: 100%; }
+
+/* ---------- badges ---------- */
+.badge {
+  display: inline-block;
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.badge-accent { background: var(--c-accent-soft); color: var(--c-accent); }
+.badge-success { background: var(--c-success-bg); color: var(--c-success); }
+.badge-danger { background: var(--c-danger-bg); color: var(--c-danger); }
+.badge-muted { background: var(--c-line-soft); color: var(--c-ink-mute); }
+
+/* ---------- typography helpers ---------- */
+.eyebrow {
+  font-size: var(--fs-micro);
+  letter-spacing: .22em;
+  color: var(--c-accent);
+}
+.title-display {
+  font-family: var(--font-serif);
+  font-weight: 300;
+  font-size: var(--fs-display);
+}
+.title-h2 {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--fs-h2);
+}
+
+/* ---------- sticky mobile action bar ----------
+   A bottom-fixed CTA bar for mobile only (Product add-to-cart, Checkout
+   submit) — desktop keeps the inline button. Respects the safe-area inset
+   so it clears the home-indicator on iOS. */
+.sticky-mobile-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 40;
+  background: var(--c-surface-glass-strong);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid var(--c-line);
+  padding: var(--sp-3) var(--sp-4);
+  padding-bottom: calc(var(--sp-3) + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -8px 24px rgba(70, 50, 40, .08);
+}
+@media (min-width: 860px) { .sticky-mobile-bar { display: none; } }
+
+/* Reserve space at the bottom of a page that has a sticky-mobile-bar, so
+   the bar never covers the last bit of content. */
+.sticky-mobile-spacer { display: none; }
+@media (max-width: 859px) { .sticky-mobile-spacer { display: block; height: 84px; } }
+
+/* ---------- responsive grids (mobile-first) ---------- */
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }
+.grid-3 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }
+.grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sp-3); }
+@media (min-width: 560px) {
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 860px) {
+  .grid-3 { grid-template-columns: repeat(3, 1fr); gap: var(--sp-6); }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); gap: var(--sp-4); }
+}

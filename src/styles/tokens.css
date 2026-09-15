@@ -1,0 +1,86 @@
+/* =============================================================================
+ *  ALFI · Design tokens
+ *  -----------------------------------------------------------------------------
+ *  Formalizes the existing terracotta-on-cream identity as CSS custom
+ *  properties instead of the same values being retyped as inline style
+ *  strings across every screen. Values are unchanged from the current brand
+ *  (see src/lib/css.js usages being migrated) — this file doesn't rebrand
+ *  anything, it names what already exists so it can be reused and tuned once.
+ *
+ *  Breakpoints can't live in a custom property (media queries can't read
+ *  var()), so they're documented here and used literally in base.css /
+ *  utilities.css / per-component CSS:
+ *    --bp-sm: 400px   (large phone)
+ *    --bp-md: 560px   (phone landscape / small tablet)
+ *    --bp-lg: 860px   (tablet / small laptop)
+ *    --bp-xl: 1180px  (desktop)
+ *  All media queries in this codebase are mobile-first (min-width).
+ * ========================================================================== */
+:root {
+  /* ---------- color ---------- */
+  --c-bg: #faf5ef;
+  --c-surface: #ffffff;
+  --c-surface-glass: rgba(250, 245, 239, .78);
+  --c-surface-glass-strong: rgba(250, 245, 239, .88);
+
+  --c-ink: #3a2c25;
+  --c-ink-soft: #6e5648;
+  --c-ink-mute: #8a766a;
+  --c-ink-faint: #a89486;
+
+  --c-accent: #bd7355;
+  --c-accent-dark: #a85a44;
+  --c-accent-soft: #fbf1e9;
+  --c-accent-contrast: #ffffff;
+
+  --c-line: #ecdccd;
+  --c-line-soft: #f3e8dd;
+  --c-line-strong: #e0cdbd;
+
+  --c-success: #6f8556;
+  --c-success-bg: #eaf0e3;
+  --c-danger: #a85a44;
+  --c-danger-bg: #fbeae4;
+
+  /* ---------- typography ---------- */
+  --font-serif: 'Frank Ruhl Libre', serif;
+  --font-sans: 'Assistant', sans-serif;
+
+  --fs-display: clamp(2.1rem, 1.3rem + 4vw, 3.4rem);
+  --fs-h1: clamp(1.7rem, 1.2rem + 2vw, 2.5rem);
+  --fs-h2: clamp(1.3rem, 1.1rem + 0.8vw, 1.6rem);
+  --fs-h3: clamp(1.1rem, 1rem + 0.4vw, 1.25rem);
+  --fs-body: 1rem;
+  --fs-small: 0.875rem;
+  --fs-micro: 0.8125rem;
+
+  /* ---------- spacing scale ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* ---------- radii ---------- */
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 18px;
+  --r-xl: 22px;
+  --r-pill: 999px;
+
+  /* ---------- shadow ---------- */
+  --shadow-sm: 0 4px 14px rgba(70, 50, 40, .08);
+  --shadow-md: 0 14px 36px rgba(140, 90, 60, .10);
+  --shadow-lg: 0 24px 70px rgba(70, 50, 40, .12);
+  --shadow-modal: 0 30px 80px rgba(0, 0, 0, .3);
+
+  /* ---------- motion ---------- */
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --dur: .2s;
+
+  /* ---------- safe touch target ---------- */
+  --tap: 44px;
+}
