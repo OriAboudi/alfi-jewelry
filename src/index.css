@@ -1,0 +1,89 @@
+:root {
+  --terracotta: #bd7355;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: #faf5ef;
+}
+
+body {
+  font-family: "Assistant", sans-serif;
+  color: #3a2c25;
+}
+
+::selection {
+  background: #bd7355;
+  color: #fff;
+}
+
+input,
+button,
+select,
+textarea {
+  font-family: inherit;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #bd7355 !important;
+}
+
+::placeholder {
+  color: #c4b1a4;
+}
+
+button {
+  font-family: inherit;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ---------- Responsive overrides ----------
+   The app is built with inline styles (see lib/css.js), so these rules use
+   !important to win over the inline declarations only at the breakpoints
+   below; desktop layout is untouched. */
+
+@media (max-width: 860px) {
+  .r-container { padding-left: 24px !important; padding-right: 24px !important; }
+  .r-sidebar-grid { grid-template-columns: 1fr !important; }
+  .r-sticky { position: static !important; top: auto !important; }
+  .r-split { grid-template-columns: 1fr !important; gap: 32px !important; }
+  .r-product-grid { grid-template-columns: 1fr !important; gap: 30px !important; }
+  .r-cart-grid { grid-template-columns: 1fr !important; }
+  .r-checkout-grid { grid-template-columns: 1fr !important; }
+  .r-grid4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .r-grid3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .r-footer-grid { grid-template-columns: 1fr 1fr !important; row-gap: 30px !important; }
+  .r-header-nav { display: none !important; }
+  .r-header-burger { display: flex !important; }
+  .r-header-inner { padding-left: 18px !important; padding-right: 18px !important; height: 64px !important; }
+  .r-hero { height: 420px !important; }
+  .r-hero-badge { top: 16px !important; right: 18px !important; padding: 8px 16px !important; font-size: 12.5px !important; }
+  .r-hero-cta { bottom: 18px !important; right: 18px !important; }
+  .r-hero-cta button { padding: 12px 24px !important; font-size: 14.5px !important; }
+}
+
+@media (max-width: 560px) {
+  .r-container { padding-left: 16px !important; padding-right: 16px !important; }
+  .r-grid3 { grid-template-columns: 1fr !important; }
+  .r-grid4 { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }
+  .r-fields2 { grid-template-columns: 1fr !important; }
+  .r-fields2 .r-field-span2 { grid-column: 1 / -1 !important; }
+  .r-footer-grid { grid-template-columns: 1fr !important; text-align: center; }
+  .r-footer-links { align-items: center !important; }
+  .r-hero { height: 320px !important; }
+  .r-title-lg { font-size: 32px !important; }
+  .r-admin-row { flex-wrap: wrap !important; }
+  .r-cart-thumb { width: 78px !important; height: 94px !important; }
+}
