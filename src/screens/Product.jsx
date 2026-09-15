@@ -6,26 +6,36 @@ import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
 
 export function Product() {
-  const { products, pid, qty, size, setQty, setSize, addCurrent, openProduct, go } = useStore();
+  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, openProduct, go } = useStore();
 
   const sel = products.find((p) => String(p.id) === String(pid)) || products[0] || {};
   const related = products.filter((p) => p.id !== sel.id).slice(0, 4);
   const sizes = sel.sizes || [];
   const images = sel.images && sel.images.length ? sel.images : (sel.image ? [sel.image] : []);
+  const outOfStock = Number(sel.stock) <= 0;
+  const freeShipFrom = Number(C.freeShipFrom || 500);
+  const shipFee = Number(C.shipFee || 39);
 
   const [activeIdx, setActiveIdx] = useState(0);
   useEffect(() => { setActiveIdx(0); }, [sel.id]);
 
+  const [openInfo, setOpenInfo] = useState(null);
+  const INFO_SECTIONS = [
+    { key: "details", title: "פרטי המוצר", body: `${sel.material || "כסף 925"} · עבודת יד באולפן שלנו. כל תכשיט עשוי להיות שונה במעט מהתמונה — ייחודיות היא חלק מהקסם של עבודת יד.` },
+    { key: "shipping", title: "משלוח והחזרות", body: `משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)} (אחרת ${fmt(shipFee)}). ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית.` },
+    { key: "care", title: "טיפוח התכשיט", body: "יש להימנע ממגע עם מים, בשמים וכימיקלים. לאחסן בנפרד, בשקית סגורה, הרחק מאור שמש ישיר." },
+  ];
+
+  const addToCartLabel = outOfStock ? "אזל במלאי" : "הוספה לעגלה";
+
   return (
-    <div className="r-container" style={css("max-width:1240px;margin:30px auto;padding:30px 40px 64px;background:rgba(250,245,239,.74);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);border-radius:22px;box-shadow:0 24px 70px rgba(70,50,40,.12);")}>
-      <div style={css("font-size:13.5px;color:#a89486;margin-bottom:26px;")}>
+    <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:30px var(--sp-5) 64px;")}>
+      <div style={css("font-size:13.5px;color:var(--c-ink-faint);margin-bottom:var(--sp-5);")}>
         <span onClick={() => go("catalog")} style={css("cursor:pointer;")}>קטלוג</span> &nbsp;/&nbsp; {sel.category} &nbsp;/&nbsp; {sel.name}
       </div>
       <div className="r-product-grid" style={css("display:grid;grid-template-columns:1.1fr .9fr;gap:54px;align-items:start;")}>
         <div>
-          <div
-            style={css("position:relative;aspect-ratio:1;border-radius:18px;margin-bottom:14px;box-shadow:0 24px 50px rgba(140,90,60,.1);overflow:hidden;")}
-          >
+          <div style={css("position:relative;aspect-ratio:1;border-radius:var(--r-lg);margin-bottom:14px;box-shadow:0 24px 50px rgba(140,90,60,.1);overflow:hidden;")}>
             {images[activeIdx] ? (
               <ZoomImage src={images[activeIdx]} radius={18} zoomScale={3} cursor="zoom-in" />
             ) : (
@@ -37,62 +47,94 @@ export function Product() {
             )}
           </div>
           {images.length > 1 && (
-            <div style={css("display:flex;gap:10px;")}>
+            <div style={css("display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;")}>
               {images.map((url, i) => (
                 <div
                   key={url + i}
                   onClick={() => setActiveIdx(i)}
-                  style={css(`width:72px;height:72px;border-radius:10px;overflow:hidden;cursor:pointer;flex:none;border:2px solid ${i === activeIdx ? "#bd7355" : "transparent"};background:url("${url}") center/cover;opacity:${i === activeIdx ? 1 : .75};transition:.2s;`)}
+                  className="tap-target"
+                  style={css(`width:64px;height:64px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;flex:none;border:2px solid ${i === activeIdx ? "var(--c-accent)" : "transparent"};background:url("${url}") center/cover;opacity:${i === activeIdx ? 1 : .75};transition:opacity var(--dur) var(--ease);`)}
                 />
               ))}
             </div>
           )}
         </div>
         <div className="r-sticky" style={css("position:sticky;top:100px;")}>
-          <div style={css("font-size:13px;letter-spacing:.2em;color:#bd7355;margin-bottom:12px;")}>{sel.category} · {sel.material}</div>
-          <h1 style={css("font-family:'Frank Ruhl Libre',serif;font-weight:300;font-size:42px;margin-bottom:14px;")}>{sel.name}</h1>
-          <div style={css("font-size:25px;margin-bottom:22px;color:#3a2c25;")}>{fmt(sel.price)}</div>
-          {Number(sel.stock) <= 0 && (
-            <div style={css("display:inline-block;background:#fbeae4;color:#a85a44;font-size:13px;font-weight:700;padding:6px 14px;border-radius:100px;margin-bottom:18px;")}>אזל במלאי</div>
+          <div className="eyebrow" style={css("margin-bottom:12px;")}>{sel.category} · {sel.material}</div>
+          <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:14px;")}>{sel.name}</h1>
+          <div style={css("font-size:25px;margin-bottom:var(--sp-5);color:var(--c-ink);")}>{fmt(sel.price)}</div>
+          {outOfStock && <div className="badge badge-danger" style={css("margin-bottom:var(--sp-4);font-size:13px;padding:6px 14px;")}>אזל במלאי</div>}
+          {!outOfStock && Number(sel.stock) <= 5 && <div className="badge badge-accent" style={css("margin-bottom:var(--sp-4);font-size:13px;padding:6px 14px;")}>נותרו {sel.stock} יחידות בלבד</div>}
+          <p style={css("font-size:16px;color:var(--c-ink-soft);margin-bottom:var(--sp-6);")}>{sel.description}</p>
+
+          {sizes.length > 0 && (
+            <>
+              <div style={css("font-size:13px;font-weight:700;color:var(--c-ink-mute);margin-bottom:12px;letter-spacing:.04em;")}>מידה</div>
+              <div style={css("display:flex;gap:10px;margin-bottom:var(--sp-5);flex-wrap:wrap;")}>
+                {sizes.map((l) => {
+                  const on = l === size;
+                  return (
+                    <button key={l} onClick={() => setSize(l)} className="tap-target" style={css(`min-width:50px;height:50px;padding:0 14px;border-radius:var(--r-md);border:1px solid ${on ? "var(--c-accent)" : "var(--c-line-strong)"};background:${on ? "var(--c-accent)" : "#fff"};color:${on ? "#fff" : "var(--c-ink)"};font-size:15px;font-weight:600;cursor:pointer;transition:.2s;`)}>{l}</button>
+                  );
+                })}
+              </div>
+            </>
           )}
-          <p style={css("font-size:16px;color:#6e5648;margin-bottom:28px;")}>{sel.description}</p>
-          <div style={css("font-size:13px;font-weight:700;color:#8a766a;margin-bottom:12px;letter-spacing:.04em;")}>מידה</div>
-          <div style={css("display:flex;gap:10px;margin-bottom:26px;flex-wrap:wrap;")}>
-            {sizes.map((l) => {
-              const on = l === size;
+
+          <div style={css("display:flex;gap:12px;margin-bottom:18px;")}>
+            <div style={css("display:flex;align-items:center;border:1px solid var(--c-line-strong);border-radius:var(--r-md);overflow:hidden;background:#fff;")}>
+              <button onClick={() => setQty(qty - 1)} disabled={qty <= 1} className="tap-target" style={css(`width:46px;border:none;background:#fff;font-size:20px;cursor:pointer;color:var(--c-ink-mute);opacity:${qty <= 1 ? .4 : 1};`)}>−</button>
+              <span style={css("width:44px;text-align:center;font-size:16px;font-weight:600;")}>{qty}</span>
+              <button onClick={() => setQty(Math.min(qty + 1, Number(sel.stock) || 0))} disabled={qty >= Number(sel.stock)} className="tap-target" style={css(`width:46px;border:none;background:#fff;font-size:20px;cursor:pointer;color:var(--c-ink-mute);opacity:${qty >= Number(sel.stock) ? .4 : 1};`)}>+</button>
+            </div>
+            <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css("flex:1;font-size:16px;")}>{addToCartLabel}</button>
+          </div>
+
+          <div style={css("border-top:1px solid var(--c-line);margin-top:18px;")}>
+            {INFO_SECTIONS.map((s) => {
+              const open = openInfo === s.key;
               return (
-                <button key={l} onClick={() => setSize(l)} style={css(`min-width:50px;height:50px;padding:0 14px;border-radius:12px;border:1px solid ${on ? "#bd7355" : "#e0cdbd"};background:${on ? "#bd7355" : "#fff"};color:${on ? "#fff" : "#3a2c25"};font-size:15px;font-weight:600;cursor:pointer;transition:.2s;`)}>{l}</button>
+                <div key={s.key} style={css("border-bottom:1px solid var(--c-line);")}>
+                  <button
+                    onClick={() => setOpenInfo(open ? null : s.key)}
+                    aria-expanded={open}
+                    className="tap-target"
+                    style={css("width:100%;background:none;border:none;padding:18px 0;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:500;cursor:pointer;color:var(--c-ink);text-align:right;")}
+                  >
+                    {s.title}<span style={css(`color:var(--c-accent);font-size:20px;line-height:1;transition:transform var(--dur) var(--ease);transform:rotate(${open ? "45deg" : "0"});`)}>+</span>
+                  </button>
+                  {open && <p style={css("padding:0 0 18px;font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;")}>{s.body}</p>}
+                </div>
               );
             })}
           </div>
-          <div style={css("display:flex;gap:12px;margin-bottom:18px;")}>
-            <div style={css("display:flex;align-items:center;border:1px solid #e0cdbd;border-radius:12px;overflow:hidden;background:#fff;")}>
-              <button onClick={() => setQty(qty - 1)} disabled={qty <= 1} style={css(`width:46px;height:54px;border:none;background:#fff;font-size:20px;cursor:pointer;color:#8a766a;opacity:${qty <= 1 ? .4 : 1};`)}>−</button>
-              <span style={css("width:44px;text-align:center;font-size:16px;font-weight:600;")}>{qty}</span>
-              <button onClick={() => setQty(Math.min(qty + 1, Number(sel.stock) || 0))} disabled={qty >= Number(sel.stock)} style={css(`width:46px;height:54px;border:none;background:#fff;font-size:20px;cursor:pointer;color:#8a766a;opacity:${qty >= Number(sel.stock) ? .4 : 1};`)}>+</button>
-            </div>
-            <button onClick={addCurrent} disabled={Number(sel.stock) <= 0} style={css(`flex:1;background:#bd7355;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;opacity:${Number(sel.stock) <= 0 ? .5 : 1};`)}>{Number(sel.stock) <= 0 ? "אזל במלאי" : "הוספה לעגלה"}</button>
-          </div>
-          <div style={css("border-top:1px solid #ecdccd;margin-top:18px;")}>
-            <div style={css("padding:18px 0;border-bottom:1px solid #ecdccd;display:flex;justify-content:space-between;font-size:15px;font-weight:500;")}>פרטי המוצר<span style={css("color:#bd7355;")}>+</span></div>
-            <div style={css("padding:18px 0;border-bottom:1px solid #ecdccd;display:flex;justify-content:space-between;font-size:15px;font-weight:500;")}>משלוח והחזרות<span style={css("color:#bd7355;")}>+</span></div>
-            <div style={css("padding:18px 0;border-bottom:1px solid #ecdccd;display:flex;justify-content:space-between;font-size:15px;font-weight:500;")}>טיפוח התכשיט<span style={css("color:#bd7355;")}>+</span></div>
-          </div>
         </div>
       </div>
-      <div style={css("margin-top:70px;")}>
-        <h2 style={css("font-family:'Frank Ruhl Libre',serif;font-weight:400;font-size:30px;margin-bottom:26px;")}>אולי יתאים גם</h2>
-        <div className="r-grid4" style={css("display:grid;grid-template-columns:repeat(4,1fr);gap:24px;")}>
-          {related.map((p) => (
-            <div key={p.id} onClick={() => openProduct(p.id)} style={css("cursor:pointer;")}>
-              <div style={thumb(p.image, GRAD_CARD, "aspect-ratio:4/5;box-shadow:0 12px 28px rgba(140,90,60,.08);")}>
-                {!p.image && <div style={css("width:46%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 200deg,#f3ece4,#d6c8b6,#f7f2ec,#cabfae,#e8e0d4,#f3ece4);box-shadow:0 8px 20px rgba(0,0,0,.12),inset 0 2px 8px rgba(0,0,0,.12);")} />}
+
+      {related.length > 0 && (
+        <div style={css("margin-top:70px;")}>
+          <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>אולי יתאים גם</h2>
+          <div className="grid-4">
+            {related.map((p) => (
+              <div key={p.id} onClick={() => openProduct(p.id)} style={css("cursor:pointer;")}>
+                <div style={thumb(p.image, GRAD_CARD, "aspect-ratio:4/5;box-shadow:var(--shadow-sm);")}>
+                  {!p.image && <div style={css("width:46%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 200deg,#f3ece4,#d6c8b6,#f7f2ec,#cabfae,#e8e0d4,#f3ece4);box-shadow:0 8px 20px rgba(0,0,0,.12),inset 0 2px 8px rgba(0,0,0,.12);")} />}
+                </div>
+                <div style={css("font-family:var(--font-serif);font-size:16px;margin-top:12px;")}>{p.name}</div>
+                <div style={css("font-size:14px;color:var(--c-ink-mute);")}>{fmt(p.price)}</div>
               </div>
-              <div style={css("font-family:'Frank Ruhl Libre',serif;font-size:16px;margin-top:12px;")}>{p.name}</div>
-              <div style={css("font-size:14px;color:#8a766a;")}>{fmt(p.price)}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
+      )}
+
+      <div className="sticky-mobile-spacer" />
+      <div className="sticky-mobile-bar" style={css("display:flex;gap:12px;align-items:center;")}>
+        <div style={css("flex:1;min-width:0;")}>
+          <div style={css("font-family:var(--font-serif);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;")}>{sel.name}</div>
+          <div style={css("font-size:15px;font-weight:600;color:var(--c-accent);")}>{fmt(sel.price)}</div>
+        </div>
+        <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css("flex:none;padding:13px 28px;")}>{addToCartLabel}</button>
       </div>
     </div>
   );

@@ -67,8 +67,6 @@ img {
   .r-footer-grid { grid-template-columns: 1fr 1fr !important; row-gap: 30px !important; }
   .r-header-nav { display: none !important; }
   .r-header-burger { display: flex !important; }
-  .r-header-inner { padding-left: 18px !important; padding-right: 18px !important; height: 64px !important; }
-  .r-hero { height: 420px !important; }
   .r-hero-badge { top: 16px !important; right: 18px !important; padding: 8px 16px !important; font-size: 12.5px !important; }
   .r-hero-cta { bottom: 18px !important; right: 18px !important; }
   .r-hero-cta button { padding: 12px 24px !important; font-size: 14.5px !important; }
@@ -82,7 +80,6 @@ img {
   .r-fields2 .r-field-span2 { grid-column: 1 / -1 !important; }
   .r-footer-grid { grid-template-columns: 1fr !important; text-align: center; }
   .r-footer-links { align-items: center !important; }
-  .r-hero { height: 320px !important; }
   .r-title-lg { font-size: 32px !important; }
   .r-admin-row { flex-wrap: wrap !important; }
   .r-cart-thumb { width: 78px !important; height: 94px !important; }
