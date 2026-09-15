@@ -27,6 +27,8 @@ export function FlowerMark({ width = 130, height = 48, sw = 1.3, variant = "simp
  * when a product has no image yet.
  */
 export function Disc({ style, children }) {
-  const base = "border-radius:50%;background:conic-gradient(from 200deg,#fdf7ee,#c9a466,#fffaf0,#8a6a37,#e6cf9c,#fdf7ee);box-shadow:0 2px 10px rgba(0,0,0,.14),inset 0 2px 6px rgba(0,0,0,.12);";
+  // Cool chrome/silver sheen (not gold/bronze) — this app sells silver
+  // jewelry only, so the placeholder metal tone matters.
+  const base = "border-radius:50%;background:conic-gradient(from 200deg,#ffffff,#b9bdc2,#f7f8f9,#7d838a,#dfe2e4,#ffffff);box-shadow:0 2px 10px rgba(0,0,0,.14),inset 0 2px 6px rgba(0,0,0,.12);";
   return <div style={css(base + (style || ""))}>{children}</div>;
 }

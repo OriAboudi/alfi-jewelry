@@ -37,7 +37,7 @@ export function Home() {
       </section>
 
       {/* TRUST STRIP */}
-      <section style={css("background:var(--c-accent-soft);border-bottom:1px solid var(--c-line);")}>
+      <section style={css("background:var(--c-line-soft);border-bottom:1px solid var(--c-line);")}>
         <div className="container" style={css("padding:var(--sp-3) var(--sp-4);display:flex;flex-wrap:wrap;justify-content:center;gap:10px var(--sp-6);text-align:center;")}>
           {TRUST_ITEMS.map((t) => (
             <span key={t} style={css("font-size:13px;font-weight:600;color:var(--c-accent-dark);white-space:nowrap;")}>{t}</span>
