@@ -295,12 +295,14 @@ export function StoreProvider({ children }) {
   }, [setState]);
 
   /* ---------- admin: orders ---------- */
+  // Goes through the update-order-status Edge Function (not a direct table
+  // write) so a "status changed" email always fires exactly once — see
+  // src/lib/store.js orders.updateStatus.
   const setOrderStatus = useCallback(async (id, status) => {
     try {
-      await store.orders.update(id, { status });
-      const allOrders = await store.orders.listAll();
-      setState({ allOrders });
-    } catch { /* ignore */ }
+      const updated = await store.orders.updateStatus(id, status);
+      setState((s) => ({ allOrders: s.allOrders.map((o) => (o.id === id ? updated : o)) }));
+    } catch (e) { alert("עדכון הסטטוס נכשל: " + e.message); }
   }, [setState]);
 
   /* ---------- image upload (admin only) ---------- */

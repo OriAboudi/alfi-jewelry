@@ -68,6 +68,7 @@ export const SEED_CONTENT = {
   processText: "כל קולקציה מתחילה בסקיצה, עוברת ליצירת אב‑טיפוס, ומגיעה אליכם רק אחרי בדיקה אישית. זה לוקח זמן — וזה בדיוק העניין.",
   freeShipFrom: 500,
   shipFee: 39,
+  lowStockThreshold: 5,
 };
 
 // Default admin (LOCAL/dev backend only — never used in production, see BACKEND above).
@@ -135,7 +136,19 @@ const local = {
     async current() { return read(LS.session, null); },
   },
   products: {
-    async list() { return read(LS.products, []); },
+    // No params → full array (storefront usage). With params → paginated
+    // {rows, count} for the admin panel — same shape as the Supabase backend.
+    async list(params) {
+      const all = read(LS.products, []);
+      if (!params) return all;
+      const { search, category, page = 1, pageSize = 20 } = params;
+      let rows = all;
+      if (search) rows = rows.filter((p) => (p.name || "").includes(search));
+      if (category && category !== "הכל") rows = rows.filter((p) => p.category === category);
+      const count = rows.length;
+      const start = (page - 1) * pageSize;
+      return { rows: rows.slice(start, start + pageSize), count };
+    },
     async get(id) { return read(LS.products, []).find((p) => String(p.id) === String(id)) || null; },
     async create(data) {
       const items = read(LS.products, []);
@@ -178,17 +191,33 @@ const local = {
       const o = { id: uid(), number: "#ALF‑" + (2400 + orders.length + 19), status: "התקבלה", created_at: new Date().toISOString(), ...order };
       orders.unshift(o); write(LS.orders, orders); return o;
     },
-    async listAll() { return read(LS.orders, []); },
+    // No params → full array (admin panel loaded everything historically).
+    // With params → paginated {rows, count}, matching the Supabase backend.
+    async listAll(params) {
+      const all = read(LS.orders, []);
+      if (!params) return all;
+      const { search, status, paymentStatus, page = 1, pageSize = 20 } = params;
+      let rows = all;
+      if (search) rows = rows.filter((o) => (o.number || "").includes(search));
+      if (status) rows = rows.filter((o) => o.status === status);
+      if (paymentStatus) rows = rows.filter((o) => o.payment_status === paymentStatus);
+      const count = rows.length;
+      const start = (page - 1) * pageSize;
+      return { rows: rows.slice(start, start + pageSize), count };
+    },
     async update(id, patch) {
       const orders = read(LS.orders, []);
       const i = orders.findIndex((o) => String(o.id) === String(id));
       if (i < 0) throw new Error("הזמנה לא נמצאה");
       orders[i] = { ...orders[i], ...patch }; write(LS.orders, orders); return orders[i];
     },
+    // Dev-only stand-in for the Supabase update-order-status Edge Function —
+    // no email is sent locally, just the status change itself.
+    async updateStatus(id, status) { return local.orders.update(id, { status }); },
     async getPublic(id) {
       const o = read(LS.orders, []).find((x) => String(x.id) === String(id));
       if (!o) throw new Error("הזמנה לא נמצאה");
-      return o;
+      return { ...o, history: [] };
     },
   },
   users: {
@@ -197,6 +226,36 @@ const local = {
   storage: {
     // No cloud in local mode — embed the image as a data-URL so it persists.
     async uploadImage(file) { return toDataURL(file); },
+  },
+  stats: {
+    // Best-effort local equivalent of the order_stats/best_selling_products
+    // Postgres functions, for dev-mode parity — computed in JS over the
+    // in-memory order list rather than in the database.
+    async summary() {
+      const orders = read(LS.orders, []).filter((o) => !o.is_test);
+      const paid = orders.filter((o) => o.payment_status === "paid");
+      const statusCounts = {};
+      for (const o of orders) statusCounts[o.status] = (statusCounts[o.status] || 0) + 1;
+      return {
+        revenue: paid.reduce((a, o) => a + (Number(o.total) || 0), 0),
+        order_count: orders.length,
+        paid_order_count: paid.length,
+        status_counts: statusCounts,
+      };
+    },
+    async bestSellers({ limit = 5 } = {}) {
+      const orders = read(LS.orders, []).filter((o) => !o.is_test && o.payment_status === "paid");
+      const byId = new Map();
+      for (const o of orders) {
+        for (const it of o.items || []) {
+          const cur = byId.get(it.id) || { product_id: it.id, name: it.name, qty_sold: 0, revenue: 0 };
+          cur.qty_sold += Number(it.qty) || 0;
+          cur.revenue += (Number(it.price) || 0) * (Number(it.qty) || 0);
+          byId.set(it.id, cur);
+        }
+      }
+      return [...byId.values()].sort((a, b) => b.qty_sold - a.qty_sold).slice(0, limit);
+    },
   },
   checkout: {
     // No payment gateway in local mode — place the order directly, no redirect.
@@ -252,7 +311,19 @@ function makeSupabase() {
       },
     },
     products: {
-      async list() { const { data, error } = await sb.from("products").select("*").order("id"); if (error) throw error; return data || []; },
+      // No params → full array (storefront usage, unchanged). With params →
+      // paginated {rows, count} for the admin panel, computed server-side.
+      async list(params) {
+        if (!params) { const { data, error } = await sb.from("products").select("*").order("id"); if (error) throw error; return data || []; }
+        const { search, category, page = 1, pageSize = 20 } = params;
+        let q = sb.from("products").select("*", { count: "exact" }).order("id");
+        if (search) q = q.ilike("name", `%${search}%`);
+        if (category && category !== "הכל") q = q.eq("category", category);
+        const from = (page - 1) * pageSize;
+        const { data, error, count } = await q.range(from, from + pageSize - 1);
+        if (error) throw error;
+        return { rows: data || [], count: count || 0 };
+      },
       async get(id) { const { data, error } = await sb.from("products").select("*").eq("id", id).single(); if (error) throw error; return data; },
       async create(d) { const { data, error } = await sb.from("products").insert(d).select().single(); if (error) throw error; return data; },
       async update(id, p) { const { data, error } = await sb.from("products").update(p).eq("id", id).select().single(); if (error) throw error; return data; },
@@ -279,8 +350,31 @@ function makeSupabase() {
       },
     },
     orders: {
-      async listAll() { const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false }); if (error) throw error; return data || []; },
+      // No params → full array (unchanged). With params → paginated
+      // {rows, count} for the admin Orders tab.
+      async listAll(params) {
+        if (!params) { const { data, error } = await sb.from("orders").select("*").order("created_at", { ascending: false }); if (error) throw error; return data || []; }
+        const { search, status, paymentStatus, page = 1, pageSize = 20 } = params;
+        let q = sb.from("orders").select("*", { count: "exact" }).order("created_at", { ascending: false });
+        if (search) q = q.ilike("number", `%${search}%`);
+        if (status) q = q.eq("status", status);
+        if (paymentStatus) q = q.eq("payment_status", paymentStatus);
+        const from = (page - 1) * pageSize;
+        const { data, error, count } = await q.range(from, from + pageSize - 1);
+        if (error) throw error;
+        return { rows: data || [], count: count || 0 };
+      },
+      // Only used by admin flows that don't need a notification (none left —
+      // status changes go through updateStatus below). Kept for completeness.
       async update(id, p) { const { data, error } = await sb.from("orders").update(p).eq("id", id).select().single(); if (error) throw error; return data; },
+      // Status changes go through the update-order-status Edge Function
+      // (never a direct table write) so a notification email always fires.
+      async updateStatus(id, status) {
+        const { data, error } = await sb.functions.invoke("update-order-status", { body: { id, status } });
+        if (error) throw new Error(error.message || "עדכון הסטטוס נכשל");
+        if (data?.error) throw new Error(data.error);
+        return data.order;
+      },
       async getPublic(id) {
         const { data, error } = await sb.functions.invoke("get-order", { body: { id } });
         if (error) throw new Error(error.message || "טעינת ההזמנה נכשלה");
@@ -290,6 +384,18 @@ function makeSupabase() {
     },
     users: {
       async list() { const { data, error } = await sb.from("profiles").select("*"); if (error) throw error; return data || []; },
+    },
+    stats: {
+      async summary({ from, to } = {}) {
+        const { data, error } = await sb.rpc("order_stats", { p_from: from || null, p_to: to || null });
+        if (error) throw error;
+        return (data && data[0]) || { revenue: 0, order_count: 0, paid_order_count: 0, status_counts: {} };
+      },
+      async bestSellers({ from, to, limit = 5 } = {}) {
+        const { data, error } = await sb.rpc("best_selling_products", { p_from: from || null, p_to: to || null, p_limit: limit });
+        if (error) throw error;
+        return data || [];
+      },
     },
     storage: {
       async uploadImage(file) {

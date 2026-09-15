@@ -14,6 +14,19 @@ export const fmtDate = (iso) => {
   }
 };
 
+export const fmtDateTime = (iso) => {
+  try {
+    return new Date(iso).toLocaleString("he-IL", {
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+};
+
 // Checkout field validation + Israeli phone formatting.
 export const isValidEmail = (s) => /^\S+@\S+\.\S+$/.test((s || "").trim());
 

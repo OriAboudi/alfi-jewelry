@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
-import { fmt } from "../lib/format.js";
+import { fmt, fmtDateTime } from "../lib/format.js";
 import { OrderProgress } from "../components/OrderProgress.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 
@@ -38,6 +38,18 @@ export function Status() {
           <div style={css("background:#fff;border:1px solid #ecdccd;border-radius:18px;padding:32px 28px;margin-bottom:24px;")}>
             <OrderProgress order={lo} />
           </div>
+
+          {Array.isArray(lo.history) && lo.history.length > 0 && (
+            <div style={css("background:#fff;border:1px solid #ecdccd;border-radius:18px;padding:26px;text-align:right;margin-bottom:20px;")}>
+              <h3 style={css("font-family:'Frank Ruhl Libre',serif;font-size:19px;margin-bottom:16px;")}>ציר זמן</h3>
+              {lo.history.map((h, i) => (
+                <div key={i} style={css("display:flex;justify-content:space-between;align-items:center;font-size:14px;padding:9px 0;border-top:1px solid #f3e8dd;")}>
+                  <span style={css("font-weight:600;")}>{h.status}</span>
+                  <span style={css("color:#8a766a;font-size:13px;")}>{fmtDateTime(h.changed_at)}</span>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div style={css("background:#fff;border:1px solid #ecdccd;border-radius:18px;padding:26px;text-align:right;margin-bottom:20px;")}>
             <h3 style={css("font-family:'Frank Ruhl Libre',serif;font-size:19px;margin-bottom:16px;")}>פרטי הלקוח</h3>

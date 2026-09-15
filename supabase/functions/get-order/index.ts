@@ -29,7 +29,13 @@ Deno.serve(async (req) => {
       .single();
     if (error || !order) return json({ error: "הזמנה לא נמצאה" });
 
-    return json({ order });
+    const { data: history } = await supabase
+      .from("order_status_history")
+      .select("status, changed_at")
+      .eq("order_id", id)
+      .order("changed_at", { ascending: true });
+
+    return json({ order: { ...order, history: history || [] } });
   } catch (e) {
     console.error(e);
     return json({ error: e.message || "שגיאה בטעינת ההזמנה" });
