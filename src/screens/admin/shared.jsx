@@ -5,16 +5,38 @@ import { css } from "../../lib/css.js";
 
 export const STATUS_OPTS = ["התקבלה", "בהכנה", "נשלחה", "בדרך", "נמסר", "בוטלה"];
 export const CAT_NAMES = ["טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
+// The 4 core jewelry categories, for inventory-by-category summaries —
+// Accessories excluded, matching the homepage's 4-tile convention.
+export const CORE_CAT_NAMES = ["טבעות", "עגילים", "שרשראות", "צמידים"];
+
+// Single source of truth for stock health across ProductsTab, DashboardTab
+// and InventoryTab, so all three always agree on the same thresholds.
+export function stockTier(stock, { fine = 10, low = 5 } = {}) {
+  const n = Number(stock) || 0;
+  if (n <= 0) return "out";
+  if (n < low) return "critical";
+  if (n < fine) return "warning";
+  return "ok";
+}
+
+export const TIER_LABEL = { ok: "תקין", warning: "מלאי נמוך", critical: "מלאי קריטי", out: "אזל במלאי" };
+export const TIER_COLOR = {
+  ok: { fg: "var(--c-success)", bg: "var(--c-success-bg)" },
+  warning: { fg: "var(--c-warning)", bg: "var(--c-warning-bg)" },
+  critical: { fg: "var(--c-danger)", bg: "var(--c-danger-bg)" },
+  out: { fg: "var(--c-danger)", bg: "var(--c-danger-bg)" },
+};
 
 export const lbl = "display:block;font-size:13px;font-weight:600;color:var(--c-ink-mute);margin-bottom:7px;";
 export const inp = "width:100%;padding:12px 14px;border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;background:#fff;";
 export const ta = inp + "resize:vertical;";
 
-export function Field({ label, value, onChange, type, placeholder }) {
+export function Field({ label, value, onChange, type, placeholder, error }) {
   return (
     <div>
       <label style={css(lbl)}>{label}</label>
-      <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} type={type || "text"} placeholder={placeholder} style={css(inp)} />
+      <input value={value ?? ""} onChange={(e) => onChange(e.target.value)} type={type || "text"} placeholder={placeholder} style={css(error ? inp.replace("var(--c-line-strong)", "#d98a72") : inp)} />
+      {error && <div style={css("color:var(--c-danger);font-size:12px;margin-top:5px;")}>{error}</div>}
     </div>
   );
 }

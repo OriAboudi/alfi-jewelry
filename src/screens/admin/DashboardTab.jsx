@@ -3,13 +3,15 @@ import { css } from "../../lib/css.js";
 import { fmt } from "../../lib/format.js";
 import { store } from "../../lib/store.js";
 import { useStore } from "../../context/StoreContext.jsx";
+import { stockTier, TIER_LABEL, TIER_COLOR } from "./shared.jsx";
 
 // Fetches its own data directly from `store` (revenue/order aggregates,
 // low-stock list) rather than the global context state — this is a
 // server-computed summary, not something to keep duplicating client-side.
 export function DashboardTab() {
   const { content, setTab } = useStore();
-  const threshold = Number(content.lowStockThreshold ?? 5);
+  const low = Number(content.lowStockThreshold ?? 5);
+  const fine = Number(content.stockFineThreshold ?? 10);
 
   const [summary, setSummary] = React.useState(null);
   const [bestSellers, setBestSellers] = React.useState([]);
@@ -22,13 +24,13 @@ export function DashboardTab() {
     Promise.all([
       store.stats.summary(),
       store.stats.bestSellers({ limit: 5 }),
-      store.products.lowStock(threshold),
+      store.products.lowStock(fine),
     ]).then(([s, b, l]) => {
       if (!alive) return;
       setSummary(s); setBestSellers(b); setLowStock(l);
     }).catch(() => {}).finally(() => { if (alive) setLoading(false); });
     return () => { alive = false; };
-  }, [threshold]);
+  }, [fine]);
 
   const card = "background:#fff;border:1px solid var(--c-line);border-radius:16px;padding:22px;";
   const statNum = "font-family:var(--font-serif);font-size:30px;font-weight:400;color:var(--c-ink);";
@@ -77,15 +79,18 @@ export function DashboardTab() {
       {lowStock.length > 0 && (
         <div style={css(card + "margin-top:16px;")}>
           <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;")}>
-            <div style={css("font-size:15px;font-weight:700;color:var(--c-danger);")}>⚠ מלאי נמוך (סף: {threshold} יח׳)</div>
-            <span onClick={() => setTab("products")} style={css("font-size:13px;color:var(--c-accent);cursor:pointer;font-weight:600;")}>מעבר למוצרים ←</span>
+            <div style={css("font-size:15px;font-weight:700;color:var(--c-danger);")}>⚠ מוצרים במלאי נמוך</div>
+            <span onClick={() => setTab("inventory")} style={css("font-size:13px;color:var(--c-accent);cursor:pointer;font-weight:600;")}>מעבר למלאי ←</span>
           </div>
-          {lowStock.map((p) => (
-            <div key={p.id} style={css("display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-top:1px solid var(--c-line-soft);")}>
-              <span>{p.name}</span>
-              <span style={css(`font-weight:700;${p.stock === 0 ? "color:var(--c-danger);" : "color:var(--c-accent);"}`)}>{p.stock === 0 ? "אזל במלאי" : `${p.stock} יח׳ נותרו`}</span>
-            </div>
-          ))}
+          {lowStock.map((p) => {
+            const tier = stockTier(p.stock, { fine, low });
+            return (
+              <div key={p.id} style={css("display:flex;justify-content:space-between;font-size:14px;padding:7px 0;border-top:1px solid var(--c-line-soft);")}>
+                <span>{p.name}</span>
+                <span style={css(`font-weight:700;color:${TIER_COLOR[tier].fg};`)}>{tier === "out" ? TIER_LABEL.out : `${p.stock} יח׳ נותרו`}</span>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

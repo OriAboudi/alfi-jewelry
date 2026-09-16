@@ -91,7 +91,16 @@ export function ContentTab() {
           <Field label="משלוח חינם מעל (₪)" value={cd.freeShipFrom} onChange={(v) => setCdraft("freeShipFrom", v)} type="number" />
           <Field label="דמי משלוח (₪)" value={cd.shipFee} onChange={(v) => setCdraft("shipFee", v)} type="number" />
         </div>
-        <Field label="סף התראת מלאי נמוך (יחידות)" value={cd.lowStockThreshold} onChange={(v) => setCdraft("lowStockThreshold", v)} type="number" />
+        <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
+          <div>
+            <Field label="סף מלאי אדום (יחידות)" value={cd.lowStockThreshold} onChange={(v) => setCdraft("lowStockThreshold", v)} type="number" />
+            <div style={css("font-size:11.5px;color:var(--c-ink-faint);margin-top:4px;")}>מתחת למספר הזה — אדום (מלאי קריטי)</div>
+          </div>
+          <div>
+            <Field label="סף מלאי כתום (יחידות)" value={cd.stockFineThreshold} onChange={(v) => setCdraft("stockFineThreshold", v)} type="number" />
+            <div style={css("font-size:11.5px;color:var(--c-ink-faint);margin-top:4px;")}>מתחת למספר הזה (ומעל האדום) — כתום</div>
+          </div>
+        </div>
         <div style={css("display:flex;gap:12px;margin-top:8px;")}>
           <button onClick={saveContent} style={css("padding:13px 28px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;")}>שמירת שינויים</button>
           {contentSaved && <span style={css("align-self:center;color:var(--c-success);font-size:14px;font-weight:600;")}>✓ נשמר</span>}

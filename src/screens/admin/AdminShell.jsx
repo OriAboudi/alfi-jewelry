@@ -2,6 +2,7 @@ import React from "react";
 import { css } from "../../lib/css.js";
 import { useStore } from "../../context/StoreContext.jsx";
 import { DashboardTab } from "./DashboardTab.jsx";
+import { InventoryTab } from "./InventoryTab.jsx";
 import { ProductsTab } from "./ProductsTab.jsx";
 import { CollectionsTab } from "./CollectionsTab.jsx";
 import { ContentTab } from "./ContentTab.jsx";
@@ -11,6 +12,7 @@ import { PaymentTestsTab } from "./PaymentTestsTab.jsx";
 
 const ADMIN_TABS = [
   ["dashboard", "סקירה כללית"],
+  ["inventory", "מלאי"],
   ["products", "מוצרים"],
   ["collections", "קולקציות"],
   ["content", "תוכן האתר"],
@@ -21,6 +23,7 @@ const ADMIN_TABS = [
 
 const TAB_COMPONENTS = {
   dashboard: DashboardTab,
+  inventory: InventoryTab,
   products: ProductsTab,
   collections: CollectionsTab,
   content: ContentTab,

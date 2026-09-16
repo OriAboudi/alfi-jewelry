@@ -6,7 +6,7 @@ import { Disc } from "../../components/Ornaments.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
 import { store } from "../../lib/store.js";
-import { Field, Area, Overlay, OverlayHeader, Pager, lbl, inp, CAT_NAMES } from "./shared.jsx";
+import { Field, Area, Overlay, OverlayHeader, Pager, lbl, inp, CAT_NAMES, stockTier, TIER_LABEL, TIER_COLOR } from "./shared.jsx";
 
 const PAGE_SIZE = 20;
 
@@ -14,7 +14,8 @@ export function ProductsTab() {
   const {
     content, draft, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
   } = useStore();
-  const threshold = Number(content.lowStockThreshold ?? 5);
+  const low = Number(content.lowStockThreshold ?? 5);
+  const fine = Number(content.stockFineThreshold ?? 10);
 
   const [search, setSearch] = React.useState("");
   const [category, setCategory] = React.useState("הכל");
@@ -23,6 +24,7 @@ export function ProductsTab() {
   const [count, setCount] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [stockEdits, setStockEdits] = React.useState({});
+  const [stockError, setStockError] = React.useState("");
 
   const reload = React.useCallback(() => {
     setLoading(true);
@@ -50,11 +52,20 @@ export function ProductsTab() {
 
   const onDelete = async (id) => { await deleteProduct(id); reload(); };
 
+  const submitDraft = () => {
+    const v = draft?.stock;
+    const valid = v !== "" && v !== null && v !== undefined && Number.isFinite(Number(v)) && Number(v) >= 0;
+    if (!valid) { setStockError("יש לציין כמות מלאי (מספר 0 ומעלה)"); return; }
+    setStockError("");
+    saveDraft();
+  };
+  const openDraft = (fn, ...args) => { setStockError(""); fn(...args); };
+
   return (
     <div>
       <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;")}>
         <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:24px;")}>מוצרים ({count})</h2>
-        <button onClick={newProduct} style={css("padding:11px 22px;background:var(--c-accent);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;")}>+ מוצר חדש</button>
+        <button onClick={() => openDraft(newProduct)} style={css("padding:11px 22px;background:var(--c-accent);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;")}>+ מוצר חדש</button>
       </div>
 
       <div style={css("display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;")}>
@@ -70,7 +81,8 @@ export function ProductsTab() {
       ) : rows.length === 0 ? (
         <div style={css("background:#fff;border:1px dashed var(--c-line-strong);border-radius:14px;padding:40px;text-align:center;color:var(--c-ink-mute);")}>לא נמצאו מוצרים.</div>
       ) : rows.map((p) => {
-        const low = Number(p.stock) <= threshold;
+        const tier = stockTier(p.stock, { fine, low });
+        const tc = TIER_COLOR[tier];
         return (
           <div key={p.id} className="r-admin-row" style={css("display:flex;align-items:center;gap:18px;background:#fff;border:1px solid var(--c-line);border-radius:14px;padding:14px 18px;margin-bottom:10px;flex-wrap:wrap;")}>
             <div style={thumb(p.image, GRAD_CARD, "width:54px;height:64px;flex:none;border-radius:10px;")}>
@@ -83,15 +95,15 @@ export function ProductsTab() {
                 type="number" min="0"
                 value={stockEdits[p.id] ?? p.stock}
                 onChange={(e) => setStockEdits((s) => ({ ...s, [p.id]: e.target.value }))}
-                style={css(`width:64px;padding:7px 8px;border:1px solid ${low ? "#e7b7a0" : "var(--c-line-strong)"};border-radius:8px;font-size:13.5px;text-align:center;color:${low ? "var(--c-danger)" : "var(--c-ink)"};`)}
+                style={css(`width:64px;padding:7px 8px;border:1px solid ${tier === "ok" ? "var(--c-line-strong)" : tc.fg};border-radius:8px;font-size:13.5px;text-align:center;color:${tier === "ok" ? "var(--c-ink)" : tc.fg};`)}
               />
               {String(stockEdits[p.id] ?? "") !== "" && Number(stockEdits[p.id]) !== p.stock && (
                 <button onClick={() => adjustStock(p.id, stockEdits[p.id])} style={css("padding:6px 10px;background:var(--c-line-soft);border:none;border-radius:8px;font-size:12px;color:var(--c-accent);font-weight:600;cursor:pointer;")}>עדכון</button>
               )}
             </div>
             {p.featured && <span style={css("font-size:12px;background:var(--c-accent-soft);color:var(--c-accent);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>מוצג בעמוד הבית</span>}
-            {low && <span style={css("font-size:12px;background:var(--c-danger-bg);color:var(--c-danger);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>{p.stock === 0 ? "אזל במלאי" : "מלאי נמוך"}</span>}
-            <button onClick={() => editProduct(p)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
+            {tier !== "ok" && <span style={css(`font-size:12px;background:${tc.bg};color:${tc.fg};padding:4px 10px;border-radius:100px;white-space:nowrap;`)}>{TIER_LABEL[tier]}</span>}
+            <button onClick={() => openDraft(editProduct, p)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
             <button onClick={() => onDelete(p.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid #e7d0c6;border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
           </div>
         );
@@ -117,7 +129,7 @@ export function ProductsTab() {
               </div>
               <Field label="מחיר (₪)" value={draft.price} onChange={(v) => setDraft("price", v)} type="number" />
             </div>
-            <Field label="מלאי (יחידות זמינות)" value={draft.stock} onChange={(v) => setDraft("stock", v)} type="number" />
+            <Field label="מלאי (יחידות זמינות) *" value={draft.stock} onChange={(v) => { setStockError(""); setDraft("stock", v); }} type="number" error={stockError} />
             <Field label="חומר" value={draft.material} onChange={(v) => setDraft("material", v)} />
             <Field label="מידות (מופרדות בפסיק)" value={draft.sizesText} onChange={(v) => setDraft("sizesText", v)} placeholder="S, M, L, XL" />
             <Area label="תיאור" value={draft.description} onChange={(v) => setDraft("description", v)} />
@@ -125,8 +137,8 @@ export function ProductsTab() {
               <input type="checkbox" checked={!!draft.featured} onChange={(e) => setDraft("featured", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />הצגה בעמוד הבית (נבחרים)
             </label>
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
-              <button onClick={saveDraft} style={css("flex:1;padding:14px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
-              <button onClick={cancelDraft} style={css("padding:14px 24px;background:#fff;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;cursor:pointer;")}>ביטול</button>
+              <button onClick={submitDraft} style={css("flex:1;padding:14px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
+              <button onClick={() => { setStockError(""); cancelDraft(); }} style={css("padding:14px 24px;background:#fff;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;cursor:pointer;")}>ביטול</button>
             </div>
           </div>
         </Overlay>

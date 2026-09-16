@@ -80,6 +80,7 @@ export const SEED_CONTENT = {
   freeShipFrom: 500,
   shipFee: 39,
   lowStockThreshold: 5,
+  stockFineThreshold: 10,
 };
 
 // Default admin (LOCAL/dev backend only — never used in production, see BACKEND above).

@@ -366,7 +366,7 @@ export function StoreProvider({ children }) {
     addToCart, changeQty, removeItem, addCurrent,
     setAdminField, submitAdminLogin, logout,
     setQty, setSize, setCatFilter,
-    setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct,
+    setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
     setCdraft, saveContent, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
   };
