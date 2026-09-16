@@ -31,7 +31,7 @@ export function Header() {
 
   return (
     <header style={css("position:sticky;top:0;z-index:40;background:var(--c-surface-glass-strong);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--c-line);")}>
-      <div className="container r-header-inner" style={css("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);height:64px;")}>
+      <div className="container r-header-inner" style={css("position:relative;display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);height:64px;")}>
         <nav className="r-header-nav" style={css("display:flex;gap:24px;align-items:center;font-size:14.5px;letter-spacing:.01em;")}>
           {CATEGORY_LINKS.map((cat) => (
             <a key={cat} onClick={() => goCat(cat)} aria-current={isCatActive(cat) ? "page" : undefined} style={css(navLink(isCatActive(cat)))}>{cat}</a>
@@ -62,7 +62,7 @@ export function Header() {
           </svg>
         </button>
 
-        <div onClick={() => navigate("home")} style={css("cursor:pointer;text-align:center;")}>
+        <div onClick={() => navigate("home")} style={css("position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);cursor:pointer;text-align:center;white-space:nowrap;")}>
           <div style={css("font-family:var(--font-serif);font-size:24px;font-weight:500;letter-spacing:.16em;line-height:1;")}>ALFI</div>
           <div style={css("font-size:9px;letter-spacing:.4em;color:var(--c-accent);margin-top:3px;")}>תכשיטי כסף</div>
         </div>

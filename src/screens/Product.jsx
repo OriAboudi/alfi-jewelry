@@ -47,7 +47,7 @@ export function Product() {
             )}
           </div>
           {images.length > 1 && (
-            <div className="no-scrollbar" style={css("display:flex;gap:10px;overflow-x:auto;overscroll-behavior:contain;padding-bottom:2px;")}>
+            <div className="no-scrollbar" style={css("display:flex;gap:10px;overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px;")}>
               {images.map((url, i) => (
                 <div
                   key={url + i}
@@ -59,7 +59,7 @@ export function Product() {
             </div>
           )}
         </div>
-        <div className="r-sticky no-scrollbar" style={css("position:sticky;top:100px;max-height:calc(100vh - 120px);overflow-y:auto;overscroll-behavior:contain;")}>
+        <div className="r-sticky no-scrollbar" style={css("position:sticky;top:100px;max-height:calc(100vh - 120px);overflow-y:auto;overscroll-behavior-y:contain;")}>
           <div className="eyebrow" style={css("margin-bottom:12px;")}>{sel.category} · {sel.material}</div>
           <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:14px;")}>{sel.name}</h1>
           <div style={css("font-size:25px;margin-bottom:var(--sp-5);color:var(--c-ink);")}>{fmt(sel.price)}</div>
