@@ -20,6 +20,7 @@ export function CardSlider({ children }) {
     <div style={css("position:relative;")}>
       <div
         ref={trackRef}
+        className="no-scrollbar"
         style={css("display:flex;gap:var(--sp-4);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--sp-1);-webkit-overflow-scrolling:touch;padding-bottom:4px;")}
       >
         {React.Children.map(children, (child) => (

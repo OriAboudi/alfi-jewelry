@@ -6,6 +6,15 @@
  * ========================================================================== */
 @import "./tokens.css";
 
+/* Hides the browser scrollbar UI on a scrollable element while keeping
+   scrolling (touch swipe / wheel / drag) fully functional — used on
+   horizontal sliders where the scrollbar track is visual clutter. */
+.no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* old Edge/IE */
+}
+.no-scrollbar::-webkit-scrollbar { display: none; } /* Chrome/Safari/Edge */
+
 /* ---------- layout shell ---------- */
 .container {
   width: 100%;

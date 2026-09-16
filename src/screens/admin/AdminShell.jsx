@@ -41,7 +41,7 @@ export function AdminShell() {
       </div>
       <p style={css("font-size:14.5px;color:var(--c-ink-mute);margin-bottom:24px;")}>כל שינוי נשמר מיידית. במצב מסד אמיתי — נשמר בענן.</p>
 
-      <div style={css("display:flex;gap:8px;margin-bottom:28px;border-bottom:1px solid var(--c-line);padding-bottom:0;overflow-x:auto;")}>
+      <div className="no-scrollbar" style={css("display:flex;gap:8px;margin-bottom:28px;border-bottom:1px solid var(--c-line);padding-bottom:0;overflow-x:auto;")}>
         {ADMIN_TABS.map(([k, label]) => (
           <button key={k} onClick={() => setTab(k)} style={css(`border:none;background:none;cursor:pointer;font-size:15px;font-weight:600;padding:12px 18px;white-space:nowrap;color:${adminTab === k ? "var(--c-accent)" : "var(--c-ink-mute)"};border-bottom:2px solid ${adminTab === k ? "var(--c-accent)" : "transparent"};`)}>{label}</button>
         ))}

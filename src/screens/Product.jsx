@@ -47,7 +47,7 @@ export function Product() {
             )}
           </div>
           {images.length > 1 && (
-            <div style={css("display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;")}>
+            <div className="no-scrollbar" style={css("display:flex;gap:10px;overflow-x:auto;padding-bottom:2px;")}>
               {images.map((url, i) => (
                 <div
                   key={url + i}
