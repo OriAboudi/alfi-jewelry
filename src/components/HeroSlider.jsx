@@ -32,7 +32,16 @@ export function HeroSlider({ images, autoplayMs = 5500, children }) {
       {slides.map((src, i) => (
         <div
           key={i}
-          style={css(`position:absolute;inset:0;transition:opacity .9s ease;opacity:${i === active ? 1 : 0};background:${src ? `url("${src}") center/cover` : "radial-gradient(120% 100% at 50% 25%,#f3e8dd,#ecd9c8)"};`)}
+          style={css(
+            src
+              // `background-size:contain` (not cover) so the whole photo is
+              // always visible regardless of the hero box's aspect ratio —
+              // a wide desktop screen previously cropped a portrait/square
+              // image top-to-bottom to fill the box; contain shows all of
+              // it, with the surrounding gap filled by background-color.
+              ? `position:absolute;inset:0;transition:opacity .9s ease;opacity:${i === active ? 1 : 0};background-color:var(--c-line-soft);background-image:url("${src}");background-position:center;background-size:contain;background-repeat:no-repeat;`
+              : `position:absolute;inset:0;transition:opacity .9s ease;opacity:${i === active ? 1 : 0};background-image:radial-gradient(120% 100% at 50% 25%,#f3e8dd,#ecd9c8);background-position:center;background-size:cover;background-repeat:no-repeat;`
+          )}
           aria-hidden={i !== active}
         />
       ))}
