@@ -106,7 +106,7 @@ export function Home() {
       </section>
 
       {/* HERO — large image */}
-      <section className="r-hero" style={css("position:relative;width:100%;margin-bottom:0;min-height:clamp(340px,62vw,580px);max-height:580px;")}>
+      <section className="r-hero" style={css("position:relative;width:100%;margin-bottom:0;aspect-ratio:4/3;min-height:200px;max-height:580px;")}>
         <HeroSlider images={heroImages}>
           <div className="r-hero-badge" style={css("position:absolute;top:var(--sp-5);right:var(--sp-5);background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:var(--r-pill);padding:10px 22px;font-size:14.5px;font-weight:600;color:var(--c-accent);letter-spacing:.05em;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.08);z-index:2;")}>{C.heroBadge}</div>
           <div className="r-hero-cta" style={css("position:absolute;bottom:var(--sp-5);right:var(--sp-5);z-index:2;")}>
