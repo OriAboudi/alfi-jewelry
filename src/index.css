@@ -15,7 +15,7 @@
 @media (max-width: 860px) {
   .r-container { padding-left: 24px !important; padding-right: 24px !important; }
   .r-sidebar-grid { grid-template-columns: 1fr !important; }
-  .r-sticky { position: static !important; top: auto !important; max-height: none !important; overflow-y: visible !important; }
+  .r-sticky { position: static !important; top: auto !important; }
   .r-split { grid-template-columns: 1fr !important; gap: 32px !important; }
   .r-product-grid { grid-template-columns: 1fr !important; gap: 30px !important; }
   .r-cart-grid { grid-template-columns: 1fr !important; }

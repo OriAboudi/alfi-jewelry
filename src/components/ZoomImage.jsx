@@ -1,6 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
-
-const MAX_ZOOM = 6;
+import React, { useRef, useState } from "react";
 
 // Touch devices have no hover state — combining onMouseEnter with onClick on
 // the same element is a well-known trap on iOS Safari, where the first tap
@@ -10,16 +8,27 @@ const MAX_ZOOM = 6;
 const IS_TOUCH = typeof window !== "undefined" && (("ontouchstart" in window) || navigator.maxTouchPoints > 0);
 
 /**
- * ZoomImage — hover-follows-cursor magnifier over an image (desktop only).
- * Scroll the mouse wheel while hovering to zoom in/out further. Pure CSS
- * background-position panning, no modal, no external dependencies. On touch
- * devices this renders as a plain static image instead.
+ * ZoomImage — hover-follows-cursor magnifier over an image (desktop only),
+ * at a fixed zoom level. Pure CSS background-position panning, no modal, no
+ * external dependencies. On touch devices this renders as a plain static
+ * image instead.
+ *
+ * Deliberately has NO wheel/scroll handling of any kind — an earlier version
+ * let the mouse wheel adjust the zoom level further while hovering, which
+ * needed to intercept the wheel event and call preventDefault() to stop the
+ * page from scrolling underneath it at the same time. That is exactly the
+ * class of bug that kept resurfacing ("zoom also scrolls the page" /
+ * "can't scroll on the product page"): a page can be scrolled from many
+ * input paths (wheel, trackpad gesture, touch, keyboard, scrollbar drag),
+ * and intercepting only one of them reliably is fragile. Removing wheel
+ * handling entirely removes the possibility of that conflict altogether —
+ * scrolling over the product image now always just scrolls the page,
+ * exactly like scrolling anywhere else on it.
  */
-export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "zoom-in" }) {
+export function ZoomImage({ src, radius = 18, onClick, zoomScale = 2.4, cursor = "zoom-in" }) {
   const ref = useRef(null);
   const [pos, setPos] = useState({ x: 50, y: 50 });
   const [hover, setHover] = useState(false);
-  const [scale, setScale] = useState(zoomScale);
 
   const move = (e) => {
     const r = ref.current.getBoundingClientRect();
@@ -28,29 +37,11 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
     setPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
   };
 
-  // React's synthetic onWheel handler is registered as a passive listener
-  // under the hood, so calling preventDefault() inside it is silently
-  // ignored by the browser — the image zoomed AND the page kept scrolling
-  // underneath it at the same time. A native, explicitly non-passive
-  // listener is the only way to actually stop the page scroll while the
-  // wheel is used to zoom.
-  useEffect(() => {
-    if (IS_TOUCH || !hover) return undefined;
-    const el = ref.current;
-    if (!el) return undefined;
-    const onWheelNative = (e) => {
-      e.preventDefault();
-      setScale((s) => Math.max(zoomScale, Math.min(MAX_ZOOM, s - e.deltaY * 0.01)));
-    };
-    el.addEventListener("wheel", onWheelNative, { passive: false });
-    return () => el.removeEventListener("wheel", onWheelNative);
-  }, [hover, zoomScale]);
-
   return (
     <div
       ref={ref}
       onMouseEnter={IS_TOUCH ? undefined : () => setHover(true)}
-      onMouseLeave={IS_TOUCH ? undefined : () => { setHover(false); setScale(zoomScale); }}
+      onMouseLeave={IS_TOUCH ? undefined : () => setHover(false)}
       onMouseMove={IS_TOUCH ? undefined : move}
       onClick={onClick}
       style={{
@@ -58,17 +49,16 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
         background: "#f3ece4", width: "100%", height: "100%", cursor: IS_TOUCH ? "default" : cursor,
         boxShadow: hover ? "inset 0 0 0 1px rgba(189,115,85,.35)" : "inset 0 0 0 1px rgba(0,0,0,0)",
         transition: "box-shadow .35s ease",
-        overscrollBehavior: "contain",
       }}
     >
       <div
         style={{
           width: "100%", height: "100%",
           backgroundImage: src ? `url("${src}")` : "none",
-          backgroundSize: hover ? `${scale * 100}%` : "cover",
+          backgroundSize: hover ? `${zoomScale * 100}%` : "cover",
           backgroundPosition: hover ? `${pos.x}% ${pos.y}%` : "center",
           backgroundRepeat: "no-repeat",
-          transition: "background-size .12s ease-out",
+          transition: "background-size .15s ease-out",
         }}
       />
       {!IS_TOUCH && (
@@ -91,22 +81,6 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
           <line x1="11" y1="8" x2="11" y2="14" />
           <line x1="8" y1="11" x2="14" y2="11" />
         </svg>
-      </div>
-      )}
-      {!IS_TOUCH && (
-      <div
-        style={{
-          position: "absolute", top: 14, insetInlineEnd: 14,
-          padding: "6px 12px", borderRadius: 999,
-          background: "rgba(20,14,10,.55)", backdropFilter: "blur(4px)",
-          color: "#fff", fontSize: 12, letterSpacing: ".01em",
-          opacity: hover ? 1 : 0,
-          transform: hover ? "translateY(0)" : "translateY(-6px)",
-          transition: "opacity .25s ease, transform .25s ease",
-          pointerEvents: "none", whiteSpace: "nowrap",
-        }}
-      >
-        גלגלת עכבר להגדלה · ×{scale.toFixed(1)}
       </div>
       )}
     </div>
