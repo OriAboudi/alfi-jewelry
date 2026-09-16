@@ -25,8 +25,25 @@ export function ContentTab() {
         </div>
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <Field label="כותרת מקטע נבחרים" value={cd.featuredTitle} onChange={(v) => setCdraft("featuredTitle", v)} />
-        <Field label="כותרת מקטע ״הסיפור שלנו״" value={cd.aboutTitle} onChange={(v) => setCdraft("aboutTitle", v)} />
-        <Area label="טקסט ״הסיפור שלנו״ (תקציר בעמוד הבית)" value={cd.aboutText} onChange={(v) => setCdraft("aboutText", v)} />
+
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);")}>באנר גדול 1 (בין הסליידרים בעמוד הבית)</div>
+        <div><label style={css(lbl)}>תמונה</label><AdminImageField value={cd.banner2Image} onChange={(v) => setCdraft("banner2Image", v)} /></div>
+        <Field label="כותרת" value={cd.banner2Title} onChange={(v) => setCdraft("banner2Title", v)} />
+        <Area label="טקסט משנה" value={cd.banner2Subtitle} onChange={(v) => setCdraft("banner2Subtitle", v)} rows={2} />
+        <Field label="טקסט כפתור" value={cd.banner2CtaLabel} onChange={(v) => setCdraft("banner2CtaLabel", v)} />
+
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);")}>באנר גדול 2 (מבצע)</div>
+        <div><label style={css(lbl)}>תמונה</label><AdminImageField value={cd.banner3Image} onChange={(v) => setCdraft("banner3Image", v)} /></div>
+        <Field label="כותרת" value={cd.banner3Title} onChange={(v) => setCdraft("banner3Title", v)} />
+        <Area label="טקסט משנה" value={cd.banner3Subtitle} onChange={(v) => setCdraft("banner3Subtitle", v)} rows={2} />
+        <Field label="טקסט כפתור" value={cd.banner3CtaLabel} onChange={(v) => setCdraft("banner3CtaLabel", v)} />
+        <div style={css("font-size:12px;color:#a89486;")}>שימו לב: זהו באנר שיווקי בלבד — המחיר/המבצע לא נאכף אוטומטית בקופה.</div>
+
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <Field label="כותרת מקטע ״קצת עלינו״" value={cd.aboutTitle} onChange={(v) => setCdraft("aboutTitle", v)} />
+        <Area label="טקסט ״קצת עלינו״ (מקטע קצר בתחתית עמוד הבית)" value={cd.aboutText} onChange={(v) => setCdraft("aboutText", v)} />
 
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);")}>עמוד ״הסיפור שלנו״</div>
