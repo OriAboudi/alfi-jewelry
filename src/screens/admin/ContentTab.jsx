@@ -3,7 +3,7 @@ import { css } from "../../lib/css.js";
 import { AdminImageField } from "../../components/AdminImageField.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
-import { Field, Area, lbl } from "./shared.jsx";
+import { Field, Area, lbl, CAT_NAMES } from "./shared.jsx";
 
 export function ContentTab() {
   const { content: C, cdraft, contentSaved, setCdraft, saveContent } = useStore();
@@ -25,6 +25,20 @@ export function ContentTab() {
         </div>
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <Field label="כותרת מקטע נבחרים" value={cd.featuredTitle} onChange={(v) => setCdraft("featuredTitle", v)} />
+
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);")}>תמונות קטגוריה (4 האריחים בעמוד הבית)</div>
+        <div className="r-grid3" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
+          {CAT_NAMES.filter((c) => c !== "אקססוריז").map((cat) => (
+            <div key={cat}>
+              <label style={css(lbl)}>{cat}</label>
+              <AdminImageField
+                value={(cd.categoryImages || {})[cat] || ""}
+                onChange={(v) => setCdraft("categoryImages", { ...(cd.categoryImages || {}), [cat]: v })}
+              />
+            </div>
+          ))}
+        </div>
 
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);")}>באנר גדול 1 (בין הסליידרים בעמוד הבית)</div>

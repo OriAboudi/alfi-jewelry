@@ -99,7 +99,7 @@ export function Catalog() {
           {list.length === 0 ? (
             <div className="card" style={css("padding:60px 20px;text-align:center;color:var(--c-ink-mute);")}>לא נמצאו מוצרים בסינון הזה.</div>
           ) : (
-            <div className="grid-3">
+            <div className="grid-3" style={css("gap:2px;")}>
               {list.map((p) => <ProductCard key={p.id} product={p} />)}
             </div>
           )}

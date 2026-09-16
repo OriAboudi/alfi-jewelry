@@ -116,15 +116,18 @@ export function Home() {
 
       {/* 4 CATEGORY TILES */}
       <section className="container" style={css("padding-block:var(--sp-6);")}>
-        <div className="grid-4">
-          {tileCats.map((c) => (
-            <div key={c} onClick={() => goCat(c)} className="tap-target hover-lift" style={css("cursor:pointer;position:relative;")}>
-              <div style={thumb(null, GRAD_CARD, "aspect-ratio:3/4;box-shadow:var(--shadow-sm);")}>
-                <Disc style="width:40%;aspect-ratio:1;" />
-                <span style={css("position:absolute;bottom:12px;right:12px;left:12px;background:rgba(255,255,255,.92);text-align:center;font-size:14px;font-weight:700;padding:8px 10px;border-radius:var(--r-sm);")}>{c}</span>
+        <div className="grid-4" style={css("gap:2px;")}>
+          {tileCats.map((c) => {
+            const img = (C.categoryImages || {})[c] || "";
+            return (
+              <div key={c} onClick={() => goCat(c)} className="tap-target hover-lift" style={css("cursor:pointer;position:relative;")}>
+                <div style={thumb(img, GRAD_CARD, "aspect-ratio:5/6;border-radius:0;border:1px solid var(--c-line);background-color:var(--c-surface);background-size:contain;background-repeat:no-repeat;")}>
+                  {!img && <Disc style="width:40%;aspect-ratio:1;" />}
+                  <span style={css("position:absolute;bottom:12px;right:12px;left:12px;background:rgba(255,255,255,.92);text-align:center;font-size:14px;font-weight:700;padding:8px 10px;")}>{c}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 

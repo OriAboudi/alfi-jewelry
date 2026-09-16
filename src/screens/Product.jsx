@@ -120,7 +120,7 @@ export function Product() {
       {related.length > 0 && (
         <div style={css("margin-top:70px;")}>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>אולי יתאים גם</h2>
-          <div className="grid-4">
+          <div className="grid-4" style={css("gap:2px;")}>
             {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </div>
