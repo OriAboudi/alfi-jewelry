@@ -125,15 +125,6 @@ export function Product() {
           </div>
         </div>
       )}
-
-      <div className="sticky-mobile-spacer" />
-      <div className="sticky-mobile-bar" style={css("display:flex;gap:12px;align-items:center;")}>
-        <div style={css("flex:1;min-width:0;")}>
-          <div style={css("font-family:var(--font-serif);font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;")}>{sel.name}</div>
-          <div style={css("font-size:15px;font-weight:600;color:var(--c-accent);")}>{fmt(sel.price)}</div>
-        </div>
-        <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css("flex:none;padding:13px 28px;")}>{addToCartLabel}</button>
-      </div>
     </div>
   );
 }
