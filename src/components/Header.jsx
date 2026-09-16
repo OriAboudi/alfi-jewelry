@@ -2,29 +2,41 @@ import React, { useState } from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 
-const LINKS = [
-  ["home", "בית"],
-  ["catalog", "קטלוג"],
-  ["collections", "קולקציות"],
-  ["story", "הסיפור שלנו"],
-];
+// Category-forward nav (tzufa.co.il pattern): categories are top-level nav
+// items that pre-filter the catalog, not buried behind one generic link.
+const CATEGORY_LINKS = ["הכל", "טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
 
 export function Header() {
-  const { go, screen, cartCount } = useStore();
+  const { go, screen, catFilter, setCatFilter, cartCount } = useStore();
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const goCat = (cat) => {
+    setMenuOpen(false);
+    setCatFilter(cat);
+    go("catalog");
+  };
+  const goCollections = () => {
+    setMenuOpen(false);
+    go("collections");
+  };
   const navigate = (target) => {
     setMenuOpen(false);
     go(target);
   };
 
+  const isCatActive = (cat) => screen === "catalog" && catFilter === cat;
+  const isCollectionsActive = screen === "collections";
+
+  const navLink = (active) => `cursor:pointer;color:${active ? "var(--c-ink)" : "var(--c-ink-mute)"};font-weight:${active ? 700 : 500};transition:color var(--dur) var(--ease);`;
+
   return (
     <header style={css("position:sticky;top:0;z-index:40;background:var(--c-surface-glass-strong);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--c-line);")}>
       <div className="container r-header-inner" style={css("display:flex;align-items:center;justify-content:space-between;gap:var(--sp-5);height:64px;")}>
-        <nav className="r-header-nav" style={css("display:flex;gap:28px;align-items:center;font-size:15px;letter-spacing:.01em;")}>
-          {LINKS.map(([k, label]) => (
-            <a key={k} onClick={() => go(k)} aria-current={screen === k ? "page" : undefined} style={css(`cursor:pointer;color:${screen === k ? "var(--c-ink)" : "var(--c-ink-mute)"};font-weight:${screen === k ? 700 : 500};transition:color var(--dur) var(--ease);`)}>{label}</a>
+        <nav className="r-header-nav" style={css("display:flex;gap:24px;align-items:center;font-size:14.5px;letter-spacing:.01em;")}>
+          {CATEGORY_LINKS.map((cat) => (
+            <a key={cat} onClick={() => goCat(cat)} aria-current={isCatActive(cat) ? "page" : undefined} style={css(navLink(isCatActive(cat)))}>{cat}</a>
           ))}
+          <a onClick={goCollections} aria-current={isCollectionsActive ? "page" : undefined} style={css(navLink(isCollectionsActive))}>קולקציות</a>
         </nav>
 
         <button
@@ -65,9 +77,10 @@ export function Header() {
 
       {menuOpen && (
         <nav className="r-header-menu" style={css("border-top:1px solid var(--c-line);background:var(--c-bg);padding:6px var(--sp-4) 16px;display:flex;flex-direction:column;")}>
-          {LINKS.map(([k, label]) => (
-            <a key={k} onClick={() => navigate(k)} style={css("padding:15px 2px;border-bottom:1px solid var(--c-line);cursor:pointer;color:var(--c-ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{label}</a>
+          {CATEGORY_LINKS.map((cat) => (
+            <a key={cat} onClick={() => goCat(cat)} style={css("padding:15px 2px;border-bottom:1px solid var(--c-line);cursor:pointer;color:var(--c-ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{cat}</a>
           ))}
+          <a onClick={goCollections} style={css("padding:15px 2px;cursor:pointer;color:var(--c-ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
         </nav>
       )}
     </header>

@@ -67,6 +67,16 @@
   color: var(--c-ink);
 }
 
+/* Subtle elevation on hover for clickable cards/tiles (category tiles,
+   collection cards) — a no-op on touch devices since :hover never fires. */
+.hover-lift {
+  transition: transform var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+}
+
 .btn-block { width: 100%; }
 
 /* ---------- badges ---------- */

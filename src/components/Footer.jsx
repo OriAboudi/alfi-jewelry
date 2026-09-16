@@ -3,7 +3,8 @@ import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 
 export function Footer() {
-  const { go } = useStore();
+  const { go, setCatFilter } = useStore();
+  const goCat = (c) => { setCatFilter(c); go("catalog"); };
   return (
     <footer style={css("background:var(--c-ink);color:#e8dccf;margin-top:var(--sp-8);")}>
       <div className="container r-footer-grid" style={css("padding:54px 0 40px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;")}>
@@ -14,10 +15,11 @@ export function Footer() {
         <div>
           <div style={css("font-weight:600;font-size:14px;margin-bottom:14px;")}>חנות</div>
           <div className="r-footer-links" style={css("display:flex;flex-direction:column;gap:9px;font-size:13.5px;color:#b9a797;")}>
-            <span onClick={() => go("catalog")} style={css("cursor:pointer;")}>טבעות</span>
-            <span onClick={() => go("catalog")} style={css("cursor:pointer;")}>שרשראות</span>
-            <span onClick={() => go("catalog")} style={css("cursor:pointer;")}>עגילים</span>
-            <span onClick={() => go("catalog")} style={css("cursor:pointer;")}>צמידים</span>
+            <span onClick={() => goCat("טבעות")} style={css("cursor:pointer;")}>טבעות</span>
+            <span onClick={() => goCat("שרשראות")} style={css("cursor:pointer;")}>שרשראות</span>
+            <span onClick={() => goCat("עגילים")} style={css("cursor:pointer;")}>עגילים</span>
+            <span onClick={() => goCat("צמידים")} style={css("cursor:pointer;")}>צמידים</span>
+            <span onClick={() => goCat("אקססוריז")} style={css("cursor:pointer;")}>אקססוריז</span>
           </div>
         </div>
         <div>

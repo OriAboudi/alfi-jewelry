@@ -4,7 +4,7 @@ import React from "react";
 import { css } from "../../lib/css.js";
 
 export const STATUS_OPTS = ["התקבלה", "בהכנה", "נשלחה", "בדרך", "נמסר", "בוטלה"];
-export const CAT_NAMES = ["טבעות", "שרשראות", "עגילים", "צמידים"];
+export const CAT_NAMES = ["טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
 
 export const lbl = "display:block;font-size:13px;font-weight:600;color:var(--c-ink-mute);margin-bottom:7px;";
 export const inp = "width:100%;padding:12px 14px;border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;background:#fff;";

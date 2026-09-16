@@ -2,16 +2,18 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
-import { FlowerMark, Disc } from "../components/Ornaments.jsx";
+import { Disc } from "../components/Ornaments.jsx";
 import { HeroSlider } from "../components/HeroSlider.jsx";
 import { CardSlider } from "../components/CardSlider.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 
-const BASE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים"];
+const BASE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
 const TRUST_ITEMS = ["✓ כסף סטרלינג 925 אמיתי", "✓ עבודת יד באולפן שלנו", "✓ אריזת מתנה בכל הזמנה"];
 
 export function Home() {
-  const { content: C, products, go, openProduct, setCatFilter } = useStore();
+  const { content: C, products, go, setCatFilter } = useStore();
+  const [openFaq, setOpenFaq] = React.useState(null);
 
   const cats = BASE_CATS.filter((c) => products.some((p) => p.category === c)).length
     ? BASE_CATS
@@ -23,6 +25,13 @@ export function Home() {
   const heroImages = (C.heroImages && C.heroImages.length ? C.heroImages : (C.heroImage ? [C.heroImage] : []));
 
   const goCat = (c) => { setCatFilter(c); go("catalog"); };
+
+  const FAQ_ITEMS = [
+    { q: "מה זה כסף 925?", a: "כסף סטרלינג 925 הוא כסף טהור בשילוב סגסוגת עדינה שמעניקה לו חוזק — כל תכשיט נוצר ומלוטש ביד באולפן שלנו." },
+    { q: "איך בוחרים מידה?", a: "בעמוד כל מוצר אפשר לבחור מידה מתוך האפשרויות הזמינות. לא בטוחים באיזו מידה מתאימה? אפשר לפנות אלינו ונשמח לעזור." },
+    { q: "איך שומרים על התכשיט?", a: "יש להימנע ממגע עם מים, בשמים וכימיקלים, ולאחסן בנפרד בשקית סגורה הרחק מאור שמש ישיר." },
+    { q: "מה מדיניות ההחזרות?", a: `ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית. משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)}.` },
+  ];
 
   return (
     <div>
@@ -47,15 +56,17 @@ export function Home() {
       </section>
 
       {/* CATEGORIES */}
-      <section className="container grid-4" style={css("padding-block:var(--sp-6);")}>
-        {cats.map((c) => (
-          <div key={c} onClick={() => goCat(c)} className="tap-target" style={css("cursor:pointer;text-align:center;")}>
-            <div style={thumb(null, GRAD_CARD, "aspect-ratio:4/5;margin-bottom:13px;box-shadow:var(--shadow-sm);")}>
-              <Disc style="width:44%;aspect-ratio:1;" />
+      <section className="container" style={css("padding-block:var(--sp-6);")}>
+        <div style={css("display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--sp-4);")}>
+          {cats.map((c) => (
+            <div key={c} onClick={() => goCat(c)} className="tap-target hover-lift" style={css("cursor:pointer;text-align:center;")}>
+              <div style={thumb(null, GRAD_CARD, "aspect-ratio:4/5;margin-bottom:13px;box-shadow:var(--shadow-sm);")}>
+                <Disc style="width:44%;aspect-ratio:1;" />
+              </div>
+              <div style={css("font-size:15.5px;font-weight:700;")}>{c}</div>
             </div>
-            <div style={css("font-size:15px;font-weight:600;")}>{c}</div>
-          </div>
-        ))}
+          ))}
+        </div>
       </section>
 
       {/* FEATURED */}
@@ -69,32 +80,31 @@ export function Home() {
         </div>
         <CardSlider>
           {featured.map((p) => (
-            <div key={p.id} onClick={() => openProduct(p.id)} style={css("cursor:pointer;width:clamp(155px,40vw,230px);")}>
-              <div style={thumb(p.image, GRAD_CARD, "aspect-ratio:4/5;margin-bottom:0;box-shadow:var(--shadow-sm);")}>
-                {!p.image && <Disc style="width:48%;aspect-ratio:1;" />}
-                <span style={css("position:absolute;top:10px;right:10px;background:#fff;font-size:11px;padding:4px 9px;border-radius:var(--r-pill);color:#8a6a58;letter-spacing:.03em;")}>{p.category}</span>
-                {Number(p.stock) === 0 && <span style={css("position:absolute;top:10px;left:10px;background:var(--c-danger-bg);color:var(--c-danger);font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:var(--r-pill);")}>אזל במלאי</span>}
-                {p.featured && <span style={css("position:absolute;bottom:10px;right:10px;background:var(--c-accent);color:#fff;font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:var(--r-pill);letter-spacing:.03em;")}>נבחרת</span>}
-              </div>
-              <div style={css("font-family:var(--font-serif);font-size:17px;margin-bottom:4px;margin-top:12px;")}>{p.name}</div>
-              <div style={css("font-size:15px;color:var(--c-accent);font-weight:600;")}>{fmt(p.price)}</div>
-            </div>
+            <ProductCard key={p.id} product={p} width="clamp(155px,40vw,230px)" />
           ))}
         </CardSlider>
       </section>
 
-      {/* STORY TEASER */}
-      <section style={css("background:var(--c-line-soft);margin-top:var(--sp-5);position:relative;overflow:hidden;")}>
-        <div className="container r-split" style={css("padding-block:70px;display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;")}>
-          <div style={css(`aspect-ratio:16/11;border-radius:var(--r-lg);position:relative;overflow:hidden;background:url(${C.storyImage || "floral-bg.jpg"}) center/cover;`)}>
-            <div style={css("position:absolute;inset:0;background:radial-gradient(circle at 75% 80%,rgba(255,255,255,.4),transparent 40%);")} />
-          </div>
-          <div>
-            <FlowerMark width={130} height={48} style={{ marginBottom: 22 }} />
-            <h2 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);line-height:1.1;margin-bottom:var(--sp-4);")}>{C.aboutTitle}</h2>
-            <p style={css("font-size:16.5px;color:var(--c-ink-soft);margin-bottom:var(--sp-4);")}>{C.aboutText}</p>
-            <button onClick={() => go("catalog")} className="btn btn-primary" style={css("margin-top:10px;")}>גלו את הקולקציה</button>
-          </div>
+      {/* FAQ */}
+      <section style={css("background:var(--c-line-soft);margin-top:var(--sp-5);")}>
+        <div className="container" style={css("max-width:760px;padding-block:var(--sp-7);")}>
+          <h2 className="title-h2" style={css("font-size:var(--fs-h1);text-align:center;margin-bottom:var(--sp-6);")}>שאלות נפוצות</h2>
+          {FAQ_ITEMS.map((f, i) => {
+            const open = openFaq === i;
+            return (
+              <div key={i} style={css("border-bottom:1px solid var(--c-line);")}>
+                <button
+                  onClick={() => setOpenFaq(open ? null : i)}
+                  aria-expanded={open}
+                  className="tap-target"
+                  style={css("width:100%;background:none;border:none;padding:18px 0;display:flex;justify-content:space-between;align-items:center;font-size:15.5px;font-weight:600;cursor:pointer;color:var(--c-ink);text-align:right;")}
+                >
+                  {f.q}<span style={css(`color:var(--c-accent);font-size:20px;line-height:1;transition:transform var(--dur) var(--ease);transform:rotate(${open ? "45deg" : "0"});`)}>+</span>
+                </button>
+                {open && <p style={css("padding:0 0 18px;font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;")}>{f.a}</p>}
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
-import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
+import { ProductCard } from "../components/ProductCard.jsx";
 
 export function Product() {
-  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, openProduct, go } = useStore();
+  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go } = useStore();
 
   const sel = products.find((p) => String(p.id) === String(pid)) || products[0] || {};
   const related = products.filter((p) => p.id !== sel.id).slice(0, 4);
@@ -90,6 +90,12 @@ export function Product() {
             <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css("flex:1;font-size:16px;")}>{addToCartLabel}</button>
           </div>
 
+          <div style={css("display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;")}>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>🔒 תשלום מאובטח</span>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>↩ 14 יום החזרות</span>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>✋ עבודת יד באולפן שלנו</span>
+          </div>
+
           <div style={css("border-top:1px solid var(--c-line);margin-top:18px;")}>
             {INFO_SECTIONS.map((s) => {
               const open = openInfo === s.key;
@@ -115,15 +121,7 @@ export function Product() {
         <div style={css("margin-top:70px;")}>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>אולי יתאים גם</h2>
           <div className="grid-4">
-            {related.map((p) => (
-              <div key={p.id} onClick={() => openProduct(p.id)} style={css("cursor:pointer;")}>
-                <div style={thumb(p.image, GRAD_CARD, "aspect-ratio:4/5;box-shadow:var(--shadow-sm);")}>
-                  {!p.image && <div style={css("width:46%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 200deg,#f3ece4,#d6c8b6,#f7f2ec,#cabfae,#e8e0d4,#f3ece4);box-shadow:0 8px 20px rgba(0,0,0,.12),inset 0 2px 8px rgba(0,0,0,.12);")} />}
-                </div>
-                <div style={css("font-family:var(--font-serif);font-size:16px;margin-top:12px;")}>{p.name}</div>
-                <div style={css("font-size:14px;color:var(--c-accent);font-weight:600;")}>{fmt(p.price)}</div>
-              </div>
-            ))}
+            {related.map((p) => <ProductCard key={p.id} product={p} />)}
           </div>
         </div>
       )}
