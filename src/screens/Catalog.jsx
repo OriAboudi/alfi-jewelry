@@ -20,6 +20,7 @@ export function Catalog() {
   const [sortOpen, setSortOpen] = React.useState(false);
   const [priceMax, setPriceMax] = React.useState(null);
   const [inStockOnly, setInStockOnly] = React.useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
 
   const cats = BASE_CATS.filter((c) => products.some((p) => p.category === c)).length
     ? BASE_CATS
@@ -45,6 +46,7 @@ export function Catalog() {
   });
 
   const sortLabel = SORTS.find(([k]) => k === sortBy)[1];
+  const activeFilterCount = (catFilter !== "הכל" ? 1 : 0) + (matFilter !== "הכל" ? 1 : 0) + (priceMax !== null ? 1 : 0) + (inStockOnly ? 1 : 0);
 
   return (
     <div className="r-container container glass-card" style={css("max-width:1240px;margin:30px auto;padding:30px var(--sp-5) 64px;")}>
@@ -57,30 +59,41 @@ export function Catalog() {
       </div>
       <div className="r-sidebar-grid" style={css("display:grid;grid-template-columns:230px 1fr;gap:46px;align-items:start;")}>
         <aside className="r-sticky" style={css("position:sticky;top:100px;")}>
-          <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>קטגוריות</div>
-          <div style={css("display:flex;flex-direction:column;gap:11px;margin-bottom:var(--sp-6);font-size:15px;")}>
-            <span onClick={() => setCatFilter("הכל")} className="tap-target" style={css(`cursor:pointer;font-weight:${catFilter === "הכל" ? 700 : 600};color:${catFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</span>
-            {cats.map((c) => (
-              <span key={c} onClick={() => setCatFilter(c)} className="tap-target" style={css(`cursor:pointer;font-weight:${catFilter === c ? 700 : 400};color:${catFilter === c ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{c}</span>
-            ))}
+          <button
+            className="r-catalog-filter-toggle tap-target"
+            onClick={() => setMobileFiltersOpen((v) => !v)}
+            aria-expanded={mobileFiltersOpen}
+            style={css("display:none;width:100%;justify-content:space-between;align-items:center;padding:14px 16px;background:#fff;border:1px solid var(--c-line);border-radius:var(--r-md);font-size:14.5px;font-weight:600;color:var(--c-ink);cursor:pointer;margin-bottom:var(--sp-4);")}
+          >
+            <span>סינון{activeFilterCount > 0 ? ` (${activeFilterCount})` : ""}</span>
+            <span style={css(`color:var(--c-accent);font-size:19px;line-height:1;transition:transform var(--dur) var(--ease);transform:rotate(${mobileFiltersOpen ? "45deg" : "0"});`)}>+</span>
+          </button>
+          <div className={`r-catalog-filter-body${mobileFiltersOpen ? " is-open" : ""}`}>
+            <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>קטגוריות</div>
+            <div style={css("display:flex;flex-direction:column;gap:11px;margin-bottom:var(--sp-6);font-size:15px;")}>
+              <span onClick={() => setCatFilter("הכל")} className="tap-target" style={css(`cursor:pointer;font-weight:${catFilter === "הכל" ? 700 : 600};color:${catFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</span>
+              {cats.map((c) => (
+                <span key={c} onClick={() => setCatFilter(c)} className="tap-target" style={css(`cursor:pointer;font-weight:${catFilter === c ? 700 : 400};color:${catFilter === c ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{c}</span>
+              ))}
+            </div>
+            <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>חומר</div>
+            <div style={css("display:flex;flex-direction:column;gap:11px;font-size:15px;margin-bottom:var(--sp-6);")}>
+              <span onClick={() => setMatFilter("הכל")} className="tap-target" style={css(`cursor:pointer;font-weight:${matFilter === "הכל" ? 700 : 400};color:${matFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</span>
+              {materials.map((m) => (
+                <span key={m} onClick={() => setMatFilter(m)} className="tap-target" style={css(`cursor:pointer;font-weight:${matFilter === m ? 700 : 400};color:${matFilter === m ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{m}</span>
+              ))}
+            </div>
+            <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>מחיר עד {fmt(effectivePriceMax)}</div>
+            <input
+              type="range" min={priceMin} max={priceMaxBound} value={effectivePriceMax}
+              onChange={(e) => setPriceMax(Number(e.target.value))}
+              style={css("width:100%;accent-color:var(--c-accent);cursor:pointer;margin-bottom:var(--sp-6);")}
+            />
+            <label style={css("display:flex;align-items:center;gap:9px;font-size:14.5px;cursor:pointer;color:var(--c-ink-soft);")}>
+              <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} style={css("width:17px;height:17px;accent-color:var(--c-accent);cursor:pointer;")} />
+              במלאי בלבד
+            </label>
           </div>
-          <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>חומר</div>
-          <div style={css("display:flex;flex-direction:column;gap:11px;font-size:15px;margin-bottom:var(--sp-6);")}>
-            <span onClick={() => setMatFilter("הכל")} className="tap-target" style={css(`cursor:pointer;font-weight:${matFilter === "הכל" ? 700 : 400};color:${matFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</span>
-            {materials.map((m) => (
-              <span key={m} onClick={() => setMatFilter(m)} className="tap-target" style={css(`cursor:pointer;font-weight:${matFilter === m ? 700 : 400};color:${matFilter === m ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{m}</span>
-            ))}
-          </div>
-          <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>מחיר עד {fmt(effectivePriceMax)}</div>
-          <input
-            type="range" min={priceMin} max={priceMaxBound} value={effectivePriceMax}
-            onChange={(e) => setPriceMax(Number(e.target.value))}
-            style={css("width:100%;accent-color:var(--c-accent);cursor:pointer;margin-bottom:var(--sp-6);")}
-          />
-          <label style={css("display:flex;align-items:center;gap:9px;font-size:14.5px;cursor:pointer;color:var(--c-ink-soft);")}>
-            <input type="checkbox" checked={inStockOnly} onChange={(e) => setInStockOnly(e.target.checked)} style={css("width:17px;height:17px;accent-color:var(--c-accent);cursor:pointer;")} />
-            במלאי בלבד
-          </label>
         </aside>
         <div>
           <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-5);padding-bottom:16px;border-bottom:1px solid var(--c-line);position:relative;")}>

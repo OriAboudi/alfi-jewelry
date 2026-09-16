@@ -33,10 +33,14 @@ function SliderSection({ eyebrow, title, ctaLabel, onCta, products }) {
 }
 
 function Banner({ image, title, subtitle, ctaLabel, onCta }) {
+  // No admin-uploaded image yet -> fall back to the site's own default
+  // background (the same floral image used site-wide), not a flat color,
+  // so the banner still looks intentional before a real photo is set.
+  const bg = image ? `url("${image}") center/cover` : `url("floral-bg.jpg") center/cover`;
   return (
-    <section style={css(`position:relative;min-height:clamp(260px,42vw,420px);background:${image ? `url("${image}") center/cover` : "var(--c-line-soft)"};display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;`)}>
+    <section style={css(`position:relative;min-height:clamp(150px,32vw,420px);background:${bg};display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;`)}>
       <div style={css("position:absolute;inset:0;background:linear-gradient(rgba(250,245,239,.3),rgba(250,245,239,.68));")} />
-      <div style={css("position:relative;padding:var(--sp-5);max-width:560px;")}>
+      <div style={css("position:relative;padding:var(--sp-4) var(--sp-5);max-width:560px;")}>
         <h2 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);line-height:1.15;margin-bottom:var(--sp-3);")}>{title}</h2>
         {subtitle && <p style={css("font-size:15.5px;color:var(--c-ink-soft);margin-bottom:var(--sp-4);")}>{subtitle}</p>}
         <button onClick={onCta} className="btn btn-primary">{ctaLabel}</button>
