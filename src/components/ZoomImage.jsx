@@ -58,6 +58,7 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
         background: "#f3ece4", width: "100%", height: "100%", cursor: IS_TOUCH ? "default" : cursor,
         boxShadow: hover ? "inset 0 0 0 1px rgba(189,115,85,.35)" : "inset 0 0 0 1px rgba(0,0,0,0)",
         transition: "box-shadow .35s ease",
+        overscrollBehavior: "contain",
       }}
     >
       <div
