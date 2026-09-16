@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 const MAX_ZOOM = 6;
 
@@ -28,10 +28,23 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
     setPos({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) });
   };
 
-  const wheel = (e) => {
-    e.preventDefault();
-    setScale((s) => Math.max(zoomScale, Math.min(MAX_ZOOM, s - e.deltaY * 0.01)));
-  };
+  // React's synthetic onWheel handler is registered as a passive listener
+  // under the hood, so calling preventDefault() inside it is silently
+  // ignored by the browser — the image zoomed AND the page kept scrolling
+  // underneath it at the same time. A native, explicitly non-passive
+  // listener is the only way to actually stop the page scroll while the
+  // wheel is used to zoom.
+  useEffect(() => {
+    if (IS_TOUCH || !hover) return undefined;
+    const el = ref.current;
+    if (!el) return undefined;
+    const onWheelNative = (e) => {
+      e.preventDefault();
+      setScale((s) => Math.max(zoomScale, Math.min(MAX_ZOOM, s - e.deltaY * 0.01)));
+    };
+    el.addEventListener("wheel", onWheelNative, { passive: false });
+    return () => el.removeEventListener("wheel", onWheelNative);
+  }, [hover, zoomScale]);
 
   return (
     <div
@@ -39,7 +52,6 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 3, cursor = "
       onMouseEnter={IS_TOUCH ? undefined : () => setHover(true)}
       onMouseLeave={IS_TOUCH ? undefined : () => { setHover(false); setScale(zoomScale); }}
       onMouseMove={IS_TOUCH ? undefined : move}
-      onWheel={!IS_TOUCH && hover ? wheel : undefined}
       onClick={onClick}
       style={{
         position: "relative", overflow: "hidden", borderRadius: radius,
