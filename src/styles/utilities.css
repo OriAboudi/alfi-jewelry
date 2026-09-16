@@ -160,7 +160,7 @@
   .r-hero-layer-mobile { display: none; }
 }
 .r-hero { aspect-ratio: 3 / 4; max-height: 640px; }
-@media (min-width: 860px) { .r-hero { aspect-ratio: 2.2 / 1; max-height: 580px; } }
+@media (min-width: 860px) { .r-hero { aspect-ratio: 3.2 / 1; max-height: 420px; } }
 
 /* ---------- responsive grids (mobile-first) ---------- */
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }
