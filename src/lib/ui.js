@@ -12,6 +12,11 @@ export const GRAD_COVER = "var(--c-surface)";
  * product image when present, or a soft gradient placeholder when empty.
  */
 export function thumb(img, grad = GRAD_CARD, extra) {
+  // Always longhand background-* properties (never the `background`
+  // shorthand) so callers can cleanly override just backgroundSize/
+  // backgroundColor via `extra` — mixing shorthand and longhand for the
+  // same underlying value is exactly what React warns is unreliable
+  // across re-renders.
   return {
     borderRadius: 14,
     position: "relative",
@@ -19,7 +24,11 @@ export function thumb(img, grad = GRAD_CARD, extra) {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    background: img ? `url("${img}") center/cover` : grad,
+    backgroundColor: grad,
+    backgroundImage: img ? `url("${img}")` : "none",
+    backgroundPosition: "center",
+    backgroundSize: "cover",
+    backgroundRepeat: "no-repeat",
     ...(extra ? css(extra) : {}),
   };
 }

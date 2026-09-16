@@ -125,7 +125,7 @@ export function Home() {
             const img = (C.categoryImages || {})[c] || "";
             return (
               <div key={c} onClick={() => goCat(c)} className="tap-target hover-lift" style={css("cursor:pointer;position:relative;")}>
-                <div style={thumb(img, GRAD_CARD, "aspect-ratio:5/6;border-radius:0;border:1px solid var(--c-line);background-color:var(--c-surface);background-size:contain;background-repeat:no-repeat;")}>
+                <div style={thumb(img, GRAD_CARD, "aspect-ratio:5/6;border-radius:0;border:1px solid var(--c-line);background-size:contain;")}>
                   {!img && <Disc style="width:40%;aspect-ratio:1;" />}
                   <span style={css("position:absolute;bottom:12px;right:12px;left:12px;background:rgba(255,255,255,.92);text-align:center;font-size:14px;font-weight:700;padding:8px 10px;")}>{c}</span>
                 </div>

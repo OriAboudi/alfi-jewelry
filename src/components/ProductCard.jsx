@@ -31,7 +31,7 @@ export function ProductCard({ product: p, width }) {
       onMouseLeave={() => setHover(false)}
       style={css(width ? `width:${width};` : "")}
     >
-      <div onClick={() => openProduct(p.id)} style={thumb(shownImage, GRAD_CARD, "aspect-ratio:1/1;margin-bottom:0;border-radius:0;border:1px solid var(--c-line);background-color:var(--c-surface);background-size:contain;background-repeat:no-repeat;cursor:pointer;")}>
+      <div onClick={() => openProduct(p.id)} style={thumb(shownImage, GRAD_CARD, "aspect-ratio:1/1;margin-bottom:0;border-radius:0;border:1px solid var(--c-line);background-size:contain;cursor:pointer;")}>
         {!shownImage && <Disc style="width:44%;aspect-ratio:1;" />}
         <span style={css("position:absolute;top:10px;right:10px;background:#fff;font-size:11px;padding:4px 9px;border-radius:var(--r-pill);color:var(--c-ink-mute);letter-spacing:.03em;")}>{p.category}</span>
         {outOfStock && <span style={css("position:absolute;top:10px;left:10px;background:var(--c-danger-bg);color:var(--c-danger);font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:var(--r-pill);")}>אזל במלאי</span>}
