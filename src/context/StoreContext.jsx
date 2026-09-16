@@ -239,7 +239,7 @@ export function StoreProvider({ children }) {
       store.users.list().then((users) => setState({ users })).catch(() => {});
     }
   }, [setState]);
-  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", price: 0, stock: 50, material: "כסף 925", description: "", images: [], featured: false, sizesText: "S, M, L" } }), [setState]);
+  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", price: 0, stock: 1, material: "כסף 925", description: "", images: [], featured: false, sizesText: "S, M, L" } }), [setState]);
   const editProduct = useCallback((p) => setState({ draft: { ...p, images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []), sizesText: (p.sizes || []).join(", ") } }), [setState]);
   const setDraft = useCallback((k, v) => setState((s) => ({ draft: { ...s.draft, [k]: v } })), [setState]);
   const cancelDraft = useCallback(() => setState({ draft: null }), [setState]);
