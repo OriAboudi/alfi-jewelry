@@ -4,9 +4,9 @@ import { fmt, isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../l
 import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { useStore } from "../context/StoreContext.jsx";
 
-const fieldStyle = "width:100%;padding:13px 15px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:#fff;";
-const fieldErrStyle = "width:100%;padding:13px 15px;border:1px solid #d98a72;border-radius:var(--r-md);font-size:15px;background:#fff;";
-const labelStyle = "display:block;font-size:13px;color:var(--c-ink-mute);margin-bottom:7px;";
+const fieldStyle = "width:100%;padding:12px 13px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);font-size:14.5px;background:#fff;";
+const fieldErrStyle = "width:100%;padding:12px 13px;border:1px solid #d98a72;border-radius:var(--r-md);font-size:14.5px;background:#fff;";
+const labelStyle = "display:block;font-size:12.5px;color:var(--c-ink-mute);margin-bottom:5px;";
 const errMsgStyle = "color:var(--c-danger);font-size:12px;margin-top:5px;";
 
 const REQUIRED_FIELDS = ["first", "last", "email", "phone", "address", "city"];
@@ -45,7 +45,7 @@ export function Checkout() {
   };
 
   const field = (k, label, opts = {}) => (
-    <div className={opts.span2 ? "r-field-span2" : undefined} style={opts.span2 ? css("grid-column:1/3;") : undefined}>
+    <div style={opts.span2 ? css("grid-column:1/-1;") : undefined}>
       <label style={css(labelStyle)}>{label}{opts.optional ? "" : " *"}</label>
       <input
         value={form[k]}
@@ -69,7 +69,7 @@ export function Checkout() {
       <div className="r-checkout-grid" style={css("display:grid;grid-template-columns:1fr 380px;gap:44px;align-items:start;")}>
         <div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>פרטי משלוח</h2>
-          <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:var(--sp-6);")}>
+          <div style={css("display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-bottom:var(--sp-6);")}>
             {field("first", "שם פרטי")}
             {field("last", "שם משפחה")}
             {field("email", "אימייל", { type: "email", placeholder: "לשליחת אישור ומעקב הזמנה", span2: true })}
