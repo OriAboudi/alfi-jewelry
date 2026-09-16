@@ -16,12 +16,20 @@ export function ContentTab() {
         <Field label="תווית באנר (Hero)" value={cd.heroBadge} onChange={(v) => setCdraft("heroBadge", v)} />
         <Field label="טקסט כפתור הבאנר" value={cd.heroCtaLabel} onChange={(v) => setCdraft("heroCtaLabel", v)} />
         <div>
-          <label style={css(lbl)}>תמונות באנר עמוד הבית (סליידר, עד 5)</label>
+          <label style={css(lbl)}>תמונות באנר עמוד הבית — דסקטופ (סליידר, עד 5)</label>
           <AdminGalleryField
             images={cd.heroImages ?? (cd.heroImage ? [cd.heroImage] : [])}
             onChange={(imgs) => setCdraft("heroImages", imgs)}
           />
-          <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>תמונה אחת = באנר קבוע. יותר מתמונה אחת = הבאנר עובר אוטומטית בין התמונות.</div>
+          <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>תמונה אחת = באנר קבוע. יותר מתמונה אחת = הבאנר עובר אוטומטית בין התמונות. מומלץ תמונה רחבה (למשל יחס 2:1).</div>
+        </div>
+        <div>
+          <label style={css(lbl)}>תמונות באנר עמוד הבית — מובייל (אופציונלי, עד 5)</label>
+          <AdminGalleryField
+            images={cd.heroImagesMobile || []}
+            onChange={(imgs) => setCdraft("heroImagesMobile", imgs)}
+          />
+          <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>מומלץ תמונה לאורך (יחס 3:4) שמתאימה טוב יותר למסך מאונך — ממוספר תמונות תואם לרשימה הדסקטופ. אם ריק, המובייל ישתמש בתמונות הדסקטופ.</div>
         </div>
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <Field label="כותרת מקטע נבחרים" value={cd.featuredTitle} onChange={(v) => setCdraft("featuredTitle", v)} />

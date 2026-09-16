@@ -148,6 +148,20 @@
 .r-slider-arrow { display: none; }
 @media (min-width: 860px) { .r-slider-arrow { display: flex; } }
 
+/* ---------- hero: separate mobile/desktop image + box shape ----------
+   tzufa.co.il serves a genuinely different, portrait-cropped photo on
+   mobile per hero slide (not a resized desktop one) inside a taller box;
+   desktop uses a wide panoramic box. CSS-only breakpoint swap, no JS
+   viewport detection (avoids hydration/resize flicker). */
+.r-hero-layer-desktop { display: none; }
+.r-hero-layer-mobile { display: block; }
+@media (min-width: 860px) {
+  .r-hero-layer-desktop { display: block; }
+  .r-hero-layer-mobile { display: none; }
+}
+.r-hero { aspect-ratio: 3 / 4; max-height: 640px; }
+@media (min-width: 860px) { .r-hero { aspect-ratio: 2.2 / 1; max-height: 580px; } }
+
 /* ---------- responsive grids (mobile-first) ---------- */
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }
 .grid-3 { display: grid; grid-template-columns: 1fr; gap: var(--sp-5); }

@@ -82,6 +82,7 @@ export function Home() {
 
   const freeShipFrom = Number(C.freeShipFrom || 500);
   const heroImages = (C.heroImages && C.heroImages.length ? C.heroImages : (C.heroImage ? [C.heroImage] : []));
+  const heroImagesMobile = C.heroImagesMobile || [];
 
   const goCat = (c) => { setCatFilter(c); go("catalog"); };
   const goCatalog = () => go("catalog");
@@ -105,9 +106,9 @@ export function Home() {
         </div>
       </section>
 
-      {/* HERO — large image */}
-      <section className="r-hero" style={css("position:relative;width:100%;margin-bottom:0;aspect-ratio:4/3;min-height:200px;max-height:580px;")}>
-        <HeroSlider images={heroImages}>
+      {/* HERO — large image, separate mobile/desktop crops (sizing via .r-hero in utilities.css) */}
+      <section className="r-hero" style={css("position:relative;width:100%;margin-bottom:0;")}>
+        <HeroSlider images={heroImages} imagesMobile={heroImagesMobile}>
           <div className="r-hero-badge" style={css("position:absolute;top:var(--sp-5);right:var(--sp-5);background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:var(--r-pill);padding:10px 22px;font-size:14.5px;font-weight:600;color:var(--c-accent);letter-spacing:.05em;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.08);z-index:2;")}>{C.heroBadge}</div>
           <div className="r-hero-cta" style={css("position:absolute;bottom:var(--sp-5);right:var(--sp-5);z-index:2;")}>
             <button onClick={goCatalog} className="btn btn-primary" style={css("padding:10px 22px;font-size:13.5px;box-shadow:0 12px 34px rgba(0,0,0,.22);")}>{C.heroCtaLabel}</button>
