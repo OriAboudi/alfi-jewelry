@@ -26,8 +26,15 @@ export function HeroSlider({ images, autoplayMs = 5500, children }) {
     if (slides.length > 1) timer.current = setInterval(() => setActive((x) => (x + 1) % slides.length), autoplayMs);
   };
 
+  // `position:absolute;inset:0` instead of `width/height:100%` — the parent
+  // <section> (Home.jsx) only sets min-height/max-height, not an explicit
+  // height, so a percentage-height child doesn't reliably resolve against
+  // it (renders at 0 height, invisible, even though the background-image
+  // itself loads fine — hence "the network request succeeds but nothing
+  // shows"). Absolute positioning fills the parent's actual rendered box
+  // regardless of how that height was determined.
   return (
-    <div style={css("position:relative;width:100%;height:100%;overflow:hidden;")}>
+    <div style={css("position:absolute;inset:0;overflow:hidden;")}>
       {slides.map((src, i) => (
         <div
           key={i}
