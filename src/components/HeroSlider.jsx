@@ -20,12 +20,6 @@ export function HeroSlider({ images, autoplayMs = 5500, children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slides.length, autoplayMs]);
 
-  const goTo = (i) => {
-    setActive(i);
-    if (timer.current) clearInterval(timer.current);
-    if (slides.length > 1) timer.current = setInterval(() => setActive((x) => (x + 1) % slides.length), autoplayMs);
-  };
-
   // `position:absolute;inset:0` instead of `width/height:100%` — the parent
   // <section> (Home.jsx) only sets min-height/max-height, not an explicit
   // height, so a percentage-height child doesn't reliably resolve against
@@ -43,19 +37,6 @@ export function HeroSlider({ images, autoplayMs = 5500, children }) {
         />
       ))}
       {children}
-      {slides.length > 1 && (
-        <div style={css("position:absolute;bottom:var(--sp-4);left:50%;transform:translateX(-50%);display:flex;gap:9px;z-index:2;")}>
-          {slides.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(i)}
-              aria-label={`שקופית ${i + 1}`}
-              aria-current={i === active}
-              style={css(`width:${i === active ? "22px" : "8px"};height:8px;border-radius:var(--r-pill);border:none;cursor:pointer;background:${i === active ? "var(--c-accent)" : "rgba(255,255,255,.7)"};transition:width var(--dur) var(--ease),background var(--dur) var(--ease);padding:0;`)}
-            />
-          ))}
-        </div>
-      )}
     </div>
   );
 }

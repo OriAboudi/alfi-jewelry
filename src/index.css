@@ -30,7 +30,7 @@
   .r-catalog-filter-body.is-open { display: block; }
   .r-hero-badge { top: 16px !important; right: 18px !important; padding: 8px 16px !important; font-size: 12.5px !important; }
   .r-hero-cta { bottom: 18px !important; right: 18px !important; }
-  .r-hero-cta button { padding: 12px 24px !important; font-size: 14.5px !important; }
+  .r-hero-cta button { padding: 9px 18px !important; font-size: 12.5px !important; }
 }
 
 @media (max-width: 560px) {
