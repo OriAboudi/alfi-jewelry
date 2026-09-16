@@ -32,16 +32,15 @@ export function HeroSlider({ images, autoplayMs = 5500, children }) {
       {slides.map((src, i) => (
         <div
           key={i}
-          style={css(
-            src
-              // `background-size:contain` (not cover) so the whole photo is
-              // always visible regardless of the hero box's aspect ratio —
-              // a wide desktop screen previously cropped a portrait/square
-              // image top-to-bottom to fill the box; contain shows all of
-              // it, with the surrounding gap filled by background-color.
-              ? `position:absolute;inset:0;transition:opacity .9s ease;opacity:${i === active ? 1 : 0};background-color:var(--c-line-soft);background-image:url("${src}");background-position:center;background-size:contain;background-repeat:no-repeat;`
-              : `position:absolute;inset:0;transition:opacity .9s ease;opacity:${i === active ? 1 : 0};background-image:radial-gradient(120% 100% at 50% 25%,#f3e8dd,#ecd9c8);background-position:center;background-size:cover;background-repeat:no-repeat;`
-          )}
+          // `background-size:cover` — `contain` was tried to avoid ever
+          // cropping the photo, but it guarantees empty gaps whenever the
+          // image's proportions don't match the hero box, which is exactly
+          // what happens on mobile with a wide/landscape photo (huge cream
+          // bars above/below, badge and button floating disconnected in
+          // that empty space). `cover` always fills the box completely on
+          // every screen size; a wide, well-composed photo (like a model
+          // shot) crops gracefully at the edges instead.
+          style={css(`position:absolute;inset:0;transition:opacity .9s ease;opacity:${i === active ? 1 : 0};background-image:${src ? `url("${src}")` : "radial-gradient(120% 100% at 50% 25%,#f3e8dd,#ecd9c8)"};background-position:center;background-size:cover;background-repeat:no-repeat;`)}
           aria-hidden={i !== active}
         />
       ))}
