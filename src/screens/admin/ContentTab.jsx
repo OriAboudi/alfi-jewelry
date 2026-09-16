@@ -18,7 +18,7 @@ export function ContentTab() {
         <div>
           <label style={css(lbl)}>תמונות באנר עמוד הבית (סליידר, עד 5)</label>
           <AdminGalleryField
-            images={cd.heroImages && cd.heroImages.length ? cd.heroImages : (cd.heroImage ? [cd.heroImage] : [])}
+            images={cd.heroImages ?? (cd.heroImage ? [cd.heroImage] : [])}
             onChange={(imgs) => setCdraft("heroImages", imgs)}
           />
           <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>תמונה אחת = באנר קבוע. יותר מתמונה אחת = הבאנר עובר אוטומטית בין התמונות.</div>
