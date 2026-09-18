@@ -7,7 +7,7 @@ export function AdminLogin() {
 
   return (
     <div style={css("min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--c-bg);")}>
-      <div style={css("width:100%;max-width:360px;padding:40px;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(70,50,40,.12);")}>
+      <div style={css("width:100%;max-width:360px;padding:40px;background:#fff;border-radius:18px;box-shadow:0 24px 70px rgba(58,45,61,.12);")}>
         <div style={css("text-align:center;margin-bottom:28px;")}>
           <div style={css("font-family:'Frank Ruhl Libre',serif;font-size:24px;letter-spacing:.14em;")}>ALFI</div>
         </div>
@@ -36,7 +36,7 @@ export function AdminLogin() {
         )}
         <button
           onClick={submitAdminLogin}
-          style={css(`width:100%;padding:15px;background:var(--c-accent);color:#fff;border:none;border-radius:12px;font-size:15.5px;font-weight:600;cursor:pointer;opacity:${adminBusy ? 0.6 : 1};`)}
+          style={css(`width:100%;padding:15px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:12px;font-size:15.5px;font-weight:600;cursor:pointer;opacity:${adminBusy ? 0.6 : 1};`)}
         >
           {adminBusy ? "רגע..." : "כניסה"}
         </button>

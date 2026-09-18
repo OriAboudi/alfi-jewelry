@@ -29,7 +29,7 @@ export function PaymentTestsTab() {
             <button
               onClick={() => createTestPayment(Number(testAmount))}
               disabled={testPaymentBusy || !(Number(testAmount) > 0)}
-              style={css(`padding:13px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;opacity:${testPaymentBusy || !(Number(testAmount) > 0) ? 0.6 : 1};`)}
+              style={css(`padding:13px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;opacity:${testPaymentBusy || !(Number(testAmount) > 0) ? 0.6 : 1};`)}
             >
               {testPaymentBusy ? "יוצר…" : "פתיחת דף תשלום בדיקה"}
             </button>

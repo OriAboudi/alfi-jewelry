@@ -40,10 +40,10 @@ export function OrderProgress({ order }) {
       <div style={css("position:absolute;top:12px;right:5%;left:5%;height:2px;background:var(--c-line-strong);z-index:0;")} />
       {stages.map((s, i) => (
         <div key={i} style={css("position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;flex:1;")}>
-          <div style={css(`width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:${s.done ? "var(--c-accent)" : s.current ? "#fff" : "var(--c-line-soft)"};border:2px solid ${s.done || s.current ? "var(--c-accent)" : "#dcc6b4"};`)}>
+          <div style={css(`width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:${s.done ? "var(--c-accent)" : s.current ? "#fff" : "var(--c-line-soft)"};border:2px solid ${s.done || s.current ? "var(--c-accent)" : "var(--c-line-strong)"};`)}>
             {s.done ? "✓" : ""}
           </div>
-          <div style={css(`margin-top:8px;font-size:12.5px;text-align:center;font-weight:${s.done || s.current ? 700 : 500};color:${s.done || s.current ? "var(--c-ink)" : "#a89486"};`)}>{s.title}</div>
+          <div style={css(`margin-top:8px;font-size:12.5px;text-align:center;font-weight:${s.done || s.current ? 700 : 500};color:${s.done || s.current ? "var(--c-ink)" : "var(--c-ink-faint)"};`)}>{s.title}</div>
         </div>
       ))}
     </div>

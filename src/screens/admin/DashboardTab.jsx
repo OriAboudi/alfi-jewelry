@@ -48,7 +48,7 @@ export function DashboardTab() {
         <div style={css(card)}><div style={css(statNum)}>{fmt(summary?.revenue || 0)}</div><div style={css(statLbl)}>הכנסות (הזמנות ששולמו)</div></div>
         <div style={css(card)}><div style={css(statNum)}>{summary?.order_count || 0}</div><div style={css(statLbl)}>הזמנות בסה״כ</div></div>
         <div style={css(card)}><div style={css(statNum)}>{summary?.paid_order_count || 0}</div><div style={css(statLbl)}>הזמנות ששולמו</div></div>
-        <div style={css(card + (lowStock.length ? "border-color:#e7b7a0;" : ""))}>
+        <div style={css(card + (lowStock.length ? "border-color:var(--c-warning);" : ""))}>
           <div style={css(statNum + (lowStock.length ? "color:var(--c-danger);" : ""))}>{lowStock.length}</div>
           <div style={css(statLbl)}>מוצרים במלאי נמוך</div>
         </div>

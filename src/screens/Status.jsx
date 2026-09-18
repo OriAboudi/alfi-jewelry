@@ -72,6 +72,9 @@ export function Status() {
             ))}
             <div style={css("height:1px;background:var(--c-line);margin:14px 0;")} />
             <div style={css("display:flex;justify-content:space-between;font-size:14px;color:var(--c-ink-mute);margin-bottom:6px;")}><span>משלוח</span><span>{lo.shipping ? fmt(lo.shipping) : "חינם"}</span></div>
+            {Number(lo.discount) > 0 && (
+              <div style={css("display:flex;justify-content:space-between;font-size:14px;color:var(--c-success);margin-bottom:6px;")}><span>הנחת קופון{lo.coupon_code ? ` (${lo.coupon_code})` : ""}</span><span>-{fmt(lo.discount)}</span></div>
+            )}
             <div style={css("display:flex;justify-content:space-between;font-size:17px;font-weight:700;")}><span>סה״כ</span><span>{fmt(lo.total)}</span></div>
           </div>
         </>

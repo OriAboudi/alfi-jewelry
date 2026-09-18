@@ -7,6 +7,15 @@
   padding: 0;
 }
 
+/* Plain cream fallback — the floral painting itself now lives in the fixed
+   .rd-bg-paint/.rd-bg-veil layers (redesign.css), rendered by App.jsx for
+   every chrome-having screen. This class only still matters for the
+   chromeless admin-login gate, which intentionally keeps a plain background
+   (admin is an internal tool, out of scope for the redesign). */
+.r-page-bg {
+  background-color: var(--c-bg);
+}
+
 /* ---------- Responsive overrides ----------
    The app is built with inline styles (see lib/css.js), so these rules use
    !important to win over the inline declarations only at the breakpoints
@@ -34,6 +43,7 @@
 }
 
 @media (max-width: 560px) {
+  .r-header-icon-label { display: none !important; }
   .r-container { padding-left: 16px !important; padding-right: 16px !important; }
   .r-grid3 { grid-template-columns: 1fr !important; }
   .r-grid4 { grid-template-columns: repeat(2, 1fr) !important; gap: 14px !important; }

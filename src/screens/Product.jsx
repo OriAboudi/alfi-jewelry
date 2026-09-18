@@ -3,10 +3,12 @@ import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
-import { ProductCard } from "../components/ProductCard.jsx";
+import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 
 export function Product() {
-  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go } = useStore();
+  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
+  const [showCouponField, setShowCouponField] = useState(false);
+  const [couponInput, setCouponInput] = useState("");
 
   const sel = products.find((p) => String(p.id) === String(pid)) || products[0] || {};
   const related = products.filter((p) => p.id !== sel.id).slice(0, 4);
@@ -35,13 +37,13 @@ export function Product() {
       </div>
       <div className="r-product-grid" style={css("display:grid;grid-template-columns:1.1fr .9fr;gap:54px;align-items:start;")}>
         <div>
-          <div style={css("position:relative;aspect-ratio:1;border-radius:var(--r-lg);margin-bottom:14px;box-shadow:0 24px 50px rgba(140,90,60,.1);overflow:hidden;")}>
+          <div style={css("position:relative;aspect-ratio:1;border-radius:var(--r-lg);margin-bottom:14px;box-shadow:0 24px 50px rgba(58,45,61,.1);overflow:hidden;")}>
             {images[activeIdx] ? (
               <ZoomImage src={images[activeIdx]} radius={18} zoomScale={3} cursor="zoom-in" />
             ) : (
-              <div style={css("width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 60% 25%,#f7e4d8,#ecd0bc);")}>
-                <div style={css("width:44%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 210deg,#f3ece4,#d6c8b6,#f7f2ec,#cabfae,#e8e0d4,#f3ece4);box-shadow:0 24px 50px rgba(0,0,0,.16),inset 0 3px 12px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;")}>
-                  <div style={css("width:52%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 60% 30%,var(--c-bg),#e3c2a8);box-shadow:inset 0 2px 8px rgba(0,0,0,.12);")} />
+              <div style={css("width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 60% 25%,#ede1ea,#ddc8dd);")}>
+                <div style={css("width:44%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 210deg,#efe9f1,#cfc0d2,#f6f0eb,#c3b6c6,#ddd0e0,#efe9f1);box-shadow:0 24px 50px rgba(0,0,0,.16),inset 0 3px 12px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;")}>
+                  <div style={css("width:52%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 60% 30%,var(--c-bg),#d3b8d6);box-shadow:inset 0 2px 8px rgba(0,0,0,.12);")} />
                 </div>
               </div>
             )}
@@ -62,10 +64,43 @@ export function Product() {
         <div className="r-sticky" style={css("position:sticky;top:100px;")}>
           <div className="eyebrow" style={css("margin-bottom:12px;")}>{sel.category} · {sel.material}</div>
           <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:14px;")}>{sel.name}</h1>
-          <div style={css("font-size:25px;margin-bottom:var(--sp-5);color:var(--c-ink);")}>{fmt(sel.price)}</div>
+          <div style={css("display:flex;align-items:baseline;gap:10px;margin-bottom:var(--sp-4);")}>
+            <div style={css(`font-size:25px;color:var(--c-ink);${couponCode ? "text-decoration:line-through;color:var(--c-ink-faint);font-size:18px;" : ""}`)}>{fmt(sel.price)}</div>
+            {couponCode && <div style={css("font-size:25px;color:var(--c-accent);font-weight:700;")}>{fmt(sel.price - (sel.price * couponPercent) / 100)}</div>}
+          </div>
+
+          {couponCode ? (
+            <div style={css("display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--c-success-bg);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:var(--sp-5);font-size:13.5px;color:var(--c-success);")}>
+              <span>קוד {couponCode} מופעל · {couponPercent}% הנחה (לאחר הנחה בקופה)</span>
+              <span onClick={removeCoupon} className="tap-target" style={css("cursor:pointer;font-weight:700;")}>✕</span>
+            </div>
+          ) : showCouponField ? (
+            <div style={css("margin-bottom:var(--sp-5);")}>
+              <div style={css("display:flex;gap:8px;")}>
+                <input
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value)}
+                  placeholder="קוד קופון"
+                  style={css("flex:1;padding:11px 13px;border:1px solid var(--c-line-strong);border-radius:var(--r-sm);font-size:14px;")}
+                />
+                <button
+                  onClick={() => applyCoupon(couponInput)}
+                  disabled={couponBusy || !couponInput.trim()}
+                  className="tap-target"
+                  style={css("padding:0 18px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:var(--r-sm);font-size:13.5px;font-weight:600;cursor:pointer;")}
+                >
+                  {couponBusy ? "בודק…" : "החלה"}
+                </button>
+              </div>
+              {couponError && <div style={css("color:var(--c-danger);font-size:12.5px;margin-top:6px;")}>{couponError}</div>}
+            </div>
+          ) : (
+            <div onClick={() => setShowCouponField(true)} className="tap-target" style={css("cursor:pointer;font-size:13.5px;color:var(--c-accent);font-weight:600;margin-bottom:var(--sp-5);")}>יש לך קוד קופון?</div>
+          )}
+
           {outOfStock && <div className="badge badge-danger" style={css("margin-bottom:var(--sp-4);font-size:13px;padding:6px 14px;")}>אזל במלאי</div>}
           {!outOfStock && Number(sel.stock) <= 5 && <div className="badge badge-accent" style={css("margin-bottom:var(--sp-4);font-size:13px;padding:6px 14px;")}>נותרו {sel.stock} יחידות בלבד</div>}
-          <p style={css("font-size:16px;color:var(--c-ink-soft);margin-bottom:var(--sp-6);")}>{sel.description}</p>
+          <p style={css("font-family:var(--font-serif);font-weight:300;font-size:17px;line-height:1.75;letter-spacing:.01em;color:var(--c-ink-soft);margin-bottom:var(--sp-6);")}>{sel.description}</p>
 
           {sizes.length > 0 && (
             <>
@@ -87,7 +122,7 @@ export function Product() {
               <span style={css("width:44px;text-align:center;font-size:16px;font-weight:600;")}>{qty}</span>
               <button onClick={() => setQty(Math.min(qty + 1, Number(sel.stock) || 0))} disabled={qty >= Number(sel.stock)} className="tap-target" style={css(`width:46px;border:none;background:#fff;font-size:20px;cursor:pointer;color:var(--c-ink-mute);opacity:${qty >= Number(sel.stock) ? .4 : 1};`)}>+</button>
             </div>
-            <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css("flex:1;font-size:16px;")}>{addToCartLabel}</button>
+            <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css(`flex:1;font-size:16px;${outOfStock ? "background:var(--c-danger-bg);color:var(--c-danger);" : ""}`)}>{addToCartLabel}</button>
           </div>
 
           <div style={css("display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;")}>
@@ -120,8 +155,8 @@ export function Product() {
       {related.length > 0 && (
         <div style={css("margin-top:70px;")}>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>אולי יתאים גם</h2>
-          <div className="grid-4" style={css("gap:2px;")}>
-            {related.map((p) => <ProductCard key={p.id} product={p} />)}
+          <div className="grid-4">
+            {related.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
           </div>
         </div>
       )}

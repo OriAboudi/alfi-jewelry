@@ -2,6 +2,7 @@ import React from "react";
 import { css } from "../../lib/css.js";
 import { AdminImageField } from "../../components/AdminImageField.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
+import { AdminListField } from "../../components/AdminListField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
 import { Field, Area, lbl, CAT_NAMES } from "./shared.jsx";
 
@@ -21,7 +22,7 @@ export function ContentTab() {
             images={cd.heroImages ?? (cd.heroImage ? [cd.heroImage] : [])}
             onChange={(imgs) => setCdraft("heroImages", imgs)}
           />
-          <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>תמונה אחת = באנר קבוע. יותר מתמונה אחת = הבאנר עובר אוטומטית בין התמונות. מומלץ תמונה רחבה (למשל יחס 2:1).</div>
+          <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>תמונה אחת = באנר קבוע. יותר מתמונה אחת = הבאנר עובר אוטומטית בין התמונות. מומלץ תמונה רחבה (למשל יחס 2:1).</div>
         </div>
         <div>
           <label style={css(lbl)}>תמונות באנר עמוד הבית — מובייל (אופציונלי, עד 5)</label>
@@ -29,8 +30,19 @@ export function ContentTab() {
             images={cd.heroImagesMobile || []}
             onChange={(imgs) => setCdraft("heroImagesMobile", imgs)}
           />
-          <div style={css("font-size:12px;color:#a89486;margin-top:6px;")}>מומלץ תמונה לאורך (יחס 3:4) שמתאימה טוב יותר למסך מאונך — ממוספר תמונות תואם לרשימה הדסקטופ. אם ריק, המובייל ישתמש בתמונות הדסקטופ.</div>
+          <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>מומלץ תמונה לאורך (יחס 3:4) שמתאימה טוב יותר למסך מאונך — ממוספר תמונות תואם לרשימה הדסקטופ. אם ריק, המובייל ישתמש בתמונות הדסקטופ.</div>
         </div>
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <div>
+          <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);margin-bottom:8px;")}>פס קידום עליון (מעל הבאנר הראשי)</div>
+          <AdminListField
+            items={cd.promoStripItems}
+            onChange={(v) => setCdraft("promoStripItems", v)}
+            placeholder="✓ טקסט קצר"
+          />
+          <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>עובר אוטומטית בין השורות כל 4 שניות. השורה על משלוח חינם היא טקסט קבוע — אם משנים את "משלוח חינם מעל" למטה, צריך לעדכן את הטקסט כאן בנפרד.</div>
+        </div>
+
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <Field label="כותרת מקטע נבחרים" value={cd.featuredTitle} onChange={(v) => setCdraft("featuredTitle", v)} />
 
@@ -61,7 +73,7 @@ export function ContentTab() {
         <Field label="כותרת" value={cd.banner3Title} onChange={(v) => setCdraft("banner3Title", v)} />
         <Area label="טקסט משנה" value={cd.banner3Subtitle} onChange={(v) => setCdraft("banner3Subtitle", v)} rows={2} />
         <Field label="טקסט כפתור" value={cd.banner3CtaLabel} onChange={(v) => setCdraft("banner3CtaLabel", v)} />
-        <div style={css("font-size:12px;color:#a89486;")}>שימו לב: זהו באנר שיווקי בלבד — המחיר/המבצע לא נאכף אוטומטית בקופה.</div>
+        <div style={css("font-size:12px;color:var(--c-ink-faint);")}>שימו לב: זהו באנר שיווקי בלבד — המחיר/המבצע לא נאכף אוטומטית בקופה.</div>
 
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <Field label="כותרת מקטע ״קצת עלינו״" value={cd.aboutTitle} onChange={(v) => setCdraft("aboutTitle", v)} />
@@ -101,8 +113,19 @@ export function ContentTab() {
             <div style={css("font-size:11.5px;color:var(--c-ink-faint);margin-top:4px;")}>מתחת למספר הזה (ומעל האדום) — כתום</div>
           </div>
         </div>
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);")}>קופון הרשמה</div>
+        <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
+          <Field label="אחוז הנחה בקופון (%)" value={cd.signupCouponPercent} onChange={(v) => setCdraft("signupCouponPercent", v)} type="number" />
+          <Field label="השהיה לפני הצגת הפופאפ (שניות)" value={cd.signupPopupDelaySeconds} onChange={(v) => setCdraft("signupPopupDelaySeconds", v)} type="number" />
+        </div>
+        <label style={css("display:flex;align-items:center;gap:8px;font-size:14px;color:var(--c-ink-soft);cursor:pointer;")}>
+          <input type="checkbox" checked={cd.signupCouponEnabled !== false} onChange={(e) => setCdraft("signupCouponEnabled", e.target.checked)} />
+          הצגת פופאפ ההרשמה באתר
+        </label>
+
         <div style={css("display:flex;gap:12px;margin-top:8px;")}>
-          <button onClick={saveContent} style={css("padding:13px 28px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;")}>שמירת שינויים</button>
+          <button onClick={saveContent} style={css("padding:13px 28px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;")}>שמירת שינויים</button>
           {contentSaved && <span style={css("align-self:center;color:var(--c-success);font-size:14px;font-weight:600;")}>✓ נשמר</span>}
         </div>
       </div>

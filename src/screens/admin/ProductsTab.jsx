@@ -65,7 +65,7 @@ export function ProductsTab() {
     <div>
       <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:12px;")}>
         <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:24px;")}>מוצרים ({count})</h2>
-        <button onClick={() => openDraft(newProduct)} style={css("padding:11px 22px;background:var(--c-accent);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;")}>+ מוצר חדש</button>
+        <button onClick={() => openDraft(newProduct)} style={css("padding:11px 22px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;")}>+ מוצר חדש</button>
       </div>
 
       <div style={css("display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;")}>
@@ -104,7 +104,7 @@ export function ProductsTab() {
             {p.featured && <span style={css("font-size:12px;background:var(--c-accent-soft);color:var(--c-accent);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>מוצג בעמוד הבית</span>}
             {tier !== "ok" && <span style={css(`font-size:12px;background:${tc.bg};color:${tc.fg};padding:4px 10px;border-radius:100px;white-space:nowrap;`)}>{TIER_LABEL[tier]}</span>}
             <button onClick={() => openDraft(editProduct, p)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
-            <button onClick={() => onDelete(p.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid #e7d0c6;border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
+            <button onClick={() => onDelete(p.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid var(--c-line-strong);border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
           </div>
         );
       })}
@@ -137,7 +137,7 @@ export function ProductsTab() {
               <input type="checkbox" checked={!!draft.featured} onChange={(e) => setDraft("featured", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />הצגה בעמוד הבית (נבחרים)
             </label>
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
-              <button onClick={submitDraft} style={css("flex:1;padding:14px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
+              <button onClick={submitDraft} style={css("flex:1;padding:14px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
               <button onClick={() => { setStockError(""); cancelDraft(); }} style={css("padding:14px 24px;background:#fff;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;cursor:pointer;")}>ביטול</button>
             </div>
           </div>

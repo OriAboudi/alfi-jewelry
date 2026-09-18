@@ -30,8 +30,8 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
     return (
       <div
         key={i}
-        className={className}
-        style={css(`position:absolute;inset:0;transition:opacity .9s ease;opacity:${isActive ? 1 : 0};background-image:${src ? `url("${src}")` : "radial-gradient(120% 100% at 50% 25%,#f3e8dd,#ecd9c8)"};background-position:center;background-size:cover;background-repeat:no-repeat;`)}
+        className={`${className} rd-hero-img`}
+        style={css(`position:absolute;inset:0;transition:opacity .9s ease;opacity:${isActive ? 1 : 0};background-image:${src ? `url("${src}")` : "radial-gradient(120% 100% at 50% 25%,#efe9f1,#ded1e2)"};`)}
         aria-hidden={!isActive}
       />
     );

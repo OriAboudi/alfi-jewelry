@@ -54,7 +54,7 @@ export function Confirm() {
 
   return (
     <div className="r-container glass-card" style={css("max-width:680px;margin:30px auto;padding:64px var(--sp-5);text-align:center;")}>
-      <div style={css("width:84px;height:84px;border-radius:50%;background:var(--c-accent);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;font-size:40px;color:#fff;")}>✓</div>
+      <div style={css("width:84px;height:84px;border-radius:50%;background:var(--c-accent-fill);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;font-size:40px;color:#fff;")}>✓</div>
       <FlowerMark width={150} height={50} style={{ margin: "0 auto 18px", display: "block" }} />
       <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:14px;")}>תודה על ההזמנה!</h1>
       <p style={css("font-size:17px;color:var(--c-ink-soft);margin-bottom:8px;")}>ההזמנה שלך התקבלה.{addr.email ? ` אישור נשלח אל ${addr.email}.` : ""}</p>
@@ -82,6 +82,9 @@ export function Confirm() {
       </div>
 
       <div className="card" style={css("padding:26px;text-align:right;margin-bottom:28px;")}>
+        {Number(lo?.discount) > 0 && (
+          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;color:var(--c-success);")}><span>הנחת קופון{lo.coupon_code ? ` (${lo.coupon_code})` : ""}</span><span>-{fmt(lo.discount)}</span></div>
+        )}
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>סה״כ לתשלום</span><span style={css("font-weight:700;")}>{total}</span></div>
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>משלוח אל</span><span>{addr.city || "תל אביב, ישראל"}</span></div>
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;")}><span style={css("color:var(--c-ink-mute);")}>הגעה משוערת</span><span>3–5 ימי עסקים</span></div>

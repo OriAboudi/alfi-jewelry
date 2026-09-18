@@ -28,7 +28,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { items, shipping_address, testAmount } = await req.json();
+    const { items, shipping_address, testAmount, couponCode } = await req.json();
 
     let verified: any[];
     let isTest = false;
@@ -74,7 +74,25 @@ Deno.serve(async (req) => {
     const freeShipFrom = Number(cfg.freeShipFrom || 500);
     const shipFee = Number(cfg.shipFee || 39);
     const shipping = isTest ? 0 : (subtotal >= freeShipFrom ? 0 : shipFee);
-    const total = subtotal + shipping;
+
+    // Coupon discount is validated and computed here, server-side, never
+    // trusted from the client. An invalid/redeemed/expired code is silently
+    // ignored rather than failing checkout — validate-coupon already gave
+    // the shopper feedback client-side before they got this far.
+    let discount = 0;
+    let appliedCouponCode: string | null = null;
+    if (!isTest && couponCode) {
+      const { data: coupon } = await supabase
+        .from("coupons")
+        .select("*")
+        .eq("code", String(couponCode).trim().toUpperCase())
+        .maybeSingle();
+      if (coupon && coupon.status === "active" && (!coupon.expires_at || new Date(coupon.expires_at) > new Date())) {
+        discount = Math.round(subtotal * (Number(coupon.percent) || 0)) / 100;
+        appliedCouponCode = coupon.code;
+      }
+    }
+    const total = Math.max(0, subtotal + shipping - discount);
 
     const number = (isTest ? "#TEST-" : "#ALF‑") + (2400 + Math.floor(Math.random() * 9000));
     const fullName = [shipping_address?.first, shipping_address?.last].filter(Boolean).join(" ");
@@ -88,6 +106,8 @@ Deno.serve(async (req) => {
         subtotal,
         shipping,
         total,
+        discount,
+        coupon_code: appliedCouponCode,
         shipping_address: { city: "תל אביב", ...shipping_address },
         payment_status: "pending",
         payment_method: "takbull",
@@ -166,7 +186,7 @@ Deno.serve(async (req) => {
 
     return json({
       url: takbullData.url || `https://api.takbull.co.il/PaymentGateway?orderUniqId=${takbullData.uniqId}`,
-      order: { id: order.id, number: order.number, total, subtotal, shipping, shipping_address: order.shipping_address },
+      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address },
     });
   } catch (e) {
     console.error(e);

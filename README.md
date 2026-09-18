@@ -259,6 +259,49 @@ Postgres (`supabase/add-order-stats-rpc.sql`) כדי שלא יהיה צורך ל
 supabase functions deploy update-order-status --no-verify-jwt
 ```
 
+## פופאפ הרשמה + קופון 5% הנחה
+
+פופאפ שמופיע ללקוח (אחרי X שניות גלישה, או לפני מעבר לתשלום בפעם הראשונה) ומציע
+קוד הנחה תמורת שם/טלפון/אימייל. הקוד נשלח במייל (Resend) ומוצג גם מיידית על המסך.
+ניתן להזין את הקוד בעמוד המוצר, בעגלה או בקופה — ההנחה בפועל מחושבת ונאכפת בצד
+שרת בתוך `create-takbull-payment`, ולא נסמכת על הצד לקוח. הקופון מסומן "נוצל" רק
+כשהתשלום אושר בפועל דרך ה‑IPN (`takbull-ipn`), כדי שעגלות ננטשות לא "ישרפו" קופון.
+
+**קבצים:** `supabase/add-signup-coupons.sql`, `supabase/functions/signup-coupon/`,
+`supabase/functions/validate-coupon/`, `supabase/functions/admin-coupons/`,
+`src/components/SignupCouponPopup.jsx`, `src/components/CouponInput.jsx`,
+`src/lib/pricing.js`, `src/screens/admin/CouponsTab.jsx`.
+
+**הגדרה (חד־פעמי):**
+1. הריצו את המיגרציה `supabase/add-signup-coupons.sql` (SQL editor).
+2. פרסמו את שלוש הפונקציות החדשות (אותו `--no-verify-jwt` כמו כל הפונקציות האחרות):
+   ```bash
+   supabase functions deploy signup-coupon --no-verify-jwt
+   supabase functions deploy validate-coupon --no-verify-jwt
+   supabase functions deploy admin-coupons --no-verify-jwt
+   ```
+3. אין secret חדש — נעשה שימוש ב‑`RESEND_API_KEY`/`ORDER_EMAIL_FROM` הקיימים.
+4. אחוז ההנחה, השהיית הפופאפ, והפעלה/כיבוי של הפופאפ ניתנים לעריכה בלשונית
+   "תוכן האתר" בפאנל הניהול. רשימת הקופונים שהונפקו וביטול קופון — בלשונית "קופונים".
+
+## כניסה לפי מספר טלפון
+
+האתר הוא guest-checkout בלבד — אין הרשמה/סיסמה אמיתית. לחיצה על אייקון המשתמש
+בסרגל העליון (כשלא מזוהה) פותחת פופאפ להזנת טלפון: אם הטלפון כבר קיים בטבלת
+`coupons` (כלומר נרשם פעם למועדון/לקופון) — המשתמש "נכנס" (השם/אימייל נטענים,
+וגם הקופון הפעיל שלו אם יש), ללא סיסמה. אם הטלפון לא נמצא, הפופאפ עובר להרשמה —
+אותו רכיב `SignupCouponPopup` שמשמש גם את כפתור ההרשמה בפוטר, עם הטלפון שכבר הוזן.
+
+**קבצים:** `supabase/functions/login-by-phone/`, `supabase/add-coupons-phone-index.sql`,
+`src/components/PhoneLoginPopup.jsx`, `src/components/SignupCouponPopup.jsx`.
+
+**הגדרה (חד־פעמי):**
+1. הריצו את המיגרציה `supabase/add-coupons-phone-index.sql` (SQL editor).
+2. פרסמו את הפונקציה החדשה:
+   ```bash
+   supabase functions deploy login-by-phone --no-verify-jwt
+   ```
+
 ## מלאי (Inventory)
 
 לכל מוצר יש שדה "מלאי" שהאדמין קובע בעריכת המוצר. כשהמלאי אוזל:

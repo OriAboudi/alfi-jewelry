@@ -4,6 +4,7 @@ import App from "./App.jsx";
 import { StoreProvider } from "./context/StoreContext.jsx";
 import "./styles/base.css";
 import "./styles/utilities.css";
+import "./styles/redesign.css";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(

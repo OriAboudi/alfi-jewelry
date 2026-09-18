@@ -15,7 +15,7 @@ export function CollectionsTab() {
     <div>
       <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;")}>
         <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:24px;")}>קולקציות ({collections.length})</h2>
-        <button onClick={newCollection} style={css("padding:11px 22px;background:var(--c-accent);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;")}>+ קולקציה חדשה</button>
+        <button onClick={newCollection} style={css("padding:11px 22px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:10px;font-size:14.5px;font-weight:600;cursor:pointer;")}>+ קולקציה חדשה</button>
       </div>
       {collections.map((c) => (
         <div key={c.id} className="r-admin-row" style={css("display:flex;align-items:center;gap:18px;background:#fff;border:1px solid var(--c-line);border-radius:14px;padding:14px 18px;margin-bottom:10px;")}>
@@ -24,7 +24,7 @@ export function CollectionsTab() {
           </div>
           <div style={css("flex:1;")}><div style={css("font-family:var(--font-serif);font-size:17px;")}>{c.title}</div><div style={css("font-size:13px;color:var(--c-ink-mute);")}>{c.subtitle}{c.category_filter ? ` · מסונן: ${c.category_filter}` : ""}</div></div>
           <button onClick={() => editCollection(c)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
-          <button onClick={() => deleteCollection(c.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid #e7d0c6;border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
+          <button onClick={() => deleteCollection(c.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid var(--c-line-strong);border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
         </div>
       ))}
 
@@ -49,7 +49,7 @@ export function CollectionsTab() {
             </div>
             <Area label="תיאור" value={draftCol.description} onChange={(v) => setDraftCol("description", v)} />
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
-              <button onClick={saveCol} style={css("flex:1;padding:14px;background:var(--c-accent);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
+              <button onClick={saveCol} style={css("flex:1;padding:14px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
               <button onClick={cancelCol} style={css("padding:14px 24px;background:#fff;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;cursor:pointer;")}>ביטול</button>
             </div>
           </div>

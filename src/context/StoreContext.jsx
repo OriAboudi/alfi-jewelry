@@ -11,14 +11,88 @@ const loadCart = () => {
 const saveCart = (cart) => {
   try { localStorage.setItem("alfi:cart", JSON.stringify(cart)); } catch { /* ignore */ }
 };
+
+// "Liked" products — local only, same guest-only model as the cart (no
+// accounts/backend field for this; see customerLogout's own note on why).
+const loadFavorites = () => {
+  try { return JSON.parse(localStorage.getItem("alfi:favorites") || "[]"); } catch { return []; }
+};
+const saveFavorites = (ids) => {
+  try { localStorage.setItem("alfi:favorites", JSON.stringify(ids)); } catch { /* ignore */ }
+};
 const scrollTop = () => { if (typeof window !== "undefined") window.scrollTo(0, 0); };
 
 const isAdminPath = () => typeof window !== "undefined" && window.location.pathname === ADMIN_PATH;
 
+// Returning from a Takbull redirect (?paid=) or an emailed tracking link
+// (?order=) needs an async fetch before the real screen (confirm/status) is
+// known — computed synchronously here (not in an effect) so the very first
+// render goes straight to the "loading" screen instead of flashing home
+// first, which looked like a bug rather than a normal page load.
+const getPendingRedirectScreen = () => {
+  if (typeof window === "undefined") return null;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("paid") || params.get("order") || params.get("canceled")) return "loading";
+  } catch { /* ignore */ }
+  return null;
+};
+
+const loadCoupon = () => {
+  try {
+    return {
+      couponCode: localStorage.getItem("alfi:couponCode") || "",
+      couponPercent: Number(localStorage.getItem("alfi:couponPercent")) || 0,
+    };
+  } catch {
+    return { couponCode: "", couponPercent: 0 };
+  }
+};
+const saveCoupon = (code, percent) => {
+  try { localStorage.setItem("alfi:couponCode", code); localStorage.setItem("alfi:couponPercent", String(percent)); } catch { /* ignore */ }
+};
+const clearCouponStorage = () => {
+  try { localStorage.removeItem("alfi:couponCode"); localStorage.removeItem("alfi:couponPercent"); } catch { /* ignore */ }
+};
+const loadCustomer = () => {
+  try {
+    return {
+      customerName: localStorage.getItem("alfi:customerName") || "",
+      customerEmail: localStorage.getItem("alfi:customerEmail") || "",
+    };
+  } catch {
+    return { customerName: "", customerEmail: "" };
+  }
+};
+const saveCustomer = (name, email) => {
+  try {
+    if (name) localStorage.setItem("alfi:customerName", name);
+    if (email) localStorage.setItem("alfi:customerEmail", email);
+  } catch { /* ignore */ }
+};
+
+// Every order this browser has legitimately placed (or opened via its own
+// tracking link) is remembered locally so "ההזמנות שלי" can list them — no
+// new server capability is added for this: it's the same trust model the
+// existing single-order "?order=<uuid>" tracking link already relies on
+// (this app deliberately has no customer accounts/login), just remembered
+// across visits instead of requiring the emailed link each time.
+const loadMyOrders = () => {
+  try { return JSON.parse(localStorage.getItem("alfi:myOrders") || "[]"); } catch { return []; }
+};
+const addMyOrder = (order) => {
+  if (!order?.id) return;
+  try {
+    const list = loadMyOrders().filter((o) => o.id !== order.id);
+    list.unshift({ id: order.id, number: order.number, created_at: order.created_at || new Date().toISOString() });
+    localStorage.setItem("alfi:myOrders", JSON.stringify(list.slice(0, 50)));
+  } catch { /* ignore */ }
+};
+
 export function StoreProvider({ children }) {
   const [state, setFull] = useState(() => ({
     loaded: false,
-    screen: isAdminPath() ? "admin-login" : "home",
+    screen: isAdminPath() ? "admin-login" : (getPendingRedirectScreen() || "home"),
     pid: SEED_PRODUCTS[0].id,
     qty: 1,
     size: "",
@@ -28,6 +102,7 @@ export function StoreProvider({ children }) {
     user: null,
     users: [],
     cart: loadCart(),
+    favorites: loadFavorites(),
     catFilter: "הכל",
     adminForm: { email: "", password: "" },
     adminError: "",
@@ -41,6 +116,17 @@ export function StoreProvider({ children }) {
     checkoutBusy: false,
     paymentError: "",
     testPaymentBusy: false,
+    ...loadCoupon(),
+    couponError: "",
+    couponBusy: false,
+    signupPopupOpen: false,
+    signupPopupPendingCheckout: false,
+    signupPopupPrefillPhone: "",
+    phoneLoginOpen: false,
+    phoneLoginBusy: false,
+    phoneLoginError: "",
+    ...loadCustomer(),
+    myOrders: loadMyOrders(),
   }));
 
   // keep a live ref so multi-field handlers (placeOrder, cart math) read fresh state
@@ -119,7 +205,9 @@ export function StoreProvider({ children }) {
         }
         try { localStorage.removeItem("alfi:pendingOrder"); } catch { /* ignore */ }
         if (order && String(order.id) === String(paidId)) {
-          setState({ lastOrder: order, cart: [] });
+          clearCouponStorage();
+          addMyOrder(order);
+          setState({ lastOrder: order, cart: [], couponCode: "", couponPercent: 0, myOrders: loadMyOrders() });
           saveCart([]);
           go("confirm");
         }
@@ -129,7 +217,8 @@ export function StoreProvider({ children }) {
       (async () => {
         try {
           const order = await store.orders.getPublic(viewId);
-          setState({ lastOrder: order });
+          addMyOrder(order);
+          setState({ lastOrder: order, myOrders: loadMyOrders() });
           go("status");
         } catch {
           alert("ההזמנה לא נמצאה");
@@ -164,7 +253,136 @@ export function StoreProvider({ children }) {
     go("admin");
   }, [setState, go]);
 
+  /* ---------- signup pop-up + coupon ---------- */
+  // Dismissing the pop-up is never remembered across page loads (no
+  // localStorage write for it) — only actually claiming a coupon suppresses
+  // it, so it keeps offering the coupon on every fresh visit/navigation
+  // until the visitor signs up.
+  const shouldOfferSignupPopup = useCallback(() => {
+    if (ref.current.content?.signupCouponEnabled === false) return false;
+    try {
+      if (localStorage.getItem("alfi:signupCouponClaimed") === "1") return false;
+    } catch { /* ignore */ }
+    return true;
+  }, []);
+
+  const openSignupPopup = useCallback((pendingCheckout = false, prefillPhone = "") => {
+    setState({ signupPopupOpen: true, signupPopupPendingCheckout: pendingCheckout, signupPopupPrefillPhone: prefillPhone });
+  }, [setState]);
+
+  // Only opens if eligible (not already claimed/dismissed-recently/disabled)
+  // and nothing else has it open — used by the 10s-browsing timer and by
+  // the checkout page's own mount trigger, so both funnel through one place.
+  const maybeOfferSignupPopup = useCallback((pendingCheckout = false) => {
+    if (!ref.current.signupPopupOpen && shouldOfferSignupPopup()) openSignupPopup(pendingCheckout);
+  }, [shouldOfferSignupPopup, openSignupPopup]);
+
+  const closeSignupPopup = useCallback(() => {
+    setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefillPhone: "" });
+  }, [setState]);
+
+  /* ---------- phone "login" (no accounts/passwords — see customerLogout) ----------
+     The header's user icon, when nobody's identified yet, offers phone-number
+     entry instead of a text "הרשמה" button. If that phone already has a
+     coupons-table row (i.e. signed up before, on any device), we just load
+     their name/email/coupon back — otherwise we hand off to the exact same
+     sign-up popup/component the footer's button uses, prefilled with the
+     phone already typed, so there's only ever one registration flow. */
+  const openPhoneLogin = useCallback(() => {
+    setState({ phoneLoginOpen: true, phoneLoginError: "" });
+  }, [setState]);
+
+  const closePhoneLogin = useCallback(() => {
+    setState({ phoneLoginOpen: false, phoneLoginError: "" });
+  }, [setState]);
+
+  const loginByPhone = useCallback(async (phone) => {
+    setState({ phoneLoginBusy: true, phoneLoginError: "" });
+    try {
+      const result = await store.signup.loginByPhone(phone);
+      if (result.found) {
+        saveCustomer(result.name, result.email);
+        if (result.coupon) saveCoupon(result.coupon.code, result.coupon.percent);
+        setState({
+          customerName: result.name,
+          customerEmail: result.email,
+          ...(result.coupon ? { couponCode: result.coupon.code, couponPercent: result.coupon.percent } : {}),
+          phoneLoginOpen: false,
+          phoneLoginBusy: false,
+        });
+      } else {
+        setState({ phoneLoginOpen: false, phoneLoginBusy: false });
+        openSignupPopup(false, phone);
+      }
+      return result;
+    } catch (e) {
+      setState({ phoneLoginBusy: false, phoneLoginError: e.message || "ההתחברות נכשלה" });
+      throw e;
+    }
+  }, [setState, openSignupPopup]);
+
   const goCheckout = useCallback(() => go("checkout"), [go]);
+
+  // Offer the pop-up after content.signupPopupDelaySeconds of browsing, once
+  // per the dismissal-cooldown/claimed rules above. The other trigger point
+  // (landing on the checkout/order-details page) is in Checkout.jsx itself.
+  useEffect(() => {
+    if (typeof window === "undefined" || isAdminPath()) return undefined;
+    const delay = Number(ref.current.content?.signupPopupDelaySeconds || 10) * 1000;
+    const t = setTimeout(maybeOfferSignupPopup, delay);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const submitSignup = useCallback(async ({ name, email, phone }) => {
+    const { code, percent } = await store.signup.subscribe({ name, email, phone });
+    saveCoupon(code, percent);
+    saveCustomer(name, email);
+    try { localStorage.setItem("alfi:signupCouponClaimed", "1"); } catch { /* ignore */ }
+    setState({ couponCode: code, couponPercent: percent, couponError: "", customerName: name, customerEmail: email });
+    return { code, percent };
+  }, [setState]);
+
+  // Clears only the locally-remembered display name/email (the "שלום, X"
+  // greeting) — there's no real account/session to end, since this site is
+  // guest-checkout-only. The coupon already claimed and the local order
+  // history stay put; this just lets someone stop being greeted by name on
+  // a shared/public device.
+  const customerLogout = useCallback(() => {
+    try { localStorage.removeItem("alfi:customerName"); localStorage.removeItem("alfi:customerEmail"); } catch { /* ignore */ }
+    setState({ customerName: "", customerEmail: "" });
+  }, [setState]);
+
+  /* ---------- order history (local, no accounts — see loadMyOrders above) ---------- */
+  const viewOrder = useCallback(async (id) => {
+    try {
+      const order = await store.orders.getPublic(id);
+      setState({ lastOrder: order });
+      go("status");
+    } catch {
+      alert("ההזמנה לא נמצאה");
+    }
+  }, [setState, go]);
+
+  const applyCoupon = useCallback(async (code) => {
+    setState({ couponBusy: true, couponError: "" });
+    try {
+      const { valid, percent } = await store.coupon.validate(code);
+      if (!valid) throw new Error("קוד לא תקין");
+      const upper = String(code).trim().toUpperCase();
+      saveCoupon(upper, percent);
+      setState({ couponCode: upper, couponPercent: percent, couponBusy: false });
+      return true;
+    } catch (e) {
+      setState({ couponError: e.message || "קוד לא תקין", couponBusy: false });
+      return false;
+    }
+  }, [setState]);
+
+  const removeCoupon = useCallback(() => {
+    clearCouponStorage();
+    setState({ couponCode: "", couponPercent: 0, couponError: "" });
+  }, [setState]);
 
   /* ---------- cart ---------- */
   const addToCart = useCallback((id, q, size) => {
@@ -190,6 +408,16 @@ export function StoreProvider({ children }) {
       const cart = s.cart.filter((c) => !(c.id === id && c.size === size));
       saveCart(cart);
       return { cart };
+    });
+  }, [setState]);
+
+  /* ---------- favorites (local only, no accounts — see loadFavorites) ---------- */
+  const toggleFavorite = useCallback((id) => {
+    setState((s) => {
+      const has = s.favorites.includes(id);
+      const favorites = has ? s.favorites.filter((x) => x !== id) : [...s.favorites, id];
+      saveFavorites(favorites);
+      return { favorites };
     });
   }, [setState]);
 
@@ -318,12 +546,14 @@ export function StoreProvider({ children }) {
     const s = ref.current;
     const items = s.cart.map((c) => ({ id: c.id, qty: c.qty, size: c.size }));
     try {
-      const { url, order } = await store.checkout.createSession({ items, shipping_address: addr });
+      const { url, order } = await store.checkout.createSession({ items, shipping_address: addr, couponCode: s.couponCode || undefined });
+      addMyOrder(order);
       if (url) {
         try { localStorage.setItem("alfi:pendingOrder", JSON.stringify(order)); } catch { /* ignore */ }
         window.location.href = url;
       } else {
-        setState({ lastOrder: order, cart: [], checkoutBusy: false });
+        clearCouponStorage();
+        setState({ lastOrder: order, cart: [], checkoutBusy: false, couponCode: "", couponPercent: 0, myOrders: loadMyOrders() });
         saveCart([]);
         go("confirm");
       }
@@ -361,14 +591,17 @@ export function StoreProvider({ children }) {
     BACKEND,
     isAdmin: !!(state.user && state.user.role === "admin"),
     cartCount: state.cart.reduce((a, c) => a + c.qty, 0),
+    favoritesCount: state.favorites.length,
     // actions
     go, openProduct, goAdmin, goCheckout,
-    addToCart, changeQty, removeItem, addCurrent,
+    addToCart, changeQty, removeItem, addCurrent, toggleFavorite,
     setAdminField, submitAdminLogin, logout,
     setQty, setSize, setCatFilter,
     setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
     setCdraft, saveContent, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
+    openSignupPopup, closeSignupPopup, maybeOfferSignupPopup, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
+    openPhoneLogin, closePhoneLogin, loginByPhone,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

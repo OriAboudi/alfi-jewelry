@@ -1,57 +1,47 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { fmt } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
 import { HeroSlider } from "../components/HeroSlider.jsx";
 import { CardSlider } from "../components/CardSlider.jsx";
-import { ProductCard } from "../components/ProductCard.jsx";
+import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { store } from "../lib/store.js";
 import { useStore } from "../context/StoreContext.jsx";
 
 const BASE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
-// Fixed order for the homepage's 4-tile category section, per reference site.
-const HOME_TILE_CATS = ["צמידים", "עגילים", "שרשראות", "טבעות"];
-const TRUST_ITEMS = ["✓ כסף סטרלינג 925 אמיתי", "✓ עבודת יד באולפן שלנו", "✓ אריזת מתנה בכל הזמנה"];
+// Fixed order for the homepage's 2x2 collections grid, per reference site.
+const HOME_TILE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים"];
 
-function SliderSection({ eyebrow, title, ctaLabel, onCta, products }) {
+const GoArrowIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+);
+
+// The design-handoff's two product sliders (used twice: "featured" and
+// "second"), with a glass section-header strip (title + "לכל התכשיטים"
+// link) above the rail. Desktop prev/next arrows are floating buttons on
+// the rail's own left/right edges (CardSlider itself), not in this header.
+function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products }) {
   if (!products.length) return null;
   return (
-    <section className="container" style={css("padding-block:var(--sp-6);")}>
-      <div style={css("display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:var(--sp-6);flex-wrap:wrap;gap:12px;")}>
-        <div>
-          {eyebrow && <div className="eyebrow" style={css("margin-bottom:8px;")}>{eyebrow}</div>}
-          <h2 className="title-h2" style={css("font-size:var(--fs-h1);")}>{title}</h2>
+    <section className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
+      <div className="glass rd-slider-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
+        <div style={css("display:flex;align-items:baseline;gap:20px;")}>
+          <h2 className="serif rd-slider-title" style={css("margin:0;font-weight:300;")}>
+            <span className="rd-only-desktop">{title}</span>
+            <span className="rd-only-mobile">{mobileTitle}</span>
+          </h2>
+          <span onClick={onCta} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onCta()} style={css("cursor:pointer;font-size:15px;letter-spacing:.06em;border-bottom:1px solid var(--ink);padding:8px 0 2px;")}>לכל התכשיטים</span>
         </div>
-        <span onClick={onCta} style={css("cursor:pointer;font-size:15px;color:var(--c-ink-mute);border-bottom:1px solid var(--c-accent);padding-bottom:2px;")}>{ctaLabel}</span>
       </div>
       <CardSlider>
-        {products.map((p) => <ProductCard key={p.id} product={p} width="clamp(155px,40vw,230px)" />)}
+        {products.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
       </CardSlider>
     </section>
   );
 }
 
-function Banner({ image, title, subtitle, ctaLabel, onCta }) {
-  // No admin-uploaded image yet -> fall back to the site's own default
-  // background (the same floral image used site-wide), not a flat color,
-  // so the banner still looks intentional before a real photo is set.
-  const bg = image ? `url("${image}") center/cover` : `url("floral-bg.jpg") center/cover`;
-  return (
-    <section style={css(`position:relative;min-height:clamp(150px,32vw,420px);background:${bg};display:flex;align-items:center;justify-content:center;text-align:center;overflow:hidden;`)}>
-      <div style={css("position:absolute;inset:0;background:linear-gradient(rgba(250,245,239,.3),rgba(250,245,239,.68));")} />
-      <div style={css("position:relative;padding:var(--sp-4) var(--sp-5);max-width:560px;")}>
-        <h2 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);line-height:1.15;margin-bottom:var(--sp-3);")}>{title}</h2>
-        {subtitle && <p style={css("font-size:15.5px;color:var(--c-ink-soft);margin-bottom:var(--sp-4);")}>{subtitle}</p>}
-        <button onClick={onCta} className="btn btn-primary">{ctaLabel}</button>
-      </div>
-    </section>
-  );
-}
-
 export function Home() {
-  const { content: C, products, go, setCatFilter } = useStore();
-  const [openFaq, setOpenFaq] = React.useState(null);
+  const { content: C, products, go, setCatFilter, openSignupPopup } = useStore();
   const [bestSellers, setBestSellers] = React.useState([]);
 
   React.useEffect(() => {
@@ -76,106 +66,124 @@ export function Home() {
 
   const featuredList = products.filter((p) => p.featured);
   const slider1 = (featuredList.length ? featuredList : products).slice(0, 8);
-  const slider2 = bestSellers.length ? bestSellers : products.slice(8, 16);
-  const usedIds = new Set([...slider1, ...slider2].map((p) => p.id));
-  const slider3 = products.filter((p) => !usedIds.has(p.id)).slice(0, 8);
+  const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
+  const usedIds = new Set(slider1.map((p) => p.id));
+  const leftover2 = slider2raw.filter((p) => !usedIds.has(p.id));
+  const slider2 = (leftover2.length ? leftover2 : [...products].reverse()).slice(0, 8);
 
-  const freeShipFrom = Number(C.freeShipFrom || 500);
   const heroImages = (C.heroImages && C.heroImages.length ? C.heroImages : (C.heroImage ? [C.heroImage] : []));
   const heroImagesMobile = C.heroImagesMobile || [];
 
   const goCat = (c) => { setCatFilter(c); go("catalog"); };
   const goCatalog = () => go("catalog");
 
-  const FAQ_ITEMS = [
-    { q: "מה זה כסף 925?", a: "כסף סטרלינג 925 הוא כסף טהור בשילוב סגסוגת עדינה שמעניקה לו חוזק — כל תכשיט נוצר ומלוטש ביד באולפן שלנו." },
-    { q: "איך בוחרים מידה?", a: "בעמוד כל מוצר אפשר לבחור מידה מתוך האפשרויות הזמינות. לא בטוחים באיזו מידה מתאימה? אפשר לפנות אלינו ונשמח לעזור." },
-    { q: "איך שומרים על התכשיט?", a: "יש להימנע ממגע עם מים, בשמים וכימיקלים, ולאחסן בנפרד בשקית סגורה הרחק מאור שמש ישיר." },
-    { q: "מה מדיניות ההחזרות?", a: `ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית. משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)}.` },
-  ];
-
   return (
     <div>
-      {/* TOP PROMO STRIP */}
-      <section style={css("background:var(--c-line-soft);border-bottom:1px solid var(--c-line);")}>
-        <div className="container" style={css("padding:var(--sp-3) var(--sp-4);display:flex;flex-wrap:wrap;justify-content:center;gap:10px var(--sp-6);text-align:center;")}>
-          {TRUST_ITEMS.map((t) => (
-            <span key={t} style={css("font-size:13px;font-weight:600;color:var(--c-accent-dark);white-space:nowrap;")}>{t}</span>
-          ))}
-          <span style={css("font-size:13px;font-weight:600;color:var(--c-accent-dark);white-space:nowrap;")}>✓ משלוח חינם מעל {fmt(freeShipFrom)}</span>
+      {/* HERO — just the image now (no glass panel/text over it). The page
+          still needs exactly one real H1 for SEO/screen readers, so it
+          moves to visually-hidden instead of disappearing entirely. */}
+      <h1 style={css("position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;")}>ALFI — תכשיטים שפורחים מתוך הטבע: תכשיטי כסף סטרלינג 925 בעבודת יד, בהשראת הטבע</h1>
+      <section className="rd-hero" style={css("position:relative;overflow:hidden;display:flex;align-items:center;box-sizing:border-box;")}>
+        <HeroSlider images={heroImages} imagesMobile={heroImagesMobile} />
+      </section>
+
+      {/* FEATURED SLIDER */}
+      <ProductSlider title={C.featuredTitle || "נבחרים מהסדנה"} mobileTitle="נבחרים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider1} />
+
+      {/* COLLECTIONS 2x2 */}
+      <section className="rd-section-pad" style={css("display:flex;flex-direction:column;gap:32px;")}>
+        <div className="glass rd-collections-head rd-only-desktop" style={css("display:flex;justify-content:space-between;align-items:center;")}>
+          <h2 className="serif" style={css("margin:0;font-size:46px;font-weight:300;")}>הקולקציות</h2>
+          <span style={css("font-size:15px;color:var(--text-body);")}>{tileCats.join(" · ")}</span>
         </div>
-      </section>
-
-      {/* HERO — large image, separate mobile/desktop crops (sizing via .r-hero in utilities.css) */}
-      <section className="r-hero" style={css("position:relative;width:100%;margin-bottom:0;")}>
-        <HeroSlider images={heroImages} imagesMobile={heroImagesMobile}>
-          <div className="r-hero-badge" style={css("position:absolute;top:var(--sp-5);right:var(--sp-5);background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border-radius:var(--r-pill);padding:10px 22px;font-size:14.5px;font-weight:600;color:var(--c-accent);letter-spacing:.05em;pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.08);z-index:2;")}>{C.heroBadge}</div>
-          <div className="r-hero-cta" style={css("position:absolute;bottom:var(--sp-5);right:var(--sp-5);z-index:2;")}>
-            <button onClick={goCatalog} className="btn btn-primary" style={css("padding:10px 22px;font-size:13.5px;box-shadow:0 12px 34px rgba(0,0,0,.22);")}>{C.heroCtaLabel}</button>
-          </div>
-        </HeroSlider>
-      </section>
-
-      {/* SLIDER 1 */}
-      <SliderSection eyebrow={C.featuredKicker} title={C.featuredTitle} ctaLabel="לכל המוצרים ←" onCta={goCatalog} products={slider1} />
-
-      {/* 4 CATEGORY TILES */}
-      <section className="container" style={css("padding-block:var(--sp-6);")}>
-        <div className="grid-4" style={css("gap:2px;")}>
-          {tileCats.map((c) => {
+        <div className="rd-cat-grid">
+          {tileCats.map((c, i) => {
             const img = (C.categoryImages || {})[c] || "";
             return (
-              <div key={c} onClick={() => goCat(c)} className="tap-target hover-lift" style={css("cursor:pointer;position:relative;")}>
-                <div style={thumb(img, GRAD_CARD, "aspect-ratio:5/6;border-radius:0;border:1px solid var(--c-line);background-size:contain;")}>
-                  {!img && <Disc style="width:40%;aspect-ratio:1;" />}
-                  <span style={css("position:absolute;bottom:12px;right:12px;left:12px;background:rgba(255,255,255,.92);text-align:center;font-size:14px;font-weight:700;padding:8px 10px;")}>{c}</span>
+              <div key={c} onClick={() => goCat(c)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && goCat(c)} className="rd-cat rd-cat-desktop glass-strong tap-target">
+                <div style={css("overflow:hidden;")}>
+                  <div className="rd-img" style={thumb(img, GRAD_CARD, "width:100%;height:100%;border-radius:0;")}>{!img && <Disc style="width:36%;aspect-ratio:1;" />}</div>
+                </div>
+                <div className="rd-cat-text" style={css("display:flex;flex-direction:column;justify-content:space-between;")}>
+                  <span style={css("font-size:13px;letter-spacing:.3em;color:var(--accent2);")}>{String(i + 1).padStart(2, "0")}</span>
+                  <span className="serif rd-cat-name" style={css("font-weight:300;line-height:1;")}>{c}</span>
+                  <span className="rd-go" style={css("align-self:flex-start;height:50px;padding:0 22px;border:1px solid var(--ink);display:flex;align-items:center;gap:12px;font-size:15px;letter-spacing:.06em;")}>לקולקציה<GoArrowIcon /></span>
                 </div>
               </div>
             );
           })}
         </div>
-      </section>
-
-      {/* BANNER 2 — large image */}
-      <Banner image={C.banner2Image} title={C.banner2Title} subtitle={C.banner2Subtitle} ctaLabel={C.banner2CtaLabel} onCta={() => go("collections")} />
-
-      {/* SLIDER 2 — best sellers */}
-      <SliderSection eyebrow="❀ הכי אהובים" title="הנמכרים ביותר" ctaLabel="לכל המוצרים ←" onCta={goCatalog} products={slider2} />
-
-      {/* BANNER 3 — promo */}
-      <Banner image={C.banner3Image} title={C.banner3Title} subtitle={C.banner3Subtitle} ctaLabel={C.banner3CtaLabel} onCta={goCatalog} />
-
-      {/* SLIDER 3 */}
-      <SliderSection eyebrow="❀ עוד השראה" title="תכשיטים נוספים שתאהבו" ctaLabel="לכל המוצרים ←" onCta={goCatalog} products={slider3} />
-
-      {/* BRIEF BRAND BLURB */}
-      <section style={css("background:var(--c-line-soft);padding-block:var(--sp-7);text-align:center;")}>
-        <div className="container" style={css("max-width:640px;")}>
-          <h2 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-3);")}>{C.aboutTitle}</h2>
-          <p style={css("font-size:16px;color:var(--c-ink-soft);line-height:1.7;")}>{C.aboutText}</p>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section>
-        <div className="container" style={css("max-width:760px;padding-block:var(--sp-7);")}>
-          <h2 className="title-h2" style={css("font-size:var(--fs-h1);text-align:center;margin-bottom:var(--sp-6);")}>שאלות נפוצות</h2>
-          {FAQ_ITEMS.map((f, i) => {
-            const open = openFaq === i;
+        {/* Mobile: plain white tiles, image only — no text label, no glass
+            wrapper, shadow, or arrow icon. Category name moves to aria-label
+            for screen readers since it no longer appears visually. */}
+        <div className="rd-cat-grid-mobile">
+          {tileCats.map((c) => {
+            const img = (C.categoryImages || {})[c] || "";
             return (
-              <div key={i} style={css("border-bottom:1px solid var(--c-line);")}>
-                <button
-                  onClick={() => setOpenFaq(open ? null : i)}
-                  aria-expanded={open}
-                  className="tap-target"
-                  style={css("width:100%;background:none;border:none;padding:18px 0;display:flex;justify-content:space-between;align-items:center;font-size:15.5px;font-weight:600;cursor:pointer;color:var(--c-ink);text-align:right;")}
-                >
-                  {f.q}<span style={css(`color:var(--c-accent);font-size:20px;line-height:1;transition:transform var(--dur) var(--ease);transform:rotate(${open ? "45deg" : "0"});`)}>+</span>
-                </button>
-                {open && <p style={css("padding:0 0 18px;font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;")}>{f.a}</p>}
+              <div key={c} onClick={() => goCat(c)} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && goCat(c)} aria-label={c} className="rd-cat-mobile tap-target">
+                <div className="rd-tile" style={thumb(img, GRAD_CARD, "border-radius:0;")}>{!img && <Disc style="width:62%;aspect-ratio:1;" />}</div>
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* PROMO BANNER — content.banner3* (existing admin fields; closest
+          match to the mockup's "3 תכשיטים ב-220 ₪" promo slot). Full
+          screen width, unlike the other sections. */}
+      <section className="rd-promo-section">
+        <div className="rd-promo glass-strong rd-promo-box">
+          <div style={css("position:relative;overflow:hidden;")}>
+            <div
+              className="rd-promo-img"
+              style={css(`position:absolute;inset:0;background-image:url("${C.banner3Image || "floral-bg.jpg"}");background-size:${C.banner3Image ? "cover" : "150%"};background-position:${C.banner3Image ? "center" : "70% 55%"};`)}
+            />
+          </div>
+          <div className="rd-promo-text" style={css("display:flex;flex-direction:column;justify-content:center;")}>
+            <span style={css("align-self:flex-start;height:34px;padding:0 16px;display:flex;align-items:center;background:var(--ink-fill);color:var(--cream);font-size:13px;letter-spacing:.2em;")}>מבצע</span>
+            <h2 className="serif rd-promo-h2" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.banner3Title || "3 תכשיטים ב־220 ₪"}</h2>
+            <p className="rd-promo-p" style={css("margin:0;color:var(--text-body);")}>{C.banner3Subtitle || "בוחרים כל שלושה תכשיטים ומשלמים 220 ₪ בלבד. [תנאי המבצע — אילו פריטים משתתפים ועד מתי]"}</p>
+            <button onClick={goCatalog} className="rd-btn rd-btn-outline rd-promo-cta" style={css("align-self:flex-start;display:flex;align-items:center;gap:14px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:16px;letter-spacing:.08em;cursor:pointer;")}>{C.banner3CtaLabel || "לבחירת התכשיטים"}<GoArrowIcon /></button>
+          </div>
+        </div>
+      </section>
+
+      {/* SECOND SLIDER — best sellers */}
+      <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} />
+
+      {/* BRAND STORY PANEL */}
+      <section className="rd-section-pad-b">
+        <div className="glass-strong rd-story-box">
+          <div style={css("display:flex;flex-direction:column;gap:24px;")}>
+            <div style={css("font-size:13px;letter-spacing:.3em;color:var(--accent2);")}>מהסדנה</div>
+            <h2 className="serif rd-story-h2" style={css("margin:0;font-weight:300;")}>כל תכשיט<br />מתחיל בפרח אחד</h2>
+            <span onClick={() => go("story")} role="button" tabIndex={0} onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && go("story")} style={css("align-self:flex-start;cursor:pointer;font-size:15px;border-bottom:1px solid var(--ink);padding:10px 0 4px;")}>לסיפור המלא</span>
+          </div>
+          <div style={css("display:flex;flex-direction:column;gap:28px;")}>
+            <p className="rd-story-p" style={css("margin:0;color:var(--text-body);")}>{C.aboutText}</p>
+            <div style={css("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;border-top:1px solid #D9CACD;padding-top:28px;")}>
+              <div style={css("display:flex;flex-direction:column;gap:6px;")}><div className="serif" style={css("font-size:26px;")}>925</div><div style={css("font-size:14px;color:var(--text-muted);")}>כסף סטרלינג</div></div>
+              <div style={css("display:flex;flex-direction:column;gap:6px;")}><div className="serif" style={css("font-size:26px;")}>יד</div><div style={css("font-size:14px;color:var(--text-muted);")}>עבודת יד מלאה</div></div>
+              <div style={css("display:flex;flex-direction:column;gap:6px;")}><div className="serif" style={css("font-size:26px;")}>טבע</div><div style={css("font-size:14px;color:var(--text-muted);")}>השראה מהגן</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NEWSLETTER (desktop reference) — no separate email-capture backend
+          exists; this opens the same sign-up/coupon popup as the footer's
+          "קבלת קוד הנחה" button always has, per HANDOFF.md's "keep the
+          existing newsletter submit logic if there is one". */}
+      <section className="rd-only-desktop" style={css("padding:0 64px 120px;display:flex;justify-content:center;")}>
+        <div className="glass" style={css("width:680px;padding:48px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center;")}>
+          <h3 className="serif" style={css("margin:0;font-size:38px;font-weight:300;")}>הצטרפי לגן של ALFI</h3>
+          <button
+            onClick={() => openSignupPopup(false)}
+            style={css("width:100%;display:flex;align-items:center;justify-content:space-between;border:0;border-bottom:1px solid var(--ink);background:transparent;font:inherit;cursor:pointer;padding:0;")}
+          >
+            <span style={css("height:52px;display:flex;align-items:center;font-size:17px;color:var(--text-muted);")}>כתובת אימייל</span>
+            <span style={css("height:52px;display:flex;align-items:center;font-size:16px;letter-spacing:.08em;color:var(--ink);")}>הרשמה</span>
+          </button>
         </div>
       </section>
     </div>

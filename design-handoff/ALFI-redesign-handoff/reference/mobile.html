@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ALFI — Mobile reference</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500&amp;family=Assistant:wght@300;400;600&display=swap">
+  <style>
+    body { margin: 0; background: #F6F0EB; font-family: "Assistant", "Segoe UI", sans-serif; color: #3A2D3D; }
+    a { color: #3A2D3D; text-decoration: none; } a:hover { color: #7A5C86; }
+    .serif { font-family: "Frank Ruhl Libre", Georgia, serif; }
+    .paint { background-image: url(floral-bg.jpg); background-size: cover; background-position: 45% center; filter: blur(3px) saturate(1.08); transform: scale(1.02); }
+    .hero-img { background-image: url(floral-bg.jpg); background-size: cover; background-position: 40% 35%; animation: slowzoom 16s ease-out both; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%); mask-image: linear-gradient(180deg, #000 62%, transparent 100%); }
+    .glass { background: rgba(249,245,241,.72); -webkit-backdrop-filter: blur(16px) saturate(1.1); backdrop-filter: blur(16px) saturate(1.1); border: 1px solid rgba(255,255,255,.65); }
+    .glass-strong { background: rgba(251,248,245,.86); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); border: 1px solid rgba(255,255,255,.7); }
+    @keyframes slowzoom { from { transform: scale(1.15); } to { transform: scale(1); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(22px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise 1s cubic-bezier(.2,.7,.1,1) both; }
+    .d1 { animation-delay: .15s; } .d2 { animation-delay: .3s; } .d3 { animation-delay: .45s; }
+    .rail { scrollbar-width: none; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; }
+    .rail::-webkit-scrollbar { display: none; }
+    .snap { scroll-snap-align: start; }
+    .cat .tile, .card .ph { transition: transform .3s ease; }
+    .cat:active .tile, .card:active .ph { transform: scale(.97); }
+    .promo-img { background-image: url(floral-bg.jpg); background-size: 260%; background-position: 70% 55%; }
+  </style>
+</head>
+<body>
+<div dir="rtl" style="width: 100%; max-width: 390px; margin: 0 auto; min-height: 100vh; box-sizing: border-box; position: relative; background: #F6F0EB; overflow: hidden;">
+
+  <div class="paint" style="position: absolute; inset: 0;"></div>
+  <div style="position: absolute; inset: 0; background: linear-gradient(180deg, rgba(246,240,235,.2) 0px, rgba(246,240,235,.35) 700px, rgba(246,240,235,.5) 1400px, rgba(246,240,235,.42) 3400px, rgba(58,45,61,.25) 100%);"></div>
+
+  <div style="position: relative; height: 100%; display: flex; flex-direction: column;">
+
+    <header class="glass" style="height: 64px; box-sizing: border-box; padding: 0 8px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; border-width: 0 0 1px 0;">
+      <div style="display: flex;">
+        <button aria-label="תפריט" style="width: 48px; height: 48px; border: 0; background: transparent; color: #3A2D3D;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M4 8h16M4 16h11"></path></svg></button>
+        <button aria-label="חיפוש" style="width: 48px; height: 48px; border: 0; background: transparent; color: #3A2D3D;"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><circle cx="11" cy="11" r="6.5"></circle><path d="M20 20l-4.2-4.2"></path></svg></button>
+      </div>
+      <a href="#" class="serif" style="justify-self: center; font-size: 26px; letter-spacing: .36em; padding-right: .36em;">ALFI</a>
+      <div style="display: flex; justify-content: flex-end;">
+        <button aria-label="סל קניות, 2 פריטים" style="position: relative; width: 48px; height: 48px; border: 0; background: transparent; color: #3A2D3D;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M5 8h14l-1 12H6L5 8z"></path><path d="M9 8V6a3 3 0 0 1 6 0v2"></path></svg><span style="position: absolute; top: 8px; left: 8px; width: 16px; height: 16px; border-radius: 50%; background: #3A2D3D; color: #F6F0EB; font-size: 10px; line-height: 16px;">2</span></button>
+      </div>
+    </header>
+
+    <section style="height: 660px; position: relative; overflow: hidden; display: flex; align-items: flex-end; padding: 0 16px 24px;">
+      <div class="hero-img" style="position: absolute; inset: 0;"></div>
+      <div class="glass rise" style="position: relative; width: 100%; box-sizing: border-box; padding: 26px 22px 22px; display: flex; flex-direction: column; gap: 14px;">
+        <div style="font-size: 12px; letter-spacing: .26em; color: #6E4F7A;">כסף 925 · עבודת יד</div>
+        <h1 class="serif rise d1" style="margin: 0; font-size: 46px; line-height: 1.04; font-weight: 300; color: #2E2231;">תכשיטים שפורחים מתוך הטבע</h1>
+        <p class="rise d2" style="margin: 0; font-size: 16px; line-height: 1.6; color: #4E4052;">תכשיטי כסף בעבודת יד, בהשראת הטבע.</p>
+        <a href="#" class="rise d3" style="height: 56px; margin-top: 4px; display: flex; align-items: center; justify-content: center; background: #3A2D3D; color: #F6F0EB; font-size: 16px; letter-spacing: .08em;">לקולקציה החדשה</a>
+      </div>
+    </section>
+
+    <section style="padding: 36px 0 40px; display: flex; flex-direction: column; gap: 18px;">
+      <div class="glass" style="margin: 0 16px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="serif" style="margin: 0; font-size: 30px; font-weight: 300;">נבחרים</h2>
+        <a href="#" style="font-size: 14px; border-bottom: 1px solid #3A2D3D; padding: 10px 0 2px;">לכל התכשיטים</a>
+      </div>
+      <div class="rail" style="display: flex; gap: 12px; overflow-x: auto; padding: 0 16px;">
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #EBE1E6; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">חדש</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">טבעת · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #E6E0EA; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">עבודת יד</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">שרשרת · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #EFE3DD; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">חדש</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">עגילים · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #E5E4DC; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">אחרונים</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">צמיד · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #E8E0EC; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">עבודת יד</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">טבעת · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #F0E2E2; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">חדש</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">שרשרת · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+      </div>
+      <div style="margin: 0 16px; height: 2px; background: rgba(58,45,61,.18); display: flex;">
+        <span style="width: 22%; background: #3A2D3D;"></span>
+      </div>
+    </section>
+
+    <section class="glass" style="margin: 0 12px; padding: 18px 10px 12px; display: flex; flex-direction: column; gap: 14px;">
+      <div style="padding: 0 8px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="serif" style="margin: 0; font-size: 30px; font-weight: 300;">הקולקציות</h2>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;">
+        
+          <a href="#" class="cat" style="display: flex; flex-direction: column; background: rgba(255,255,255,.8); padding: 6px;">
+            <div class="tile" style="aspect-ratio: 4 / 5; background: #E9DDE8; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונה</div>
+            <div style="height: 50px; padding: 0 6px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="serif" style="font-size: 20px;">טבעות</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A2D3D" stroke-width="1.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+            </div>
+          </a>
+        
+          <a href="#" class="cat" style="display: flex; flex-direction: column; background: rgba(255,255,255,.8); padding: 6px;">
+            <div class="tile" style="aspect-ratio: 4 / 5; background: #F0DCDC; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונה</div>
+            <div style="height: 50px; padding: 0 6px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="serif" style="font-size: 20px;">שרשראות</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A2D3D" stroke-width="1.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+            </div>
+          </a>
+        
+          <a href="#" class="cat" style="display: flex; flex-direction: column; background: rgba(255,255,255,.8); padding: 6px;">
+            <div class="tile" style="aspect-ratio: 4 / 5; background: #E4E2D8; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונה</div>
+            <div style="height: 50px; padding: 0 6px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="serif" style="font-size: 20px;">עגילים</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A2D3D" stroke-width="1.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+            </div>
+          </a>
+        
+          <a href="#" class="cat" style="display: flex; flex-direction: column; background: rgba(255,255,255,.8); padding: 6px;">
+            <div class="tile" style="aspect-ratio: 4 / 5; background: #DED6E6; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונה</div>
+            <div style="height: 50px; padding: 0 6px; display: flex; justify-content: space-between; align-items: center;">
+              <span class="serif" style="font-size: 20px;">צמידים</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3A2D3D" stroke-width="1.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg>
+            </div>
+          </a>
+        
+      </div>
+    </section>
+
+    <section style="padding: 44px 12px 0;">
+      <div class="glass-strong" style="padding: 8px; display: flex; flex-direction: column;">
+        <div style="position: relative; height: 240px; overflow: hidden;">
+          <div class="promo-img" style="position: absolute; inset: 0;"></div>
+          <div style="position: absolute; bottom: 12px; right: 12px; width: 130px; height: 100px; background: rgba(246,240,235,.9); display: flex; align-items: center; justify-content: center; font-size: 11px; color: #6E6475;">תמונת 3 תכשיטים</div>
+        </div>
+        <div style="padding: 24px 16px 18px; display: flex; flex-direction: column; gap: 14px;">
+          <span style="align-self: flex-start; height: 28px; padding: 0 12px; display: flex; align-items: center; background: #3A2D3D; color: #F6F0EB; font-size: 12px; letter-spacing: .2em;">מבצע</span>
+          <h2 class="serif" style="margin: 0; font-size: 46px; line-height: 1; font-weight: 300; color: #2E2231;">3 תכשיטים ב־220 ₪</h2>
+          <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4E4052;">בוחרים כל שלושה תכשיטים ומשלמים 220 ₪ בלבד. [תנאי המבצע]</p>
+          <a href="#" style="height: 54px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #3A2D3D; color: #F6F0EB; font-size: 15px; letter-spacing: .08em;">לבחירת התכשיטים<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></a>
+        </div>
+      </div>
+    </section>
+
+    <section style="padding: 44px 0 0; display: flex; flex-direction: column; gap: 18px;">
+      <div class="glass" style="margin: 0 16px; padding: 12px 18px; display: flex; justify-content: space-between; align-items: center;">
+        <h2 class="serif" style="margin: 0; font-size: 28px; font-weight: 300;">עוד תכשיטים</h2>
+        <a href="#" style="font-size: 14px; border-bottom: 1px solid #3A2D3D; padding: 10px 0 2px;">לכל התכשיטים</a>
+      </div>
+      <div class="rail" style="display: flex; gap: 12px; overflow-x: auto; padding: 0 16px;">
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #EEE4DE; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">חדש</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">עגילים · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #E4E3DA; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">עבודת יד</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">צמיד · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #E9E0E9; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">חדש</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">טבעת · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #EFE0E2; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">אחרונים</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">שרשרת · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #E6E1EA; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">עבודת יד</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">עגילים · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+          <div class="card snap glass-strong" style="flex: 0 0 256px; padding: 8px 8px 12px; display: flex; flex-direction: column; gap: 12px;">
+            <a href="#" style="position: relative; display: block; height: 320px; overflow: hidden;">
+              <div class="ph" style="position: absolute; inset: 0; background: #EDE6DD; display: flex; align-items: center; justify-content: center; color: rgba(58,45,61,.42); font-size: 11px;">תמונת מוצר</div>
+              <span style="position: absolute; top: 10px; right: 10px; font-size: 11px; letter-spacing: .1em; background: rgba(246,240,235,.92); padding: 4px 8px;">חדש</span>
+            </a>
+            <div style="padding: 0 6px; display: flex; justify-content: space-between; align-items: baseline; gap: 8px;">
+              <div style="display: flex; flex-direction: column; gap: 3px;">
+                <a href="#" class="serif" style="font-size: 19px; line-height: 1.25;">[שם התכשיט]</a>
+                <span style="font-size: 13px; color: #625565;">צמיד · כסף 925</span>
+              </div>
+              <span style="font-size: 16px; font-weight: 600; white-space: nowrap;">[מחיר] ₪</span>
+            </div>
+            <button style="margin: 0 6px; height: 46px; border: 0; background: #3A2D3D; font: inherit; font-size: 14px; letter-spacing: .06em; color: #F6F0EB;">הוספה לסל</button>
+          </div>
+        
+      </div>
+      <div style="margin: 0 16px; height: 2px; background: rgba(58,45,61,.18); display: flex;">
+        <span style="width: 22%; background: #3A2D3D;"></span>
+      </div>
+    </section>
+
+    <section style="padding: 44px 16px 48px;">
+      <div class="glass-strong" style="padding: 32px 24px 30px; display: flex; flex-direction: column; gap: 16px;">
+        <div style="font-size: 12px; letter-spacing: .26em; color: #7A5C86;">מהסדנה</div>
+        <h2 class="serif" style="margin: 0; font-size: 38px; line-height: 1.1; font-weight: 300;">כל תכשיט מתחיל בפרח אחד</h2>
+        <p style="margin: 0; font-size: 17px; line-height: 1.75; color: #4E4052;">[סיפור המותג — שתיים־שלוש שורות על ההשראה ועל העבודה בסדנה.]</p>
+        <a href="#" style="align-self: flex-start; font-size: 15px; border-bottom: 1px solid #3A2D3D; padding: 12px 0 4px;">לסיפור המלא</a>
+      </div>
+    </section>
+
+    <footer style="flex-grow: 1; padding: 44px 24px 32px; display: flex; flex-direction: column; gap: 28px; background: rgba(58,45,61,.9); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); color: #E6DAE6;">
+      <div class="serif" style="font-size: 30px; letter-spacing: .36em; color: #F6F0EB;">ALFI</div>
+      <div style="display: flex; flex-direction: column;">
+        <a href="#" style="height: 54px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #6A5A70; color: #F6F0EB; font-size: 16px;">חנות<span>+</span></a>
+        <a href="#" style="height: 54px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #6A5A70; color: #F6F0EB; font-size: 16px;">שירות לקוחות<span>+</span></a>
+        <a href="#" style="height: 54px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #6A5A70; color: #F6F0EB; font-size: 16px;">צרי קשר<span>+</span></a>
+      </div>
+      <div style="font-size: 12px; color: #C3B3C4;">© ALFI · תכשיטי כסף בעבודת יד</div>
+    </footer>
+  </div>
+</div>
+</body>
+</html>

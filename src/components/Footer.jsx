@@ -1,46 +1,123 @@
-import React from "react";
+import React, { useState } from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { CONTACT } from "../lib/contact.js";
+
+// Reset-styled <button> instead of a <span onClick> — real button semantics
+// mean native keyboard support (Tab + Enter/Space) for free.
+const linkBtn = "cursor:pointer;background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;text-align:right;display:block;width:100%;";
+const colHeading = "font-weight:600;color:var(--cream);";
+const colList = "display:flex;flex-direction:column;gap:12px;font-size:15px;color:inherit;";
+
+// Desktop's "שירות"/mobile's "שירות לקוחות" column: "משלוחים והחזרות" maps to
+// the real shipping/returns page; the other two have no dedicated page or
+// data anywhere in the app (no ring-size guide, no standalone care page —
+// Product.jsx has a care *accordion*, not a route), so per HANDOFF.md
+// ("render missing content as static") they're plain non-interactive text,
+// not invented links.
+function ServiceList({ go, textStyle }) {
+  return (
+    <>
+      <button onClick={() => go("shipping")} style={css(linkBtn + textStyle)}>משלוחים והחזרות</button>
+      <span style={css(textStyle)}>מידות טבעת</span>
+      <span style={css(textStyle)}>טיפול בכסף</span>
+    </>
+  );
+}
+
+function ContactList({ textStyle }) {
+  return (
+    <>
+      <a href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={css(textStyle + "direction:ltr;text-align:right;")}>{CONTACT.whatsappDisplay}</a>
+      <a href={CONTACT.emailUrl} style={css(textStyle + "direction:ltr;text-align:right;")}>{CONTACT.email}</a>
+      <a href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" style={css(textStyle)}>{CONTACT.instagramHandle}</a>
+    </>
+  );
+}
 
 export function Footer() {
   const { go, setCatFilter } = useStore();
   const goCat = (c) => { setCatFilter(c); go("catalog"); };
+  const [openSection, setOpenSection] = useState(null);
+
+  const mobileLinkStyle = "color:var(--cream);";
+  const desktopLinkStyle = "";
+
+  const accordionRow = (key, label, content) => {
+    const open = openSection === key;
+    return (
+      <div key={key}>
+        <button
+          onClick={() => setOpenSection(open ? null : key)}
+          aria-expanded={open}
+          style={css("width:100%;height:54px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--divider-dark);background:none;border-width:0 0 1px 0;color:var(--cream);font-size:16px;font:inherit;cursor:pointer;padding:0;text-align:right;")}
+        >
+          {label}
+          <span className={`rd-acc-plus${open ? " rd-acc-open" : ""}`} aria-hidden="true">+</span>
+        </button>
+        {open && (
+          <div style={css("padding:16px 4px;")}>
+            <div style={css(colList + "color:var(--cream);")}>{content}</div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
-    <footer style={css("background:var(--c-ink);color:#e8dccf;margin-top:var(--sp-8);")}>
-      <div className="container r-footer-grid" style={css("padding:54px 0 40px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:36px;")}>
-        <div>
-          <div style={css("font-family:var(--font-serif);font-size:24px;letter-spacing:.14em;margin-bottom:10px;")}>ALFI</div>
-          <p style={css("font-size:14px;color:#b9a797;max-width:240px;")}>תכשיטי כסף סטרלינג 925 בעבודת יד, בהשראת הטבע.</p>
-        </div>
-        <div>
-          <div style={css("font-weight:600;font-size:14px;margin-bottom:14px;")}>חנות</div>
-          <div className="r-footer-links" style={css("display:flex;flex-direction:column;gap:9px;font-size:13.5px;color:#b9a797;")}>
-            <span onClick={() => goCat("טבעות")} style={css("cursor:pointer;")}>טבעות</span>
-            <span onClick={() => goCat("שרשראות")} style={css("cursor:pointer;")}>שרשראות</span>
-            <span onClick={() => goCat("עגילים")} style={css("cursor:pointer;")}>עגילים</span>
-            <span onClick={() => goCat("צמידים")} style={css("cursor:pointer;")}>צמידים</span>
-            <span onClick={() => goCat("אקססוריז")} style={css("cursor:pointer;")}>אקססוריז</span>
+    <footer className="rd-footer-glass" style={css("color:#E6DAE6;")}>
+      {/* ---- Desktop (>=768px) ---- */}
+      <div className="rd-footer-desktop" style={css("padding:72px 64px 40px;flex-direction:column;gap:48px;")}>
+        <div style={css("display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:40px;")}>
+          <div className="serif" style={css("font-size:36px;letter-spacing:.42em;color:var(--cream);")}>ALFI</div>
+          <div style={css(colList)}>
+            <strong style={css(colHeading)}>חנות</strong>
+            <button onClick={() => goCat("טבעות")} style={css(linkBtn)}>טבעות</button>
+            <button onClick={() => goCat("שרשראות")} style={css(linkBtn)}>שרשראות</button>
+            <button onClick={() => goCat("עגילים")} style={css(linkBtn)}>עגילים</button>
+            <button onClick={() => goCat("צמידים")} style={css(linkBtn)}>צמידים</button>
+          </div>
+          <div style={css(colList)}>
+            <strong style={css(colHeading)}>שירות</strong>
+            <ServiceList go={go} textStyle={desktopLinkStyle} />
+          </div>
+          <div style={css(colList)}>
+            <strong style={css(colHeading)}>צרי קשר</strong>
+            <ContactList textStyle={desktopLinkStyle} />
           </div>
         </div>
-        <div>
-          <div style={css("font-weight:600;font-size:14px;margin-bottom:14px;")}>גלריה</div>
-          <div className="r-footer-links" style={css("display:flex;flex-direction:column;gap:9px;font-size:13.5px;color:#b9a797;")}>
-            <span onClick={() => go("collections")} style={css("cursor:pointer;")}>קולקציות</span>
-            <span onClick={() => go("story")} style={css("cursor:pointer;")}>הסיפור שלנו</span>
-            <span style={css("cursor:pointer;")}>טיפוח התכשיט</span>
-            <span style={css("cursor:pointer;")}>צור קשר</span>
-          </div>
-        </div>
-        <div>
-          <div style={css("font-weight:600;font-size:14px;margin-bottom:14px;")}>הצטרפו לרשימה</div>
-          <p style={css("font-size:13.5px;color:#b9a797;margin-bottom:12px;")}>10% הנחה על ההזמנה הראשונה</p>
-          <div style={css("display:flex;gap:8px;")}>
-            <input placeholder="אימייל" style={css("flex:1;min-width:0;padding:11px 12px;border:1px solid #5a4a40;border-radius:var(--r-sm);background:#4a3a31;color:#fff;font-size:13.5px;")} />
-            <button className="tap-target" style={css("padding:0 18px;background:var(--c-accent);color:#fff;border:none;border-radius:var(--r-sm);font-size:13.5px;font-weight:600;cursor:pointer;flex:none;")}>שליחה</button>
-          </div>
+        <div style={css("font-size:13px;color:#C3B3C4;border-top:1px solid var(--divider-dark);padding-top:24px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;")}>
+          <span>© ALFI · תכשיטי כסף בעבודת יד</span>
+          <span style={css("display:flex;flex-wrap:wrap;gap:16px;")}>
+            <button onClick={() => go("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</button>
+            <button onClick={() => go("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</button>
+            <button onClick={() => go("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</button>
+          </span>
         </div>
       </div>
-      <div style={css("border-top:1px solid #4a3a31;padding:18px var(--sp-4);text-align:center;font-size:12.5px;color:#9a8676;")}>© 2026 ALFI · כל הזכויות שמורות</div>
+
+      {/* ---- Mobile (<768px) — real accordions, not the mockup's static "+" ---- */}
+      <div className="rd-footer-mobile" style={css("padding:44px 24px 32px;flex-direction:column;gap:28px;")}>
+        <div className="serif" style={css("font-size:30px;letter-spacing:.36em;color:var(--cream);")}>ALFI</div>
+        <div>
+          {accordionRow("shop", "חנות", (
+            <>
+              <button onClick={() => goCat("טבעות")} style={css(linkBtn + "color:var(--cream);")}>טבעות</button>
+              <button onClick={() => goCat("שרשראות")} style={css(linkBtn + "color:var(--cream);")}>שרשראות</button>
+              <button onClick={() => goCat("עגילים")} style={css(linkBtn + "color:var(--cream);")}>עגילים</button>
+              <button onClick={() => goCat("צמידים")} style={css(linkBtn + "color:var(--cream);")}>צמידים</button>
+            </>
+          ))}
+          {accordionRow("service", "שירות לקוחות", <ServiceList go={go} textStyle={mobileLinkStyle} />)}
+          {accordionRow("contact", "צרי קשר", <ContactList textStyle={mobileLinkStyle} />)}
+        </div>
+        <div style={css("font-size:12px;color:#C3B3C4;")}>© ALFI · תכשיטי כסף בעבודת יד</div>
+        <div style={css("display:flex;flex-wrap:wrap;gap:16px;font-size:12px;")}>
+          <button onClick={() => go("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</button>
+          <button onClick={() => go("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</button>
+          <button onClick={() => go("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</button>
+        </div>
+      </div>
     </footer>
   );
 }

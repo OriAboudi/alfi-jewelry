@@ -51,6 +51,12 @@ export const SEED_CONTENT = {
   authTagline: "תכשיטי כסף סטרלינג 925 בעבודת יד, בהשראת עולם הצומח — עדינים, חמים ונצחיים.",
   featuredKicker: "❀ נבחרי הקולקציה",
   featuredTitle: "פורחים השבוע",
+  promoStripItems: [
+    "✓ כסף סטרלינג 925 אמיתי",
+    "✓ עבודת יד באולפן שלנו",
+    "✓ אריזת מתנה בכל הזמנה",
+    "✓ משלוח חינם מעל ₪500",
+  ],
   categoryImages: { "טבעות": "", "שרשראות": "", "עגילים": "", "צמידים": "", "אקססוריז": "" },
   banner2Image: "",
   banner2Title: "הקולקציה החדשה שלנו",
@@ -81,6 +87,9 @@ export const SEED_CONTENT = {
   shipFee: 39,
   lowStockThreshold: 5,
   stockFineThreshold: 10,
+  signupCouponPercent: 5,
+  signupCouponEnabled: true,
+  signupPopupDelaySeconds: 10,
 };
 
 // Default admin (LOCAL/dev backend only — never used in production, see BACKEND above).
@@ -90,6 +99,12 @@ const SEED_ADMIN = { name: "מנהל ALFI", email: "admin@alfi.co.il", role: "ad
 
 /* ---------- helpers ---------- */
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const COUPON_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
+function generateCouponCode() {
+  let s = "";
+  for (let i = 0; i < 6; i++) s += COUPON_CODE_CHARS[Math.floor(Math.random() * COUPON_CODE_CHARS.length)];
+  return "ALFI-" + s;
+}
 function weakHash(s) {
   let h = 0;
   for (let i = 0; i < s.length; i++) { h = (h << 5) - h + s.charCodeAt(i); h |= 0; }
@@ -118,6 +133,7 @@ const LS = {
   orders: "alfi:orders",
   collections: "alfi:collections",
   session: "alfi:session",
+  coupons: "alfi:coupons",
 };
 const read = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { console.warn("ALFI: storage write failed", e); } };
@@ -127,6 +143,7 @@ function seedLocal() {
   if (!localStorage.getItem(LS.content)) write(LS.content, SEED_CONTENT);
   if (!localStorage.getItem(LS.orders)) write(LS.orders, []);
   if (!localStorage.getItem(LS.collections)) write(LS.collections, SEED_COLLECTIONS);
+  if (!localStorage.getItem(LS.coupons)) write(LS.coupons, []);
   if (!read(LS.users, null)) {
     const password = uid();
     write(LS.users, [{ id: uid(), name: SEED_ADMIN.name, email: SEED_ADMIN.email, pass: weakHash(password), role: "admin", created_at: new Date().toISOString() }]);
@@ -276,7 +293,7 @@ const local = {
   },
   checkout: {
     // No payment gateway in local mode — place the order directly, no redirect.
-    async createSession({ items, shipping_address, paymentMethod = "takbull" }) {
+    async createSession({ items, shipping_address, paymentMethod = "takbull", couponCode }) {
       const products = read(LS.products, []);
       const content = { ...SEED_CONTENT, ...read(LS.content, {}) };
       const verified = items.map((it) => {
@@ -287,12 +304,92 @@ const local = {
       });
       const subtotal = verified.reduce((a, it) => a + it.price * it.qty, 0);
       const shipping = subtotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39);
+
+      let discount = 0;
+      let appliedCouponCode = null;
+      if (couponCode) {
+        const coupons = read(LS.coupons, []);
+        const coupon = coupons.find((c) => c.code === String(couponCode).trim().toUpperCase());
+        if (coupon && coupon.status === "active") {
+          discount = Math.round(subtotal * (Number(coupon.percent) || 0)) / 100;
+          appliedCouponCode = coupon.code;
+        }
+      }
+      const total = Math.max(0, subtotal + shipping - discount);
+
       const order = await local.orders.create({
-        items: verified, subtotal, shipping, total: subtotal + shipping,
+        items: verified, subtotal, shipping, discount, coupon_code: appliedCouponCode, total,
         shipping_address: { city: "תל אביב", ...shipping_address },
         payment_status: "paid", payment_method: paymentMethod, user_id: null,
       });
+
+      // Local orders are "paid" immediately (no separate IPN step), so redeem
+      // the coupon right here instead of waiting for a webhook.
+      if (appliedCouponCode) {
+        const coupons = read(LS.coupons, []);
+        const i = coupons.findIndex((c) => c.code === appliedCouponCode);
+        if (i >= 0) { coupons[i] = { ...coupons[i], status: "redeemed", redeemed_at: new Date().toISOString(), order_id: order.id }; write(LS.coupons, coupons); }
+      }
+
       return { url: null, order };
+    },
+  },
+  signup: {
+    // Dev-only stand-in for the signup-coupon Edge Function — no email is
+    // sent locally (local mode never sends any email), the code is just
+    // generated and stored so the pop-up's on-screen success state works.
+    async subscribe({ name, email, phone }) {
+      const cleanEmail = String(email || "").trim().toLowerCase();
+      const content = { ...SEED_CONTENT, ...read(LS.content, {}) };
+      if (content.signupCouponEnabled === false) throw new Error("ההרשמה אינה זמינה כרגע");
+      const percent = Number(content.signupCouponPercent || 5);
+      const coupons = read(LS.coupons, []);
+      const existing = coupons.find((c) => c.email === cleanEmail && c.status === "active");
+      if (existing) return { code: existing.code, percent: Number(existing.percent) };
+      const code = generateCouponCode();
+      coupons.unshift({ id: uid(), code, name, email: cleanEmail, phone, percent, status: "active", created_at: new Date().toISOString() });
+      write(LS.coupons, coupons);
+      return { code, percent };
+    },
+    // Dev-only stand-in for the login-by-phone Edge Function.
+    async loginByPhone(phone) {
+      const phoneDigits = String(phone || "").replace(/[^\d]/g, "");
+      const match = read(LS.coupons, [])
+        .filter((c) => c.phone && String(c.phone).replace(/[^\d]/g, "") === phoneDigits)
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      if (!match) return { found: false };
+      return {
+        found: true,
+        name: match.name,
+        email: match.email,
+        coupon: match.status === "active" ? { code: match.code, percent: Number(match.percent) } : null,
+      };
+    },
+  },
+  coupon: {
+    async validate(code) {
+      const clean = String(code || "").trim().toUpperCase();
+      const coupon = read(LS.coupons, []).find((c) => c.code === clean);
+      if (!coupon) throw new Error("קוד קופון לא נמצא");
+      if (coupon.status === "redeemed") throw new Error("קוד הקופון כבר נוצל");
+      if (coupon.status === "void") throw new Error("קוד הקופון בוטל");
+      return { valid: true, percent: Number(coupon.percent) || 0 };
+    },
+  },
+  adminCoupons: {
+    async list({ page = 1, pageSize = 20 } = {}) {
+      const all = read(LS.coupons, []);
+      const count = all.length;
+      const start = (page - 1) * pageSize;
+      return { rows: all.slice(start, start + pageSize), count };
+    },
+    async void(id) {
+      const coupons = read(LS.coupons, []);
+      const i = coupons.findIndex((c) => c.id === id);
+      if (i < 0) throw new Error("קופון לא נמצא");
+      coupons[i] = { ...coupons[i], status: "void" };
+      write(LS.coupons, coupons);
+      return coupons[i];
     },
   },
 };
@@ -436,9 +533,9 @@ function makeSupabase() {
       },
     },
     checkout: {
-      async createSession({ items, shipping_address, testAmount }) {
+      async createSession({ items, shipping_address, testAmount, couponCode }) {
         const { data, error } = await sb.functions.invoke("create-takbull-payment", {
-          body: { items, shipping_address, testAmount },
+          body: { items, shipping_address, testAmount, couponCode },
         });
         if (error) throw new Error(error.message || "יצירת ההזמנה נכשלה");
         if (data?.error) {
@@ -451,6 +548,42 @@ function makeSupabase() {
           throw new Error(data.error);
         }
         return data; // { url, order }
+      },
+    },
+    signup: {
+      async subscribe({ name, email, phone }) {
+        const { data, error } = await sb.functions.invoke("signup-coupon", { body: { name, email, phone } });
+        if (error) throw new Error(error.message || "ההרשמה נכשלה");
+        if (data?.error) throw new Error(data.error);
+        return data; // { code, percent }
+      },
+      async loginByPhone(phone) {
+        const { data, error } = await sb.functions.invoke("login-by-phone", { body: { phone } });
+        if (error) throw new Error(error.message || "ההתחברות נכשלה");
+        if (data?.error) throw new Error(data.error);
+        return data; // { found, name, email, coupon }
+      },
+    },
+    coupon: {
+      async validate(code) {
+        const { data, error } = await sb.functions.invoke("validate-coupon", { body: { code } });
+        if (error) throw new Error(error.message || "בדיקת הקופון נכשלה");
+        if (data?.error) throw new Error(data.error);
+        return data; // { valid, percent }
+      },
+    },
+    adminCoupons: {
+      async list({ page = 1, pageSize = 20 } = {}) {
+        const { data, error } = await sb.functions.invoke("admin-coupons", { body: { action: "list", page, pageSize } });
+        if (error) throw new Error(error.message || "טעינת הקופונים נכשלה");
+        if (data?.error) throw new Error(data.error);
+        return data; // { rows, count }
+      },
+      async void(id) {
+        const { data, error } = await sb.functions.invoke("admin-coupons", { body: { action: "void", id } });
+        if (error) throw new Error(error.message || "ביטול הקופון נכשל");
+        if (data?.error) throw new Error(data.error);
+        return data.coupon;
       },
     },
   };

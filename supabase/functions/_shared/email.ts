@@ -37,6 +37,35 @@ export async function sendOrderStatusEmail(order: any, status: string) {
   });
 }
 
+export async function sendSignupCouponEmail({ name, email, code, percent }: { name: string; email: string; code: string; percent: number }) {
+  if (!email) return;
+  if (!RESEND_API_KEY) {
+    console.warn("RESEND_API_KEY not set — skipping signup coupon email for", email);
+    return;
+  }
+
+  const html = `
+    <div dir="rtl" style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#3a2d3d;">
+      <h2 style="color:#7a5c86;">ברוכה הבאה ל‑ALFI${name ? `, ${escapeHtml(name)}` : ""}!</h2>
+      <p>תודה שנרשמת. הנה קוד ההנחה שלך ל‑${percent}% הנחה על ההזמנה הבאה:</p>
+      <div style="background:#ede3ee;border-radius:10px;padding:18px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:.08em;margin:20px 0;">${escapeHtml(code)}</div>
+      <p style="font-size:13px;color:#625565;">אפשר להזין את הקוד בעמוד המוצר או בקופה.</p>
+      <p style="color:#625565;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף בעבודת יד</p>
+    </div>`;
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from: FROM_ADDRESS, to: email, subject: "ALFI · קוד ההנחה שלך (5%)", html }),
+  });
+  if (!res.ok) {
+    console.error("Resend send failed (signup coupon)", res.status, await res.text());
+  }
+}
+
 async function sendOrderEmail(order: any, { subject, heading, intro }: { subject: string; heading: string; intro: string }) {
   const email = order?.shipping_address?.email;
   if (!email) {
@@ -49,15 +78,16 @@ async function sendOrderEmail(order: any, { subject, heading, intro }: { subject
   }
 
   const html = `
-    <div dir="rtl" style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#3a2c25;">
-      <h2 style="color:#bd7355;">${escapeHtml(heading)}</h2>
+    <div dir="rtl" style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;color:#3a2d3d;">
+      <h2 style="color:#7a5c86;">${escapeHtml(heading)}</h2>
       <p>${intro}</p>
       ${itemsTableHtml(order)}
       <p>סכום ביניים: ₪${Number(order.subtotal || 0).toFixed(2)}</p>
       <p>משלוח: ${order.shipping ? `₪${Number(order.shipping).toFixed(2)}` : "חינם"}</p>
+      ${Number(order.discount) > 0 ? `<p>הנחת קופון${order.coupon_code ? ` (${escapeHtml(order.coupon_code)})` : ""}: -₪${Number(order.discount).toFixed(2)}</p>` : ""}
       <p style="font-size:18px;font-weight:bold;">סה״כ: ₪${Number(order.total || 0).toFixed(2)}</p>
       ${trackLinkHtml(order)}
-      <p style="color:#8a766a;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף בעבודת יד</p>
+      <p style="color:#625565;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף בעבודת יד</p>
     </div>`;
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -85,7 +115,7 @@ function itemsTableHtml(order: any) {
   return `
     <table style="width:100%;border-collapse:collapse;margin:20px 0;">
       <thead>
-        <tr style="border-bottom:1px solid #e0cdbd;text-align:right;">
+        <tr style="border-bottom:1px solid #d6ccda;text-align:right;">
           <th style="padding:8px 0;">פריט</th><th style="padding:8px 0;">כמות</th><th style="padding:8px 0;text-align:left;">מחיר</th>
         </tr>
       </thead>
@@ -99,8 +129,8 @@ function trackLinkHtml(order: any) {
     console.warn("SITE_URL not set — email will omit the order-tracking link");
     return "";
   }
-  return `<p style="margin-top:24px;"><a href="${trackUrl}" style="display:inline-block;background:#bd7355;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:bold;">מעקב אחר ההזמנה</a></p>
-    <p style="font-size:12px;color:#a89486;">אפשר לחזור לקישור הזה בכל זמן כדי לראות את הסטטוס המעודכן.</p>`;
+  return `<p style="margin-top:24px;"><a href="${trackUrl}" style="display:inline-block;background:#7a5c86;color:#fff;text-decoration:none;padding:12px 24px;border-radius:10px;font-weight:bold;">מעקב אחר ההזמנה</a></p>
+    <p style="font-size:12px;color:#7d7086;">אפשר לחזור לקישור הזה בכל זמן כדי לראות את הסטטוס המעודכן.</p>`;
 }
 
 function escapeHtml(s: unknown) {

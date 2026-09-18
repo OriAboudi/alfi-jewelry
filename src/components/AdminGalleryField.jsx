@@ -46,7 +46,7 @@ export function AdminGalleryField({ images, onChange }) {
           <div key={url + i} style={css("position:relative;width:84px;height:84px;border-radius:10px;overflow:hidden;border:2px solid " + (i === 0 ? "var(--c-accent)" : "var(--c-line-strong)") + ";flex:none;")}>
             <img src={url} alt="" style={css("width:100%;height:100%;object-fit:cover;display:block;")} />
             {i === 0 && (
-              <div style={css("position:absolute;bottom:0;right:0;left:0;background:rgba(189,115,85,.9);color:#fff;font-size:10px;text-align:center;padding:2px 0;")}>ראשית</div>
+              <div style={css("position:absolute;bottom:0;right:0;left:0;background:rgba(122,92,134,.9);color:#fff;font-size:10px;text-align:center;padding:2px 0;")}>ראשית</div>
             )}
             <div style={css("position:absolute;top:2px;left:2px;display:flex;gap:3px;")}>
               {i !== 0 && (
@@ -57,13 +57,13 @@ export function AdminGalleryField({ images, onChange }) {
           </div>
         ))}
         {list.length < MAX_IMAGES && (
-          <label style={css("width:84px;height:84px;border-radius:10px;border:1.5px dashed #d9c4b3;display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;color:var(--c-ink-mute);font-size:13px;text-align:center;")}>
+          <label style={css("width:84px;height:84px;border-radius:10px;border:1.5px dashed var(--c-line-strong);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;color:var(--c-ink-mute);font-size:13px;text-align:center;")}>
             {busy ? "מעלה…" : "+ הוספה"}
             <input type="file" accept="image/*" onChange={handleFile} disabled={busy} style={{ display: "none" }} />
           </label>
         )}
       </div>
-      <div style={css("font-size:12px;color:#a89486;")}>{list.length}/{MAX_IMAGES} תמונות · הראשונה משמשת כתמונת השער בקטלוג ובעגלה</div>
+      <div style={css("font-size:12px;color:var(--c-ink-faint);")}>{list.length}/{MAX_IMAGES} תמונות · הראשונה משמשת כתמונת השער בקטלוג ובעגלה</div>
       {err && <div style={css("color:var(--c-danger);font-size:12.5px;margin-top:6px;")}>{err}</div>}
     </div>
   );

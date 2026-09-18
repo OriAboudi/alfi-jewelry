@@ -63,7 +63,7 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 2.4, cursor =
       onClick={onClick}
       style={{
         position: "relative", overflow: "hidden", borderRadius: radius,
-        background: "#f3ece4", width: "100%", height: "100%", cursor: IS_TOUCH ? "default" : cursor,
+        background: "#efe9f1", width: "100%", height: "100%", cursor: IS_TOUCH ? "default" : cursor,
         boxShadow: hover ? "inset 0 0 0 1px rgba(189,115,85,.35)" : "inset 0 0 0 1px rgba(0,0,0,0)",
         transition: "box-shadow .35s ease",
       }}
@@ -85,7 +85,7 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 2.4, cursor =
           width: 38, height: 38, borderRadius: "50%",
           background: "rgba(255,255,255,.92)", backdropFilter: "blur(4px)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          boxShadow: "0 6px 18px rgba(70,50,40,.18)",
+          boxShadow: "0 6px 18px rgba(58,45,61,.18)",
           opacity: hover ? 0 : 1,
           transform: hover ? "scale(.8)" : "scale(1)",
           transition: "opacity .25s ease, transform .25s ease",

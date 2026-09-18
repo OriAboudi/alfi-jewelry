@@ -67,6 +67,16 @@ Deno.serve(async (req) => {
             );
           }
         }
+        if (updated.coupon_code) {
+          // Atomic guard, same idea as the orders update above: only redeem
+          // once, even if Takbull redelivers the same IPN.
+          await supabase
+            .from("coupons")
+            .update({ status: "redeemed", redeemed_at: new Date().toISOString(), order_id: updated.id })
+            .eq("code", updated.coupon_code)
+            .eq("status", "active")
+            .then(({ error: couponErr }) => couponErr && console.error("coupon redemption failed", updated.coupon_code, couponErr.message));
+        }
         await sendOrderConfirmationEmail(updated).catch((e) => console.error("email send failed", e));
       }
     } else {

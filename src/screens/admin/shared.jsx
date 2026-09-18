@@ -53,7 +53,7 @@ export function Area({ label, value, onChange, rows = 3, placeholder }) {
 // Overlay shell shared by every editor/detail modal in the admin panel.
 export function Overlay({ onClose, maxWidth = 560, children }) {
   return (
-    <div onClick={onClose} style={css("position:fixed;inset:0;z-index:80;background:rgba(58,44,37,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;")}>
+    <div onClick={onClose} style={css("position:fixed;inset:0;z-index:80;background:rgba(46,34,49,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;")}>
       <div onClick={(e) => e.stopPropagation()} dir="rtl" style={css(`background:var(--c-bg);border-radius:20px;width:100%;max-width:${maxWidth}px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:var(--shadow-modal);`)}>
         {children}
       </div>

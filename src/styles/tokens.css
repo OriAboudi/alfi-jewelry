@@ -18,26 +18,41 @@
  * ========================================================================== */
 :root {
   /* ---------- color ----------
-     Silver-jewelry brand — single warm terracotta/copper accent (no gold:
-     the store sells silver only). Background is the original light cream. */
-  --c-bg: #faf5ef;
+     "Impressionist Garden" redesign palette (design-handoff/HANDOFF.md
+     section 2) — plum/mauve on cream, replacing the original warm
+     terracotta-on-cream identity site-wide. These --c-* tokens are what
+     every screen (Catalog/Product/Cart/Checkout/Admin, not just Home)
+     actually renders with, so retinting them here is what propagates the
+     new palette everywhere without rewriting each screen's markup. The
+     newer --ink/--cream/etc. tokens in redesign.css hold the same values
+     under the handoff's own names, used directly by the new Home/Header/
+     Footer components. Functional status colors (success/warning/danger)
+     are semantic, not brand color, and are intentionally left as-is. */
+  --c-bg: #f6f0eb;
   --c-surface: #ffffff;
-  --c-surface-glass: rgba(250, 245, 239, .78);
-  --c-surface-glass-strong: rgba(250, 245, 239, .88);
+  --c-surface-glass: rgba(249, 245, 241, .78);
+  --c-surface-glass-strong: rgba(251, 248, 245, .88);
 
-  --c-ink: #3a2c25;
-  --c-ink-soft: #6e5648;
-  --c-ink-mute: #8a766a;
-  --c-ink-faint: #a89486;
+  --c-ink: #3a2d3d;
+  --c-ink-soft: #4e4052;
+  --c-ink-mute: #625565;
+  --c-ink-faint: #7d7086;
 
-  --c-accent: #b5602f;
-  --c-accent-dark: #8a3e22;
-  --c-accent-soft: #f6ddc0;
+  --c-accent: #7a5c86;
+  --c-accent-dark: #6e4f7a;
+  --c-accent-soft: #ede3ee;
   --c-accent-contrast: #ffffff;
+  /* Translucent version for solid button/badge FILLS specifically (not
+     --c-accent-dark itself, which stays fully opaque — it's also used as
+     plain text color in several places, e.g. Story.jsx's eyebrow, and
+     making that semi-transparent would just make text look washed out).
+     "More subtle and transparent" purple, applied via this dedicated
+     token rather than by touching the shared one. */
+  --c-accent-fill: rgba(110, 79, 122, .82);
 
-  --c-line: #ecdccd;
-  --c-line-soft: #f3e8dd;
-  --c-line-strong: #e0cdbd;
+  --c-line: #e4dee6;
+  --c-line-soft: #efe9f1;
+  --c-line-strong: #d6ccda;
 
   --c-success: #5f7a45;
   --c-success-bg: #e3edd6;
@@ -76,9 +91,9 @@
   --r-pill: 999px;
 
   /* ---------- shadow ---------- */
-  --shadow-sm: 0 4px 14px rgba(70, 50, 40, .08);
-  --shadow-md: 0 14px 36px rgba(140, 90, 60, .10);
-  --shadow-lg: 0 24px 70px rgba(70, 50, 40, .12);
+  --shadow-sm: 0 4px 14px rgba(58, 45, 61, .1);
+  --shadow-md: 0 14px 36px rgba(58, 45, 61, .12);
+  --shadow-lg: 0 24px 70px rgba(58, 45, 61, .14);
   --shadow-modal: 0 30px 80px rgba(0, 0, 0, .3);
 
   /* ---------- motion ---------- */

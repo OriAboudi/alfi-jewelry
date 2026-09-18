@@ -1,0 +1,361 @@
+/* =============================================================================
+ *  ALFI · Home page redesign — "Impressionist Garden" (design-handoff/).
+ *  Additive design system: these tokens/classes sit alongside the existing
+ *  --c-* tokens in tokens.css (still used by Catalog/Product/Cart/Checkout/
+ *  Admin, untouched by this pass) rather than replacing them. Values are
+ *  copied verbatim from design-handoff/HANDOFF.md section 2 and the two
+ *  reference HTML files — not approximated.
+ * ========================================================================== */
+.serif { font-family: "Frank Ruhl Libre", Georgia, serif; }
+
+:root {
+  --ink: #3A2D3D;
+  --ink-deep: #2E2231;
+  --text-body: #4E4052;
+  --text-muted: #625565;
+  --accent2: #7A5C86;
+  --accent2-deep: #6E4F7A;
+  --cream: #F6F0EB;
+  --divider-dark: #6A5A70;
+  /* Translucent fill for solid button/badge/chip backgrounds specifically —
+     --ink itself stays fully opaque (it's the primary body-text color
+     everywhere), this is only for the "filled dark" button/badge look, so
+     it reads as a softer, more subtle purple instead of a flat solid block. */
+  --ink-fill: rgba(58, 45, 61, .82);
+}
+
+/* ---------- glass surfaces ---------- */
+.glass {
+  background: rgba(249, 245, 241, .72);
+  -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  backdrop-filter: blur(18px) saturate(1.1);
+  border: 1px solid rgba(255, 255, 255, .65);
+}
+.glass-strong {
+  background: rgba(251, 248, 245, .86);
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, .7);
+}
+/* No backdrop-filter support -> more opaque fallback (still meets contrast). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass { background: rgba(249, 245, 241, .92); }
+  .glass-strong { background: rgba(251, 248, 245, .95); }
+}
+
+.rd-footer-glass {
+  background: rgba(58, 45, 61, .9);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+}
+@media (max-width: 767px) {
+  .rd-footer-glass { -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+}
+
+/* ---------- fixed page background (painting + readability veil) ----------
+   position:fixed, not background-attachment:fixed — the latter is broken on
+   iOS Safari (see HANDOFF.md section 3's implementation note). Sits behind
+   everything (z-index -2/-1) and never scrolls. */
+.rd-bg-paint {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image: url(/floral-bg.jpg);
+  background-size: cover;
+  background-position: center;
+  filter: blur(4px) saturate(1.08);
+  transform: scale(1.02);
+}
+.rd-bg-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(246, 240, 235, .2) 0px, rgba(246, 240, 235, .34) 900px, rgba(246, 240, 235, .48) 1800px, rgba(246, 240, 235, .42) 4400px, rgba(58, 45, 61, .25) 100%);
+}
+@media (max-width: 767px) {
+  .rd-bg-paint { background-position: 45% center; filter: blur(3px) saturate(1.08); }
+  .rd-bg-veil { background: linear-gradient(180deg, rgba(246, 240, 235, .2) 0px, rgba(246, 240, 235, .35) 700px, rgba(246, 240, 235, .5) 1400px, rgba(246, 240, 235, .42) 3400px, rgba(58, 45, 61, .25) 100%); }
+}
+
+/* ---------- hero image: sharp copy + slow zoom + bottom fade ---------- */
+.rd-hero-img {
+  background-size: cover;
+  background-position: center 30%;
+  animation: rd-slowzoom 18s ease-out both;
+  -webkit-mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+}
+@media (max-width: 767px) {
+  .rd-hero-img { background-position: 40% 35%; animation-duration: 16s; -webkit-mask-image: linear-gradient(180deg, #000 62%, transparent 100%); mask-image: linear-gradient(180deg, #000 62%, transparent 100%); }
+}
+@keyframes rd-slowzoom { from { transform: scale(1.12); } to { transform: scale(1); } }
+
+/* ---------- rise-in on load (hero + section headers) ---------- */
+@keyframes rd-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+.rd-rise { animation: rd-rise 1.1s cubic-bezier(.2, .7, .1, 1) both; }
+.rd-d1 { animation-delay: .15s; }
+.rd-d2 { animation-delay: .3s; }
+.rd-d3 { animation-delay: .45s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-rise, .rd-hero-img { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .rd-card, .rd-cat, .rd-promo, .rd-card .rd-ph, .rd-cat .rd-img, .rd-promo .rd-promo-img {
+    transition: none !important;
+  }
+  .rd-card:hover, .rd-cat:hover { transform: none !important; box-shadow: none !important; }
+}
+
+/* ---------- nav hover underline (grows from the right, RTL) ---------- */
+.rd-nav a { position: relative; padding: 10px 0; color: var(--ink); }
+.rd-nav a::after { content: ""; position: absolute; right: 0; bottom: 4px; height: 1px; width: 0; background: var(--ink); transition: width .4s ease; }
+.rd-nav a:hover::after, .rd-nav a[aria-current="page"]::after { width: 100%; }
+
+/* ---------- slider rail ---------- */
+.rd-rail { scrollbar-width: none; scroll-snap-type: x mandatory; gap: 12px; }
+.rd-rail::-webkit-scrollbar { display: none; }
+.rd-snap { scroll-snap-align: start; }
+.rd-rail-gutter { padding-right: 16px; padding-left: 16px; scroll-padding-inline: 16px; }
+.rd-progress-gutter { margin: 0 16px; }
+/* Width cap on the slider sections specifically (not header/footer/other
+   sections, which stay full-bleed) — without this, on very wide monitors
+   the rail just keeps showing more and more cards instead of staying a
+   normal size. */
+/* No auto-centering margin — starts flush at the page's own start edge
+   (right, in RTL), same as the header/hero/other full-bleed sections above
+   and below it, instead of floating independently centered with its own
+   uneven-looking margins. */
+.rd-slider-max { max-width: 1400px; margin-right: 0; margin-left: auto; }
+@media (min-width: 768px) {
+  .rd-rail { gap: 24px; }
+}
+@media (min-width: 1024px) {
+  /* Small gutter, not a wide reserved margin — the arrows now sit over the
+     image itself instead of floating beside it, so cards can start close
+     to the true page edge. */
+  .rd-rail-gutter { padding-right: 24px; padding-left: 24px; scroll-padding-inline: 24px; }
+  .rd-progress-gutter { margin: 0 24px; }
+}
+
+/* ---------- product card ---------- */
+.rd-card { transition: transform .6s cubic-bezier(.2, .7, .1, 1), box-shadow .6s, background .2s ease; padding: 8px 8px 12px; gap: 12px; }
+.rd-card:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -34px rgba(58, 45, 61, .5); }
+.rd-card .rd-ph { transition: transform 1s cubic-bezier(.2, .7, .1, 1); }
+.rd-card:hover .rd-ph { transform: scale(1.05); }
+.rd-card:active .rd-ph { transform: scale(.97); }
+/* Same "lighter purple on tap" feedback as the mobile collection tiles —
+   the card's own glass-strong background stays the resting state, this
+   just tints it lighter purple for the moment it's pressed. */
+.rd-card:active { background: rgba(122, 92, 134, .06); }
+
+.rd-card-width { flex: 0 0 260px; }
+.rd-card-img { height: 230px; }
+.rd-card-name { font-size: 17px; }
+.rd-card-meta { font-size: 12px; }
+.rd-card-price { font-size: 15px; }
+.rd-fav-btn { display: none; }
+
+.rd-add-btn {
+  height: 46px;
+  border: 1px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  font-size: 14px;
+  letter-spacing: .06em;
+  transition: background .35s ease, color .35s ease, border-color .35s ease;
+}
+.rd-add-btn:disabled { opacity: .55; }
+.rd-add-btn.rd-outline:hover:not(:disabled) { background: var(--ink-fill); color: var(--cream); }
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .rd-card-width { flex: 0 0 300px; }
+  .rd-card-img { height: 260px; }
+}
+@media (min-width: 1024px) {
+  .rd-card { padding: 10px 10px 14px; gap: 14px; }
+  .rd-card-width { flex: 0 0 340px; }
+  .rd-card-img { height: 300px; }
+  .rd-card-name { font-size: 19px; }
+  .rd-card-meta { font-size: 13px; }
+  .rd-card-price { font-size: 16px; }
+  .rd-fav-btn { display: flex; }
+  .rd-add-btn {
+    height: 50px;
+    font-size: 15px;
+  }
+}
+
+/* ---------- collection card ---------- */
+.rd-cat { transition: transform .6s cubic-bezier(.2, .7, .1, 1), box-shadow .6s; }
+.rd-cat:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(58, 45, 61, .45); }
+.rd-cat .rd-img { transition: transform 1.2s cubic-bezier(.2, .7, .1, 1); }
+.rd-cat:hover .rd-img { transform: scale(1.05); }
+.rd-cat:active .rd-img { transform: scale(.97); }
+.rd-cat .rd-go { transition: background .35s, color .35s; }
+.rd-cat:hover .rd-go { background: var(--ink-fill); color: var(--cream); }
+
+/* ---------- arrows (slider) ---------- */
+.rd-arrow { transition: background .3s, color .3s; }
+.rd-arrow:hover { background: var(--ink-fill) !important; color: var(--cream) !important; }
+
+/* Prev/next arrows overlaid on the product photo itself (desktop only), at
+   the rail's own edges — not floating out in a reserved side gutter. */
+.rd-rail-arrow {
+  display: none;
+  position: absolute;
+  /* Centered on the product photo itself, not the card's full height
+     (name/price/button add ~110px below the image) — a plain 50%-of-
+     container value would sit low, part-way into the text instead of on
+     the image, which isn't a comfortable target. */
+  top: 141px;
+  transform: translateY(-50%);
+  width: 52px;
+  height: 52px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  border: none;
+  background: rgba(246, 240, 235, .85);
+  color: var(--ink);
+  cursor: pointer;
+  z-index: 2;
+  box-shadow: 0 4px 14px rgba(58, 45, 61, .2);
+}
+.rd-rail-arrow-left { left: 12px; }
+.rd-rail-arrow-right { right: 12px; }
+@media (min-width: 1024px) {
+  .rd-rail-arrow { display: flex; top: 168px; }
+  /* Gutter is 80px at this breakpoint (.rd-rail-gutter) — 12px keeps a
+     clear ~16px gap before the first/last card, instead of sitting on it. */
+  .rd-rail-arrow-left { left: 12px; }
+  .rd-rail-arrow-right { right: 12px; }
+}
+
+/* ---------- promo banner image zoom ---------- */
+.rd-promo .rd-promo-img { transition: transform 1.4s cubic-bezier(.2, .7, .1, 1); }
+.rd-promo:hover .rd-promo-img { transform: scale(1.04); }
+
+/* ---------- generic filled/outline hover-fill button ---------- */
+.rd-btn { transition: background .35s ease, color .35s ease, border-color .35s ease; }
+.rd-btn-outline:hover { background: var(--ink-fill) !important; color: var(--cream) !important; }
+
+/* ---------- header: desktop/mobile bar swap ---------- */
+.rd-header-desktop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rd-header-mobile { display: none; }
+@media (max-width: 767px) {
+  .rd-header-desktop { display: none; }
+  .rd-header-mobile { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- footer: desktop/mobile layout swap ---------- */
+.rd-footer-desktop { display: flex; }
+.rd-footer-mobile { display: none; }
+@media (max-width: 767px) {
+  .rd-footer-desktop { display: none; }
+  .rd-footer-mobile { display: flex; }
+}
+
+/* ---------- footer accordion chevron (mobile) ---------- */
+.rd-acc-plus { transition: transform .3s ease; display: inline-block; }
+.rd-acc-open .rd-acc-plus { transform: rotate(45deg); }
+
+/* ---------- responsive show/hide (mobile <1024px shows .rd-only-mobile;
+   desktop >=1024px shows .rd-only-desktop) ----------
+   The "hide" declarations carry !important: several of these elements also
+   set their own inline `display` (flex, for layout) via the style prop —
+   an inline style otherwise beats any plain class rule regardless of media
+   query, which would silently defeat the hide. The "show" declarations
+   deliberately have no !important, so an element's own inline `display`
+   (e.g. flex) wins once it's no longer force-hidden. */
+.rd-only-mobile { display: inline; }
+.rd-only-desktop { display: none !important; }
+@media (min-width: 1024px) {
+  .rd-only-mobile { display: none !important; }
+  .rd-only-desktop { display: inline; }
+}
+div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
+@media (min-width: 1024px) {
+  div.rd-only-desktop, section.rd-only-desktop { display: block; }
+}
+
+/* ---------- page gutter (content max-width 1440px, 16px/64px sides) ---------- */
+.rd-section-pad { padding: 44px 16px 0; box-sizing: border-box; }
+.rd-section-pad-b { padding: 44px 16px 48px; box-sizing: border-box; }
+@media (min-width: 1024px) {
+  .rd-section-pad { padding: 96px 64px 0; }
+  .rd-section-pad-b { padding: 0 64px 110px; }
+}
+
+/* ---------- hero ---------- */
+.rd-hero { height: 660px; padding: 0 16px 24px; align-items: flex-end; }
+.rd-hero-panel { width: 100%; padding: 26px 22px 22px; gap: 14px; }
+.rd-hero-h1 { font-size: 46px; line-height: 1.04; }
+.rd-hero-p { font-size: 16px; line-height: 1.6; }
+.rd-hero-actions { margin-top: 4px; }
+.rd-hero-actions .rd-btn { flex: 1; }
+@media (min-width: 1024px) {
+  .rd-hero { height: 780px; padding: 0 64px; align-items: center; }
+  .rd-hero-panel { width: 620px; padding: 56px 56px 52px; gap: 26px; }
+  .rd-hero-h1 { font-size: 84px; line-height: 1.02; }
+  .rd-hero-p { font-size: 20px; line-height: 1.7; max-width: 460px; }
+  .rd-hero-actions .rd-btn { flex: none; }
+}
+
+/* ---------- product/section header strip (glass) ---------- */
+.rd-slider-head, .rd-collections-head { margin: 0 16px; padding: 12px 18px; }
+.rd-slider-title { font-size: 30px; }
+@media (min-width: 1024px) {
+  .rd-slider-head, .rd-collections-head { margin: 0 64px; padding: 22px 32px; }
+  .rd-slider-title { font-size: 46px; }
+}
+
+/* ---------- collections: desktop 2x2 split card / mobile compact grid ---------- */
+.rd-cat-desktop { display: none; }
+/* Plain white tiles, hairline border, no shadow/glass wrapper — a real
+   (if thin) 1px divider between cards, not a big gap. */
+.rd-cat-grid-mobile { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; margin: 0 12px; background: var(--c-line); border: 1px solid var(--c-line); }
+/* Default: a subtle, translucent purple wash instead of plain white.
+   :active (tap): a lighter shade of the same purple — real-time feedback
+   that the tap registered, not just the image-scale on .rd-tile. */
+.rd-cat-mobile { display: flex; flex-direction: column; background: rgba(122, 92, 134, .14); cursor: pointer; transition: background .2s ease; }
+.rd-cat-mobile:active { background: rgba(122, 92, 134, .06); }
+.rd-tile { aspect-ratio: 1 / 1.5; }
+.rd-cat-grid { display: none; }
+@media (min-width: 1024px) {
+  .rd-cat-desktop { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; height: 400px; padding: 12px; box-sizing: border-box; cursor: pointer; }
+  .rd-cat-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 0 64px; }
+  .rd-cat-text { padding: 36px 36px 28px; }
+  .rd-cat-name { font-size: 52px; }
+  .rd-cat-grid-mobile { display: none; }
+}
+
+/* ---------- promo banner: mobile stacked / desktop split ---------- */
+/* Full screen width, unlike every other section — no side gutter, top/
+   bottom padding only. */
+.rd-promo-section { padding: 60px 0 48px; box-sizing: border-box; }
+@media (min-width: 1024px) {
+  .rd-promo-section { padding: 90px 0 110px; }
+}
+.rd-promo-box { display: flex; flex-direction: column; padding: 8px; }
+.rd-promo .rd-promo-img { position: relative; height: 240px; }
+.rd-promo-text { padding: 24px 16px 18px; gap: 14px; }
+.rd-promo-h2 { font-size: 46px; line-height: 1; }
+.rd-promo-p { font-size: 15px; line-height: 1.6; }
+.rd-promo-cta { height: 54px; width: 100%; justify-content: center; }
+@media (min-width: 1024px) {
+  .rd-promo-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; height: 540px; padding: 14px; box-sizing: border-box; }
+  .rd-promo .rd-promo-img { height: auto; position: absolute; inset: 0; }
+  .rd-promo-text { padding: 56px 72px; gap: 26px; }
+  .rd-promo-h2 { font-size: 76px; }
+  .rd-promo-p { font-size: 19px; line-height: 1.7; max-width: 440px; }
+  .rd-promo-cta { height: 58px; width: auto; padding: 0 44px; }
+}
+
+/* ---------- brand story panel ---------- */
+.rd-story-box { margin: 0 16px; padding: 32px 24px 30px; display: flex; flex-direction: column; gap: 16px; }
+.rd-story-h2 { font-size: 38px; line-height: 1.1; }
+.rd-story-p { font-size: 17px; line-height: 1.75; }
+@media (min-width: 1024px) {
+  .rd-story-box { margin: 0 64px; padding: 72px 96px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 96px; align-items: center; }
+  .rd-story-h2 { font-size: 60px; line-height: 1.1; }
+  .rd-story-p { font-size: 19px; line-height: 1.8; }
+}
