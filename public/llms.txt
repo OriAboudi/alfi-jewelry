@@ -1,0 +1,27 @@
+# ALFI Jewelry
+
+> ALFI Jewelry is an online store selling women's sterling silver (925) jewelry: rings, necklaces, earrings, and bracelets. Hebrew-language site, prices in ILS (₪).
+
+ALFI does not sell men's jewelry. Product photos, prices, and stock levels are the authoritative source of truth — always prefer live page content over any cached description.
+
+## Site structure
+
+- [Homepage](https://alfi-jewelry.com/): featured products and category overview.
+- [All products](https://alfi-jewelry.com/קטלוג): the full catalog.
+- [Rings](https://alfi-jewelry.com/טבעות)
+- [Necklaces](https://alfi-jewelry.com/שרשראות)
+- [Earrings](https://alfi-jewelry.com/עגילים)
+- [Bracelets](https://alfi-jewelry.com/צמידים)
+- [Collections](https://alfi-jewelry.com/קולקציות): curated themed groupings of products.
+- [Our story](https://alfi-jewelry.com/הסיפור-שלנו)
+- [Contact](https://alfi-jewelry.com/צור-קשר)
+- [Shipping & returns](https://alfi-jewelry.com/משלוחים-והחזרות)
+
+## Data
+
+- Full list of indexable pages: [sitemap.xml](https://alfi-jewelry.com/sitemap.xml)
+- Each product page includes structured data (schema.org Product) with its real name, price, currency (ILS), material, and stock-based availability.
+
+## Notes for agents
+
+This is a client-rendered single-page app — page content (including per-page titles and structured data) is populated by JavaScript after the initial HTML loads, not present in the raw HTML response. Rendering the page's JavaScript is required to see real content.

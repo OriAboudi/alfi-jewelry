@@ -14,6 +14,7 @@
  *  Every method returns a Promise.
  * ========================================================================== */
 import { createClient } from "@supabase/supabase-js";
+import { compressImage } from "./imageCompress.js";
 
 const SB_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -525,8 +526,13 @@ function makeSupabase() {
     },
     storage: {
       async uploadImage(file) {
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt(file)}`;
-        const { error } = await sb.storage.from(BUCKET).upload(path, file, { cacheControl: "3600", upsert: false });
+        // Every upload gets a unique, never-reused path (timestamp + random
+        // suffix, upsert:false) — content-addressed in effect, so a full
+        // year of caching is always safe: a changed image is a new path,
+        // never a mutated one.
+        const uploadFile = await compressImage(file);
+        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${fileExt(uploadFile)}`;
+        const { error } = await sb.storage.from(BUCKET).upload(path, uploadFile, { cacheControl: "31536000", upsert: false });
         if (error) throw new Error("העלאת התמונה נכשלה: " + error.message);
         const { data } = sb.storage.from(BUCKET).getPublicUrl(path);
         return data.publicUrl;

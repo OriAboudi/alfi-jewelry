@@ -50,9 +50,9 @@ export function AdminGalleryField({ images, onChange }) {
             )}
             <div style={css("position:absolute;top:2px;left:2px;display:flex;gap:3px;")}>
               {i !== 0 && (
-                <button type="button" onClick={() => moveToFront(i)} title="הפוך לתמונה ראשית" style={css("width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,.92);cursor:pointer;font-size:11px;line-height:1;")}>★</button>
+                <button type="button" onClick={() => moveToFront(i)} title="הפוך לתמונה ראשית" aria-label="הפוך לתמונה ראשית" style={css("width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,.92);cursor:pointer;font-size:11px;line-height:1;")}>★</button>
               )}
-              <button type="button" onClick={() => removeAt(i)} title="הסרה" style={css("width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,.92);cursor:pointer;font-size:12px;line-height:1;color:var(--c-danger);")}>✕</button>
+              <button type="button" onClick={() => removeAt(i)} title="הסרה" aria-label="הסרת תמונה" style={css("width:20px;height:20px;border:none;border-radius:6px;background:rgba(255,255,255,.92);cursor:pointer;font-size:12px;line-height:1;color:var(--c-danger);")}>✕</button>
             </div>
           </div>
         ))}

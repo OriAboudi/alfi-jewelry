@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- HERO_PRELOAD_START -->
+    <link rel="preload" as="image" href="https://vlulgkvthummpnauryoo.supabase.co/storage/v1/object/public/product-images/1789847215503-sm1jwz.webp" media="(min-width: 768px)" fetchpriority="high" />
+    <link rel="preload" as="image" href="https://vlulgkvthummpnauryoo.supabase.co/storage/v1/object/public/product-images/1789847158399-fmqshi.webp" media="(max-width: 767px)" fetchpriority="high" />
+    <!-- HERO_PRELOAD_END -->
     <title>ALFI · תכשיטי כסף סטרלינג 925 לאישה</title>
     <meta name="description" content="ALFI — תכשיטי כסף סטרלינג 925 בהשראת הטבע. טבעות, שרשראות, עגילים וצמידים." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -32,7 +36,12 @@
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700&family=Assistant:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <!-- Loaded non-render-blocking (the media="print" swap trick): the font
+         CSS itself is tiny, but waiting on its round-trip before first paint
+         is pure delay — font-display=swap already means text renders with a
+         fallback font immediately either way and swaps in once this loads. -->
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700&family=Assistant:wght@300;400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@300;400;500;700&family=Assistant:wght@300;400;500;600;700&display=swap" rel="stylesheet" /></noscript>
   </head>
   <body>
     <div id="root"></div>

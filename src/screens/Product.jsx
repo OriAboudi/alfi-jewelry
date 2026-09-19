@@ -94,10 +94,15 @@ export function Product() {
                 <div
                   key={url + i}
                   onClick={() => setActiveIdx(i)}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`תמונה ${i + 1}`}
+                  aria-current={i === activeIdx}
+                  onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setActiveIdx(i); } }}
                   className="tap-target"
                   style={css(`width:64px;height:64px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;flex:none;border:2px solid ${i === activeIdx ? "var(--c-accent)" : "transparent"};opacity:${i === activeIdx ? 1 : .75};transition:opacity var(--dur) var(--ease);`)}
                 >
-                  <img src={url} alt={`${sel.name} – תמונה ${i + 1}`} style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
+                  <img src={url} alt={`${sel.name} – תמונה ${i + 1}`} loading="lazy" decoding="async" style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
                 </div>
               ))}
             </div>

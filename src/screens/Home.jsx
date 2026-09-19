@@ -114,7 +114,7 @@ export function Home() {
                 <div style={css("overflow:hidden;")}>
                   <div className="rd-img" style={css(`border-radius:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background-color:${GRAD_CARD};width:100%;height:100%;`)}>
                     {img ? (
-                      <img src={img} alt={`${c} כסף 925`} style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
+                      <img src={img} alt={`${c} כסף 925`} loading="lazy" decoding="async" style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
                     ) : (
                       <Disc style="width:36%;aspect-ratio:1;" />
                     )}
@@ -139,7 +139,7 @@ export function Home() {
               <a key={c} href={pathFor("catalog", { catFilter: c })} onClick={(e) => { e.preventDefault(); goCat(c); }} onKeyDown={(e) => { if (e.key === " ") { e.preventDefault(); goCat(c); } }} tabIndex={0} aria-label={c} className="rd-cat-mobile tap-target">
                 <div className="rd-tile" style={css(`border-radius:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background-color:${GRAD_CARD};`)}>
                   {img ? (
-                    <img src={img} alt={`${c} כסף 925`} style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
+                    <img src={img} alt={`${c} כסף 925`} loading="lazy" decoding="async" style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
                   ) : (
                     <Disc style="width:62%;aspect-ratio:1;" />
                   )}

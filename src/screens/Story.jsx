@@ -37,7 +37,7 @@ export function Story() {
           {values.map((v, i) => (
             <div key={i} className="card" style={css("background:rgba(255,255,255,.72);padding:32px 26px;text-align:center;")}>
               <FlowerMark width={64} height={30} sw={1.6} style={{ margin: "0 auto 16px", display: "block" }} />
-              <h3 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:10px;")}>{v.title}</h3>
+              <h2 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:10px;")}>{v.title}</h2>
               <p style={css("font-size:14.5px;color:var(--c-ink-soft);line-height:1.6;")}>{v.text}</p>
             </div>
           ))}

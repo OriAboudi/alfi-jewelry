@@ -6,7 +6,7 @@
   "description": "ALFI — חנות תכשיטי כסף (React + Vite + Supabase)",
   "scripts": {
     "dev": "vite",
-    "prebuild": "node scripts/generate-sitemap.mjs",
+    "prebuild": "node scripts/generate-sitemap.mjs && node scripts/inject-hero-preload.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

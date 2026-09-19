@@ -56,6 +56,8 @@ export function RedesignProductCard({ product: p, index = 0 }) {
           <img
             src={p.image}
             alt={`${p.name} – ${p.category} ${p.material || "כסף 925"}`}
+            loading="lazy"
+            decoding="async"
             style={css("position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;")}
           />
         ) : (

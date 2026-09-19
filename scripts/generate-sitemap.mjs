@@ -14,18 +14,10 @@
 // Node's --env-file flag, which hard-errors when the file is missing
 // (exactly the Netlify case).
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { writeFileSync } from "node:fs";
+import { loadSupabaseEnv } from "./supabaseEnv.mjs";
 
 const SITE = "https://alfi-jewelry.com";
-
-function loadDotEnvIfNeeded() {
-  if (process.env.VITE_SUPABASE_URL && process.env.VITE_SUPABASE_ANON_KEY) return;
-  if (!existsSync(".env")) return;
-  for (const line of readFileSync(".env", "utf8").split("\n")) {
-    const m = line.match(/^\s*([\w.]+)\s*=\s*(.*)\s*$/);
-    if (m && !process.env[m[1]]) process.env[m[1]] = (m[2] || "").replace(/^["']|["']$/g, "");
-  }
-}
 
 function slugify(str) {
   return String(str || "").trim().replace(/\s+/g, "-").replace(/["'/?#%\\]/g, "");
@@ -36,7 +28,7 @@ function urlEntry(path) {
 }
 
 async function main() {
-  loadDotEnvIfNeeded();
+  const { url, key } = loadSupabaseEnv();
 
   const staticPages = [
     "/",
@@ -50,8 +42,6 @@ async function main() {
   ];
 
   let products = [];
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_ANON_KEY;
   if (url && key) {
     try {
       const supabase = createClient(url, key);

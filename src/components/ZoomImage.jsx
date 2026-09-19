@@ -72,6 +72,8 @@ export function ZoomImage({ src, alt = "", radius = 18, onClick, zoomScale = 2.4
         <img
           src={src}
           alt={alt}
+          fetchpriority="high"
+          decoding="async"
           style={{
             width: "100%", height: "100%",
             objectFit: "cover", objectPosition: "center",

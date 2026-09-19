@@ -1,11 +1,10 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { css } from "./lib/css.js";
 import { useStore } from "./context/StoreContext.jsx";
 import { Header } from "./components/Header.jsx";
 import { Footer } from "./components/Footer.jsx";
 import { SignupCouponPopup } from "./components/SignupCouponPopup.jsx";
 import { PhoneLoginPopup } from "./components/PhoneLoginPopup.jsx";
-import { AdminLogin } from "./screens/AdminLogin.jsx";
 import { Home } from "./screens/Home.jsx";
 import { Catalog } from "./screens/Catalog.jsx";
 import { Product } from "./screens/Product.jsx";
@@ -23,7 +22,12 @@ import { Contact } from "./screens/Contact.jsx";
 import { Privacy } from "./screens/Privacy.jsx";
 import { Terms } from "./screens/Terms.jsx";
 import { Shipping } from "./screens/Shipping.jsx";
-import { Admin } from "./screens/Admin.jsx";
+
+// Admin is a large, internal-only tool (9 tabs' worth of code) that ~0% of
+// real visits ever touch — lazy-loading it keeps it out of the bundle every
+// storefront customer downloads, instead of shipping it unconditionally.
+const Admin = lazy(() => import("./screens/Admin.jsx").then((m) => ({ default: m.Admin })));
+const AdminLogin = lazy(() => import("./screens/AdminLogin.jsx").then((m) => ({ default: m.AdminLogin })));
 
 const SCREENS = {
   home: Home,
@@ -65,7 +69,9 @@ export default function App() {
   if (screen === "admin-login") {
     return (
       <div dir="rtl" className="r-page-bg" style={css(PAGE_BG)}>
-        <AdminLogin />
+        <Suspense fallback={null}>
+          <AdminLogin />
+        </Suspense>
       </div>
     );
   }
@@ -88,7 +94,11 @@ export default function App() {
           full-bleed.) */}
       <div style={css("position:relative;z-index:1;")}>
         {showChrome && <Header />}
-        <Screen />
+        <main>
+          <Suspense fallback={null}>
+            <Screen />
+          </Suspense>
+        </main>
         {showChrome && <Footer />}
         {showChrome && <SignupCouponPopup />}
         {showChrome && <PhoneLoginPopup />}
