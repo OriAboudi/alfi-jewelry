@@ -2,9 +2,10 @@
 // original monolithic Admin.jsx so each tab file can stay focused.
 import React from "react";
 import { css } from "../../lib/css.js";
+import { CAT_NAMES } from "../../lib/categories.js";
 
 export const STATUS_OPTS = ["התקבלה", "בהכנה", "נשלחה", "בדרך", "נמסר", "בוטלה"];
-export const CAT_NAMES = ["טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
+export { CAT_NAMES };
 // The 4 core jewelry categories, for inventory-by-category summaries —
 // Accessories excluded, matching the homepage's 4-tile convention.
 export const CORE_CAT_NAMES = ["טבעות", "עגילים", "שרשראות", "צמידים"];

@@ -3,9 +3,11 @@ import { css } from "../lib/css.js";
 import { fmt, fmtDateTime } from "../lib/format.js";
 import { OrderProgress } from "../components/OrderProgress.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Status() {
   const { lastOrder: lo, go, refreshOrder } = useStore();
+  useSeoTags({ noindex: true });
   const [loading, setLoading] = useState(!!lo?.id);
 
   useEffect(() => {

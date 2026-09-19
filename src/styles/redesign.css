@@ -149,6 +149,13 @@
 
 .rd-card-width { flex: 0 0 260px; }
 .rd-card-img { height: 230px; }
+/* Catalog's single-column mobile layout (.grid-3 below 560px) makes the card
+   nearly full viewport width while the slider's fixed height stays tuned for
+   a 260px-wide card — on a wide card that crops far more of the product out
+   of frame, so it scales with width here instead of a hard cap. */
+@media (max-width: 559px) {
+  .grid-3 .rd-card-img { height: auto; aspect-ratio: 1 / 1; }
+}
 .rd-card-name { font-size: 17px; }
 .rd-card-meta { font-size: 12px; }
 .rd-card-price { font-size: 15px; }
@@ -244,6 +251,15 @@
 @media (max-width: 767px) {
   .rd-header-desktop { display: none; }
   .rd-header-mobile { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* ---------- product page "אולי יתאים גם": grid on desktop, slider on mobile ---------- */
+.r-related-slider { display: none; }
+.r-more-slider { display: none; }
+@media (max-width: 767px) {
+  .r-related-grid { display: none; }
+  .r-related-slider { display: block; }
+  .r-more-slider { display: block; }
 }
 
 /* ---------- footer: desktop/mobile layout swap ---------- */

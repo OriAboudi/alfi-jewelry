@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
-import { FlowerMark } from "./Ornaments.jsx";
 
 const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:#fff;transition:border-color .2s;";
 const fieldErrStyle = fieldStyle.replace("var(--c-line-strong)", "#d98a72");
@@ -43,7 +42,7 @@ export function PhoneLoginPopup() {
       >
         <span onClick={closePhoneLogin} className="tap-target" style={css("position:absolute;top:8px;left:8px;cursor:pointer;font-size:20px;color:var(--c-ink-mute);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;")}>×</span>
 
-        <FlowerMark width={72} height={28} variant="simple" style={{ margin: "0 auto 8px" }} />
+        <div className="serif" style={css("font-size:24px;letter-spacing:.36em;padding-right:.36em;color:var(--ink);margin-bottom:10px;")}>ALFI</div>
 
         <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:6px;")}>כניסה עם מספר טלפון</h2>
         <p style={css("font-size:12.5px;color:var(--c-ink-soft);margin-bottom:16px;")}>הזינו את הטלפון שנרשמתם איתו — אם עדיין לא נרשמתם, ניצור לכם חשבון וקופון חדש.</p>

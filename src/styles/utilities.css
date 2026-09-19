@@ -30,8 +30,8 @@
   background: var(--c-surface-glass);
   backdrop-filter: blur(7px);
   -webkit-backdrop-filter: blur(7px);
-  border-radius: var(--r-xl);
-  box-shadow: var(--shadow-lg);
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .card {

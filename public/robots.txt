@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /portal-09340b71e2da
+
+Sitemap: https://alfi-jewelry.com/sitemap.xml

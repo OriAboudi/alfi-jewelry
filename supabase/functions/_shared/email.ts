@@ -50,7 +50,7 @@ export async function sendSignupCouponEmail({ name, email, code, percent }: { na
       <p>תודה שנרשמת. הנה קוד ההנחה שלך ל‑${percent}% הנחה על ההזמנה הבאה:</p>
       <div style="background:#ede3ee;border-radius:10px;padding:18px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:.08em;margin:20px 0;">${escapeHtml(code)}</div>
       <p style="font-size:13px;color:#625565;">אפשר להזין את הקוד בעמוד המוצר או בקופה.</p>
-      <p style="color:#625565;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף בעבודת יד</p>
+      <p style="color:#625565;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף סטרלינג 925 לאישה</p>
     </div>`;
 
   const res = await fetch("https://api.resend.com/emails", {
@@ -87,7 +87,7 @@ async function sendOrderEmail(order: any, { subject, heading, intro }: { subject
       ${Number(order.discount) > 0 ? `<p>הנחת קופון${order.coupon_code ? ` (${escapeHtml(order.coupon_code)})` : ""}: -₪${Number(order.discount).toFixed(2)}</p>` : ""}
       <p style="font-size:18px;font-weight:bold;">סה״כ: ₪${Number(order.total || 0).toFixed(2)}</p>
       ${trackLinkHtml(order)}
-      <p style="color:#625565;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף בעבודת יד</p>
+      <p style="color:#625565;font-size:13px;margin-top:30px;">ALFI · תכשיטי כסף סטרלינג 925 לאישה</p>
     </div>`;
 
   const res = await fetch("https://api.resend.com/emails", {

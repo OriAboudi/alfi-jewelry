@@ -3,8 +3,9 @@ import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { useStore } from "../context/StoreContext.jsx";
-
-const BASE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים", "אקססוריז"];
+import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
+import { pathFor } from "../lib/routes.js";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 const BASE_MATERIALS = ["כסף 925", "כסף + זירקון", "כסף מוזהב"];
 const SORTS = [
   ["featured", "מומלצים"],
@@ -48,10 +49,28 @@ export function Catalog() {
   const sortLabel = SORTS.find(([k]) => k === sortBy)[1];
   const activeFilterCount = (catFilter !== "הכל" ? 1 : 0) + (matFilter !== "הכל" ? 1 : 0) + (priceMax !== null ? 1 : 0) + (inStockOnly ? 1 : 0);
 
+  const isCategory = catFilter !== "הכל";
+  const canonicalPath = pathFor("catalog", { catFilter });
+  useSeoTags({
+    title: isCategory ? `${catFilter} · ALFI` : "כל התכשיטים · ALFI",
+    description: isCategory
+      ? `${catFilter} בכסף סטרלינג 925 — קולקציית ALFI.`
+      : "כל תכשיטי הכסף של ALFI במקום אחד — טבעות, שרשראות, עגילים וצמידים בכסף סטרלינג 925.",
+    canonical: canonicalPath,
+    jsonLd: isCategory ? {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "בית", item: "https://alfi-jewelry.com/" },
+        { "@type": "ListItem", position: 2, name: catFilter, item: `https://alfi-jewelry.com${canonicalPath}` },
+      ],
+    } : undefined,
+  });
+
   return (
     <div className="r-container container glass-card" style={css("max-width:1240px;margin:30px auto;padding:30px var(--sp-5) 64px;")}>
       <div style={css("font-size:13.5px;color:var(--c-ink-faint);margin-bottom:var(--sp-4);")}>
-        <span onClick={() => go("home")} style={css("cursor:pointer;")}>בית</span> &nbsp;/&nbsp; קטלוג{catFilter !== "הכל" ? ` / ${catFilter}` : ""}
+        <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }} style={css("cursor:pointer;")}>בית</a> &nbsp;/&nbsp; קטלוג{catFilter !== "הכל" ? ` / ${catFilter}` : ""}
       </div>
       <div style={css("text-align:center;margin-bottom:var(--sp-6);")}>
         <div className="eyebrow" style={css("margin-bottom:12px;")}>❀ קטלוג</div>

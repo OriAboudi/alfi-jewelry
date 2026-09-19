@@ -3,6 +3,7 @@ import { css } from "../lib/css.js";
 import { FlowerMark } from "../components/Ornaments.jsx";
 import { WhatsAppIcon, InstagramIcon, EmailIcon } from "../components/ContactIcons.jsx";
 import { CONTACT } from "../lib/contact.js";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 const row = "display:flex;align-items:center;gap:16px;padding:18px;border:1px solid var(--c-line);border-radius:var(--r-lg);background:#fff;text-decoration:none;color:inherit;";
 const iconWrap = "flex:none;width:48px;height:48px;border-radius:50%;background:var(--c-accent-soft);color:var(--c-accent-dark);display:flex;align-items:center;justify-content:center;";
@@ -25,6 +26,12 @@ function ContactRow({ icon, label, value, href, external }) {
 }
 
 export function Contact() {
+  useSeoTags({
+    title: "יצירת קשר · ALFI",
+    description: "יצירת קשר עם ALFI — וואטסאפ, אימייל ואינסטגרם.",
+    canonical: "/צור-קשר",
+  });
+
   return (
     <div className="r-container glass-card" style={css("max-width:640px;margin:30px auto;padding:56px var(--sp-5) 70px;text-align:center;")}>
       <FlowerMark width={130} height={48} style={{ margin: "0 auto 18px", display: "block" }} />

@@ -1,9 +1,11 @@
 import React from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function AdminLogin() {
   const { adminForm, adminError, adminBusy, setAdminField, submitAdminLogin } = useStore();
+  useSeoTags({ noindex: true });
 
   return (
     <div style={css("min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--c-bg);")}>

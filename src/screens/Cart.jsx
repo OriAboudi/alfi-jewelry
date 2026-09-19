@@ -5,9 +5,11 @@ import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { computeTotals } from "../lib/pricing.js";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Cart() {
   const { cart, products, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
+  useSeoTags({ noindex: true });
 
   const lines = cart.map((c) => {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", category: "", material: "", price: 0, image: "" };

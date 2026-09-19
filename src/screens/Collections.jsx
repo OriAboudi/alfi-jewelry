@@ -3,11 +3,20 @@ import { css } from "../lib/css.js";
 import { thumb, GRAD_COVER } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { pathFor } from "../lib/routes.js";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Collections() {
   const { collections, go, setCatFilter } = useStore();
 
-  const openCollection = (col) => {
+  useSeoTags({
+    title: "קולקציות · ALFI",
+    description: "הקולקציות של ALFI — אוספי תכשיטים בהשראת הטבע.",
+    canonical: "/קולקציות",
+  });
+
+  const openCollection = (col) => (e) => {
+    e.preventDefault();
     setCatFilter(col.category_filter || "הכל");
     go("catalog");
   };
@@ -21,7 +30,7 @@ export function Collections() {
       </div>
       <div className="grid-3">
         {collections.map((col) => (
-          <div key={col.id} onClick={() => openCollection(col)} className="card hover-lift" style={css("cursor:pointer;overflow:hidden;background:#fff;border:none;box-shadow:var(--shadow-md);")}>
+          <a key={col.id} href={pathFor("catalog", { catFilter: col.category_filter || "הכל" })} onClick={openCollection(col)} className="card hover-lift" style={css("display:block;cursor:pointer;overflow:hidden;background:#fff;border:none;box-shadow:var(--shadow-md);")}>
             <div style={thumb(col.image, GRAD_COVER, "aspect-ratio:4/3;position:relative;")}>
               {!col.image && <Disc style="width:40%;aspect-ratio:1;" />}
               <span style={css("position:absolute;bottom:14px;right:16px;background:rgba(255,255,255,.92);font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);color:var(--c-accent);")}>{col.subtitle}</span>
@@ -31,7 +40,7 @@ export function Collections() {
               <p style={css("font-size:14.5px;color:var(--c-ink-soft);margin-bottom:16px;line-height:1.6;")}>{col.description}</p>
               <span style={css("font-size:14px;color:var(--c-accent);font-weight:700;")}>לצפייה בקולקציה ←</span>
             </div>
-          </div>
+          </a>
         ))}
       </div>
     </div>

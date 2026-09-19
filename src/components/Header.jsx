@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { SearchOverlay } from "./SearchOverlay.jsx";
+import { pathFor } from "../lib/routes.js";
 
 // Design-handoff nav only lists the 4 categories (no "הכל"/collections item
 // in the header itself) — see reference/desktop.html's <nav class="nav">.
@@ -31,12 +32,14 @@ export function Header() {
     prevCartCount.current = cartCount;
   }, [cartCount]);
 
-  const goCat = (cat) => {
+  const goCat = (cat) => (e) => {
+    e.preventDefault();
     setMenuOpen(false);
     setCatFilter(cat);
     go("catalog");
   };
-  const goCollections = () => {
+  const goCollections = (e) => {
+    e.preventDefault();
     setMenuOpen(false);
     go("collections");
   };
@@ -91,9 +94,9 @@ export function Header() {
         <div className="rd-header-desktop" style={css("height:92px;box-sizing:border-box;padding:0 64px;align-items:center;")}>
           <nav className="rd-nav" style={css("display:flex;gap:36px;font-size:15px;letter-spacing:.04em;")}>
             {CATEGORY_LINKS.map((cat) => (
-              <a key={cat} {...asButton(() => goCat(cat))} aria-current={isCatActive(cat) ? "page" : undefined} style={css("cursor:pointer;")}>{cat}</a>
+              <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} aria-current={isCatActive(cat) ? "page" : undefined} style={css("cursor:pointer;")}>{cat}</a>
             ))}
-            <a {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>
+            <a href={pathFor("collections")} {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>
           </nav>
           <span
             {...asButton(() => navigate("home"))}
@@ -144,9 +147,9 @@ export function Header() {
         {menuOpen && (
           <nav className="glass" style={css("border-top:1px solid rgba(255,255,255,.65);padding:6px 16px 16px;display:flex;flex-direction:column;")}>
             {CATEGORY_LINKS.map((cat) => (
-              <a key={cat} {...asButton(() => goCat(cat))} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{cat}</a>
+              <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{cat}</a>
             ))}
-            <a {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
+            <a href={pathFor("collections")} {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
             <span {...asButton(() => navigate("favorites"))} className="tap-target" style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>
               מועדפים
               {favoritesCount > 0 && <span style={css("font-size:13px;color:var(--text-muted);")}>{favoritesCount}</span>}

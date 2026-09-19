@@ -10,5 +10,5 @@ const SECTIONS = [
 ];
 
 export function Terms() {
-  return <LegalPageShell title="תנאי שימוש" sections={SECTIONS} />;
+  return <LegalPageShell title="תנאי שימוש" sections={SECTIONS} description="תנאי השימוש באתר ALFI." canonical="/תנאי-שימוש" />;
 }

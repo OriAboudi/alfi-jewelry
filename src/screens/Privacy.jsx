@@ -11,5 +11,5 @@ const SECTIONS = [
 ];
 
 export function Privacy() {
-  return <LegalPageShell title="מדיניות פרטיות" sections={SECTIONS} />;
+  return <LegalPageShell title="מדיניות פרטיות" sections={SECTIONS} description="מדיניות הפרטיות של ALFI." canonical="/מדיניות-פרטיות" />;
 }

@@ -4,26 +4,66 @@ import { fmt } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
+import { CardSlider } from "../components/CardSlider.jsx";
+import { pathFor } from "../lib/routes.js";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Product() {
-  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
+  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go, setCatFilter, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
   const [showCouponField, setShowCouponField] = useState(false);
   const [couponInput, setCouponInput] = useState("");
 
   const sel = products.find((p) => String(p.id) === String(pid)) || products[0] || {};
   const related = products.filter((p) => p.id !== sel.id).slice(0, 4);
+  const moreProducts = products.filter((p) => p.id !== sel.id && !related.some((r) => r.id === p.id)).slice(0, 8);
   const sizes = sel.sizes || [];
   const images = sel.images && sel.images.length ? sel.images : (sel.image ? [sel.image] : []);
   const outOfStock = Number(sel.stock) <= 0;
   const freeShipFrom = Number(C.freeShipFrom || 500);
   const shipFee = Number(C.shipFee || 39);
 
+  const canonicalPath = pathFor("product", { pid: sel.id, products });
+  const canonicalUrl = `https://alfi-jewelry.com${canonicalPath}`;
+  useSeoTags({
+    title: sel.id ? `${sel.name} — ${sel.material || "כסף 925"} · ALFI` : undefined,
+    description: sel.description ? sel.description.slice(0, 155) : undefined,
+    canonical: sel.id ? canonicalPath : undefined,
+    image: images[0],
+    type: "product",
+    jsonLd: sel.id ? [
+      {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: sel.name,
+        description: sel.description,
+        image: images,
+        brand: { "@type": "Brand", name: "ALFI Jewelry" },
+        offers: {
+          "@type": "Offer",
+          price: sel.price,
+          priceCurrency: "ILS",
+          availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
+          url: canonicalUrl,
+        },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "בית", item: "https://alfi-jewelry.com/" },
+          { "@type": "ListItem", position: 2, name: sel.category, item: `https://alfi-jewelry.com${pathFor("catalog", { catFilter: sel.category })}` },
+          { "@type": "ListItem", position: 3, name: sel.name, item: canonicalUrl },
+        ],
+      },
+    ] : undefined,
+  });
+
   const [activeIdx, setActiveIdx] = useState(0);
   useEffect(() => { setActiveIdx(0); }, [sel.id]);
 
   const [openInfo, setOpenInfo] = useState(null);
   const INFO_SECTIONS = [
-    { key: "details", title: "פרטי המוצר", body: `${sel.material || "כסף 925"} · עבודת יד באולפן שלנו. כל תכשיט עשוי להיות שונה במעט מהתמונה — ייחודיות היא חלק מהקסם של עבודת יד.` },
+    { key: "details", title: "פרטי המוצר", body: `${sel.material || "כסף 925"}. כל תכשיט עשוי להיות שונה במעט מהתמונה בשל תהליך הייצור.` },
     { key: "shipping", title: "משלוח והחזרות", body: `משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)} (אחרת ${fmt(shipFee)}). ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית.` },
     { key: "care", title: "טיפוח התכשיט", body: "יש להימנע ממגע עם מים, בשמים וכימיקלים. לאחסן בנפרד, בשקית סגורה, הרחק מאור שמש ישיר." },
   ];
@@ -33,13 +73,13 @@ export function Product() {
   return (
     <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:30px var(--sp-5) 64px;")}>
       <div style={css("font-size:13.5px;color:var(--c-ink-faint);margin-bottom:var(--sp-5);")}>
-        <span onClick={() => go("catalog")} style={css("cursor:pointer;")}>קטלוג</span> &nbsp;/&nbsp; {sel.category} &nbsp;/&nbsp; {sel.name}
+        <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); setCatFilter("הכל"); go("catalog"); }} style={css("cursor:pointer;")}>קטלוג</a> &nbsp;/&nbsp; <a href={pathFor("catalog", { catFilter: sel.category })} onClick={(e) => { e.preventDefault(); setCatFilter(sel.category); go("catalog"); }} style={css("cursor:pointer;")}>{sel.category}</a> &nbsp;/&nbsp; {sel.name}
       </div>
       <div className="r-product-grid" style={css("display:grid;grid-template-columns:1.1fr .9fr;gap:54px;align-items:start;")}>
         <div>
-          <div style={css("position:relative;aspect-ratio:1;border-radius:var(--r-lg);margin-bottom:14px;box-shadow:0 24px 50px rgba(58,45,61,.1);overflow:hidden;")}>
+          <div className="r-product-photo" style={css("position:relative;aspect-ratio:1;border-radius:var(--r-lg);margin-bottom:14px;box-shadow:0 24px 50px rgba(58,45,61,.1);overflow:hidden;")}>
             {images[activeIdx] ? (
-              <ZoomImage src={images[activeIdx]} radius={18} zoomScale={3} cursor="zoom-in" />
+              <ZoomImage src={images[activeIdx]} alt={`${sel.name} – תמונה ${activeIdx + 1}`} radius={18} zoomScale={3} cursor="zoom-in" />
             ) : (
               <div style={css("width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:radial-gradient(120% 100% at 60% 25%,#ede1ea,#ddc8dd);")}>
                 <div style={css("width:44%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 210deg,#efe9f1,#cfc0d2,#f6f0eb,#c3b6c6,#ddd0e0,#efe9f1);box-shadow:0 24px 50px rgba(0,0,0,.16),inset 0 3px 12px rgba(0,0,0,.12);display:flex;align-items:center;justify-content:center;")}>
@@ -55,8 +95,10 @@ export function Product() {
                   key={url + i}
                   onClick={() => setActiveIdx(i)}
                   className="tap-target"
-                  style={css(`width:64px;height:64px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;flex:none;border:2px solid ${i === activeIdx ? "var(--c-accent)" : "transparent"};background:url("${url}") center/cover;opacity:${i === activeIdx ? 1 : .75};transition:opacity var(--dur) var(--ease);`)}
-                />
+                  style={css(`width:64px;height:64px;border-radius:var(--r-sm);overflow:hidden;cursor:pointer;flex:none;border:2px solid ${i === activeIdx ? "var(--c-accent)" : "transparent"};opacity:${i === activeIdx ? 1 : .75};transition:opacity var(--dur) var(--ease);`)}
+                >
+                  <img src={url} alt={`${sel.name} – תמונה ${i + 1}`} style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
+                </div>
               ))}
             </div>
           )}
@@ -128,7 +170,7 @@ export function Product() {
           <div style={css("display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;")}>
             <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>🔒 תשלום מאובטח</span>
             <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>↩ 14 יום החזרות</span>
-            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>✋ עבודת יד באולפן שלנו</span>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>✨ כסף סטרלינג 925</span>
           </div>
 
           <div style={css("border-top:1px solid var(--c-line);margin-top:18px;")}>
@@ -155,9 +197,23 @@ export function Product() {
       {related.length > 0 && (
         <div style={css("margin-top:70px;")}>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>אולי יתאים גם</h2>
-          <div className="grid-4">
+          <div className="grid-4 r-related-grid">
             {related.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
           </div>
+          <div className="r-related-slider">
+            <CardSlider>
+              {related.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
+            </CardSlider>
+          </div>
+        </div>
+      )}
+
+      {moreProducts.length > 0 && (
+        <div className="r-more-slider" style={css("margin-top:40px;")}>
+          <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>עוד תכשיטים שתאהבי</h2>
+          <CardSlider>
+            {moreProducts.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
+          </CardSlider>
         </div>
       )}
     </div>

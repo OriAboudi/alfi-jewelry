@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../../lib/css.js";
 import { useStore } from "../../context/StoreContext.jsx";
+import { useSeoTags } from "../../hooks/useSeoTags.js";
 import { DashboardTab } from "./DashboardTab.jsx";
 import { InventoryTab } from "./InventoryTab.jsx";
 import { ProductsTab } from "./ProductsTab.jsx";
@@ -38,6 +39,7 @@ const TAB_COMPONENTS = {
 export function AdminShell() {
   const { adminTab, user, setTab, logout } = useStore();
   const TabComponent = TAB_COMPONENTS[adminTab] || DashboardTab;
+  useSeoTags({ noindex: true });
 
   return (
     <div className="r-container glass-card" style={css("max-width:1180px;margin:30px auto;padding:40px;")}>

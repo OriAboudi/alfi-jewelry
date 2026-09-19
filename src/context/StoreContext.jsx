@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
 import store, { SEED_PRODUCTS, SEED_CONTENT, SEED_COLLECTIONS, BACKEND } from "../lib/store.js";
 import { ADMIN_PATH } from "../lib/adminPath.js";
+import { pathFor, parsePath } from "../lib/routes.js";
 
 const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
@@ -90,44 +91,54 @@ const addMyOrder = (order) => {
 };
 
 export function StoreProvider({ children }) {
-  const [state, setFull] = useState(() => ({
-    loaded: false,
-    screen: isAdminPath() ? "admin-login" : (getPendingRedirectScreen() || "home"),
-    pid: SEED_PRODUCTS[0].id,
-    qty: 1,
-    size: "",
-    products: SEED_PRODUCTS,
-    content: SEED_CONTENT,
-    collections: SEED_COLLECTIONS,
-    user: null,
-    users: [],
-    cart: loadCart(),
-    favorites: loadFavorites(),
-    catFilter: "הכל",
-    adminForm: { email: "", password: "" },
-    adminError: "",
-    adminBusy: false,
-    adminTab: "dashboard",
-    draft: null,
-    draftCol: null,
-    cdraft: null,
-    contentSaved: false,
-    lastOrder: null,
-    checkoutBusy: false,
-    paymentError: "",
-    testPaymentBusy: false,
-    ...loadCoupon(),
-    couponError: "",
-    couponBusy: false,
-    signupPopupOpen: false,
-    signupPopupPendingCheckout: false,
-    signupPopupPrefillPhone: "",
-    phoneLoginOpen: false,
-    phoneLoginBusy: false,
-    phoneLoginError: "",
-    ...loadCustomer(),
-    myOrders: loadMyOrders(),
-  }));
+  const [state, setFull] = useState(() => {
+    // Resolve the initial screen/catFilter/pid from the real URL, but only
+    // when neither the secret admin path nor a Takbull payment-redirect
+    // query param is in play — those two take precedence exactly as before
+    // (see getPendingRedirectScreen/isAdminPath above).
+    const pending = getPendingRedirectScreen();
+    const routed = (typeof window !== "undefined" && !isAdminPath() && !pending)
+      ? parsePath(window.location.pathname)
+      : null;
+    return {
+      loaded: false,
+      screen: isAdminPath() ? "admin-login" : (pending || routed?.screen || "home"),
+      pid: routed?.pid ?? SEED_PRODUCTS[0].id,
+      qty: 1,
+      size: "",
+      products: SEED_PRODUCTS,
+      content: SEED_CONTENT,
+      collections: SEED_COLLECTIONS,
+      user: null,
+      users: [],
+      cart: loadCart(),
+      favorites: loadFavorites(),
+      catFilter: routed?.catFilter || "הכל",
+      adminForm: { email: "", password: "" },
+      adminError: "",
+      adminBusy: false,
+      adminTab: "dashboard",
+      draft: null,
+      draftCol: null,
+      cdraft: null,
+      contentSaved: false,
+      lastOrder: null,
+      checkoutBusy: false,
+      paymentError: "",
+      testPaymentBusy: false,
+      ...loadCoupon(),
+      couponError: "",
+      couponBusy: false,
+      signupPopupOpen: false,
+      signupPopupPendingCheckout: false,
+      signupPopupPrefillPhone: "",
+      phoneLoginOpen: false,
+      phoneLoginBusy: false,
+      phoneLoginError: "",
+      ...loadCustomer(),
+      myOrders: loadMyOrders(),
+    };
+  });
 
   // keep a live ref so multi-field handlers (placeOrder, cart math) read fresh state
   const ref = useRef(state);
@@ -232,6 +243,35 @@ export function StoreProvider({ children }) {
     const p = ref.current.products.find((x) => String(x.id) === String(id));
     setState({ screen: "product", pid: id, qty: 1, size: (p && p.sizes && p.sizes[0]) || "" });
     scrollTop();
+  }, [setState]);
+
+  // ---------- URL sync (real routing) ----------
+  // Keeps the address bar in step with {screen, catFilter, pid} for every
+  // content screen (see routes.js's pathFor — it returns null for cart/
+  // checkout/confirm/etc., which this effect then simply leaves alone, so it
+  // can never fight the Takbull payment-redirect flow above). Only pushes
+  // when the derived path actually differs from the current one, which is
+  // also what stops this from re-pushing right after a popstate-driven
+  // update below (that update already leaves location.pathname matching).
+  useEffect(() => {
+    if (typeof window === "undefined" || isAdminPath()) return;
+    const path = pathFor(state.screen, { catFilter: state.catFilter, pid: state.pid, products: state.products });
+    if (path && path !== window.location.pathname) {
+      window.history.pushState({}, "", path);
+    }
+  }, [state.screen, state.catFilter, state.pid, state.products]);
+
+  // Browser back/forward: re-derive {screen, catFilter, pid} from whatever
+  // URL the user landed back on.
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const onPopState = () => {
+      if (isAdminPath()) return;
+      const parsed = parsePath(window.location.pathname);
+      if (parsed) setState((s) => ({ ...s, ...parsed, contentSaved: false }));
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, [setState]);
 
   const goAdmin = useCallback(async () => {

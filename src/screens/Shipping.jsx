@@ -2,6 +2,7 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 // Unlike Privacy/Terms, the free-shipping threshold, shipping fee, and
 // 14-day return window are already real, admin-configured facts used
@@ -15,6 +16,12 @@ export function Shipping() {
   const { content: C, go } = useStore();
   const freeShipFrom = Number(C.freeShipFrom || 500);
   const shipFee = Number(C.shipFee || 39);
+
+  useSeoTags({
+    title: "משלוחים והחזרות · ALFI",
+    description: `משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)} (אחרת ${fmt(shipFee)}). ניתן להחזיר תוך 14 יום מקבלת המשלוח.`,
+    canonical: "/משלוחים-והחזרות",
+  });
 
   return (
     <div className="r-container glass-card" style={css("max-width:720px;margin:30px auto;padding:56px var(--sp-5) 70px;")}>

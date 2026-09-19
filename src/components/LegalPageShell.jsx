@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 /**
  * LegalPageShell — shared scaffold for Privacy/Terms/Shipping pages.
@@ -8,8 +9,9 @@ import { useStore } from "../context/StoreContext.jsx";
  * come from the site owner, so this only provides structure (section
  * headers) plus a clearly-marked TODO notice, never invented claims.
  */
-export function LegalPageShell({ title, sections }) {
+export function LegalPageShell({ title, sections, description, canonical }) {
   const { go } = useStore();
+  useSeoTags({ title: `${title} · ALFI`, description, canonical });
   return (
     <div className="r-container glass-card" style={css("max-width:720px;margin:30px auto;padding:56px var(--sp-5) 70px;")}>
       <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:22px;text-align:center;")}>{title}</h1>

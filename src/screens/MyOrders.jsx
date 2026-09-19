@@ -2,6 +2,7 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { fmtDate } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 // No customer accounts on this site (guest checkout only) — "my orders" is
 // simply the list of orders this browser has actually placed or opened via
@@ -10,6 +11,7 @@ import { useStore } from "../context/StoreContext.jsx";
 // just remembered across visits instead of re-typed from the email each time.
 export function MyOrders() {
   const { myOrders, customerName, viewOrder, go, customerLogout } = useStore();
+  useSeoTags({ noindex: true });
 
   return (
     <div className="r-container glass-card" style={css("max-width:720px;margin:30px auto;padding:46px var(--sp-5) 64px;")}>

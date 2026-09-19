@@ -1,9 +1,11 @@
 import React from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function PaymentFailed() {
   const { go, paymentError } = useStore();
+  useSeoTags({ noindex: true });
 
   return (
     <div className="r-container glass-card" style={css("max-width:680px;margin:30px auto;padding:64px var(--sp-5);text-align:center;")}>

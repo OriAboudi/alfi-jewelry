@@ -27,6 +27,7 @@
   .r-sticky { position: static !important; top: auto !important; }
   .r-split { grid-template-columns: 1fr !important; gap: 32px !important; }
   .r-product-grid { grid-template-columns: 1fr !important; gap: 30px !important; }
+  .r-product-photo { border-radius: 0 !important; box-shadow: none !important; }
   .r-cart-grid { grid-template-columns: 1fr !important; }
   .r-checkout-grid { grid-template-columns: 1fr !important; }
   .r-grid4 { grid-template-columns: repeat(2, 1fr) !important; }

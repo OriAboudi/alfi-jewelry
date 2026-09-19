@@ -2,6 +2,7 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { FlowerMark } from "../components/Ornaments.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Story() {
   const { content: C, go } = useStore();
@@ -11,6 +12,12 @@ export function Story() {
     { title: C.value3Title, text: C.value3Text },
   ];
   const heroImg = C.storyHeroImage || C.storyImage || "floral-bg.jpg";
+
+  useSeoTags({
+    title: "הסיפור שלנו · ALFI",
+    description: C.storyLead ? C.storyLead.slice(0, 155) : "הסיפור של ALFI — תכשיטי כסף סטרלינג 925 בהשראת הטבע.",
+    canonical: "/הסיפור-שלנו",
+  });
 
   return (
     <div>

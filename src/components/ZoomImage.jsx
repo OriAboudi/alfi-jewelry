@@ -25,7 +25,7 @@ const IS_TOUCH = typeof window !== "undefined" && (("ontouchstart" in window) ||
  * (same convention browsers themselves use for page zoom) means the two
  * interactions never compete: unmodified scroll always passes through.
  */
-export function ZoomImage({ src, radius = 18, onClick, zoomScale = 2.4, cursor = "zoom-in" }) {
+export function ZoomImage({ src, alt = "", radius = 18, onClick, zoomScale = 2.4, cursor = "zoom-in" }) {
   const ref = useRef(null);
   const [pos, setPos] = useState({ x: 50, y: 50 });
   const [hover, setHover] = useState(false);
@@ -68,16 +68,19 @@ export function ZoomImage({ src, radius = 18, onClick, zoomScale = 2.4, cursor =
         transition: "box-shadow .35s ease",
       }}
     >
-      <div
-        style={{
-          width: "100%", height: "100%",
-          backgroundImage: src ? `url("${src}")` : "none",
-          backgroundSize: hover ? `${scale * 100}%` : "cover",
-          backgroundPosition: hover ? `${pos.x}% ${pos.y}%` : "center",
-          backgroundRepeat: "no-repeat",
-          transition: "background-size .12s ease-out",
-        }}
-      />
+      {src && (
+        <img
+          src={src}
+          alt={alt}
+          style={{
+            width: "100%", height: "100%",
+            objectFit: "cover", objectPosition: "center",
+            transform: hover ? `scale(${scale})` : "scale(1)",
+            transformOrigin: hover ? `${pos.x}% ${pos.y}%` : "center",
+            transition: "transform .12s ease-out",
+          }}
+        />
+      )}
       {!IS_TOUCH && (
       <div
         style={{

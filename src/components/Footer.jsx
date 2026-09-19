@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { CONTACT } from "../lib/contact.js";
+import { WhatsAppIcon, EmailIcon, InstagramIcon } from "./ContactIcons.jsx";
+import { pathFor } from "../lib/routes.js";
 
-// Reset-styled <button> instead of a <span onClick> — real button semantics
-// mean native keyboard support (Tab + Enter/Space) for free.
+// Reset-styled <a>/<button> — real link/button semantics mean native
+// keyboard support (Tab + Enter/Space) for free.
 const linkBtn = "cursor:pointer;background:none;border:none;padding:0;margin:0;font:inherit;color:inherit;text-align:right;display:block;width:100%;";
 const colHeading = "font-weight:600;color:var(--cream);";
 const colList = "display:flex;flex-direction:column;gap:12px;font-size:15px;color:inherit;";
@@ -18,26 +20,35 @@ const colList = "display:flex;flex-direction:column;gap:12px;font-size:15px;colo
 function ServiceList({ go, textStyle }) {
   return (
     <>
-      <button onClick={() => go("shipping")} style={css(linkBtn + textStyle)}>משלוחים והחזרות</button>
+      <a href={pathFor("shipping")} onClick={(e) => { e.preventDefault(); go("shipping"); }} style={css(linkBtn + textStyle)}>משלוחים והחזרות</a>
       <span style={css(textStyle)}>מידות טבעת</span>
       <span style={css(textStyle)}>טיפול בכסף</span>
     </>
   );
 }
 
+const contactLink = "display:flex;align-items:center;gap:8px;";
+
 function ContactList({ textStyle }) {
   return (
     <>
-      <a href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={css(textStyle + "direction:ltr;text-align:right;")}>{CONTACT.whatsappDisplay}</a>
-      <a href={CONTACT.emailUrl} style={css(textStyle + "direction:ltr;text-align:right;")}>{CONTACT.email}</a>
-      <a href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" style={css(textStyle)}>{CONTACT.instagramHandle}</a>
+      <a href={CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={css(textStyle + contactLink + "direction:ltr;justify-content:flex-end;")}>
+        {CONTACT.whatsappDisplay}<WhatsAppIcon size={16} />
+      </a>
+      <a href={CONTACT.emailUrl} style={css(textStyle + contactLink + "direction:ltr;justify-content:flex-end;")}>
+        {CONTACT.email}<EmailIcon size={16} />
+      </a>
+      <a href={CONTACT.instagramUrl} target="_blank" rel="noopener noreferrer" style={css(textStyle + contactLink)}>
+        <InstagramIcon size={16} />{CONTACT.instagramHandle}
+      </a>
     </>
   );
 }
 
 export function Footer() {
   const { go, setCatFilter } = useStore();
-  const goCat = (c) => { setCatFilter(c); go("catalog"); };
+  const goCat = (c) => (e) => { e.preventDefault(); setCatFilter(c); go("catalog"); };
+  const goPage = (screen) => (e) => { e.preventDefault(); go(screen); };
   const [openSection, setOpenSection] = useState(null);
 
   const mobileLinkStyle = "color:var(--cream);";
@@ -72,10 +83,10 @@ export function Footer() {
           <div className="serif" style={css("font-size:36px;letter-spacing:.42em;color:var(--cream);")}>ALFI</div>
           <div style={css(colList)}>
             <strong style={css(colHeading)}>חנות</strong>
-            <button onClick={() => goCat("טבעות")} style={css(linkBtn)}>טבעות</button>
-            <button onClick={() => goCat("שרשראות")} style={css(linkBtn)}>שרשראות</button>
-            <button onClick={() => goCat("עגילים")} style={css(linkBtn)}>עגילים</button>
-            <button onClick={() => goCat("צמידים")} style={css(linkBtn)}>צמידים</button>
+            <a href={pathFor("catalog", { catFilter: "טבעות" })} onClick={goCat("טבעות")} style={css(linkBtn)}>טבעות</a>
+            <a href={pathFor("catalog", { catFilter: "שרשראות" })} onClick={goCat("שרשראות")} style={css(linkBtn)}>שרשראות</a>
+            <a href={pathFor("catalog", { catFilter: "עגילים" })} onClick={goCat("עגילים")} style={css(linkBtn)}>עגילים</a>
+            <a href={pathFor("catalog", { catFilter: "צמידים" })} onClick={goCat("צמידים")} style={css(linkBtn)}>צמידים</a>
           </div>
           <div style={css(colList)}>
             <strong style={css(colHeading)}>שירות</strong>
@@ -87,11 +98,11 @@ export function Footer() {
           </div>
         </div>
         <div style={css("font-size:13px;color:#C3B3C4;border-top:1px solid var(--divider-dark);padding-top:24px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;")}>
-          <span>© ALFI · תכשיטי כסף בעבודת יד</span>
+          <span>© ALFI · תכשיטי כסף סטרלינג 925 לאישה</span>
           <span style={css("display:flex;flex-wrap:wrap;gap:16px;")}>
-            <button onClick={() => go("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</button>
-            <button onClick={() => go("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</button>
-            <button onClick={() => go("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</button>
+            <a href={pathFor("contact")} onClick={goPage("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</a>
+            <a href={pathFor("privacy")} onClick={goPage("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</a>
+            <a href={pathFor("terms")} onClick={goPage("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</a>
           </span>
         </div>
       </div>
@@ -102,20 +113,20 @@ export function Footer() {
         <div>
           {accordionRow("shop", "חנות", (
             <>
-              <button onClick={() => goCat("טבעות")} style={css(linkBtn + "color:var(--cream);")}>טבעות</button>
-              <button onClick={() => goCat("שרשראות")} style={css(linkBtn + "color:var(--cream);")}>שרשראות</button>
-              <button onClick={() => goCat("עגילים")} style={css(linkBtn + "color:var(--cream);")}>עגילים</button>
-              <button onClick={() => goCat("צמידים")} style={css(linkBtn + "color:var(--cream);")}>צמידים</button>
+              <a href={pathFor("catalog", { catFilter: "טבעות" })} onClick={goCat("טבעות")} style={css(linkBtn + "color:var(--cream);")}>טבעות</a>
+              <a href={pathFor("catalog", { catFilter: "שרשראות" })} onClick={goCat("שרשראות")} style={css(linkBtn + "color:var(--cream);")}>שרשראות</a>
+              <a href={pathFor("catalog", { catFilter: "עגילים" })} onClick={goCat("עגילים")} style={css(linkBtn + "color:var(--cream);")}>עגילים</a>
+              <a href={pathFor("catalog", { catFilter: "צמידים" })} onClick={goCat("צמידים")} style={css(linkBtn + "color:var(--cream);")}>צמידים</a>
             </>
           ))}
           {accordionRow("service", "שירות לקוחות", <ServiceList go={go} textStyle={mobileLinkStyle} />)}
           {accordionRow("contact", "צרי קשר", <ContactList textStyle={mobileLinkStyle} />)}
         </div>
-        <div style={css("font-size:12px;color:#C3B3C4;")}>© ALFI · תכשיטי כסף בעבודת יד</div>
+        <div style={css("font-size:12px;color:#C3B3C4;")}>© ALFI · תכשיטי כסף סטרלינג 925 לאישה</div>
         <div style={css("display:flex;flex-wrap:wrap;gap:16px;font-size:12px;")}>
-          <button onClick={() => go("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</button>
-          <button onClick={() => go("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</button>
-          <button onClick={() => go("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</button>
+          <a href={pathFor("contact")} onClick={goPage("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</a>
+          <a href={pathFor("privacy")} onClick={goPage("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</a>
+          <a href={pathFor("terms")} onClick={goPage("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</a>
         </div>
       </div>
     </footer>

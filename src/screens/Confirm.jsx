@@ -4,12 +4,14 @@ import { fmt } from "../lib/format.js";
 import { FlowerMark } from "../components/Ornaments.jsx";
 import { OrderProgress } from "../components/OrderProgress.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 const POLL_ATTEMPTS = 6;
 const POLL_DELAY_MS = 2000;
 
 export function Confirm() {
   const { lastOrder: lo, go, refreshOrder } = useStore();
+  useSeoTags({ noindex: true });
   const [loading, setLoading] = useState(!!lo?.id);
   const [stillVerifying, setStillVerifying] = useState(false);
 

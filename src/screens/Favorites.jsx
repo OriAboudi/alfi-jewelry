@@ -2,9 +2,11 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Favorites() {
   const { products, favorites, go } = useStore();
+  useSeoTags({ noindex: true });
   const list = products.filter((p) => favorites.includes(p.id));
 
   return (

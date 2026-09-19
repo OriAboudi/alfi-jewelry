@@ -5,6 +5,7 @@ import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { computeTotals } from "../lib/pricing.js";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useSeoTags } from "../hooks/useSeoTags.js";
 
 const fieldStyle = "width:100%;padding:12px 13px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);font-size:14.5px;background:#fff;";
 const fieldErrStyle = "width:100%;padding:12px 13px;border:1px solid #d98a72;border-radius:var(--r-md);font-size:14.5px;background:#fff;";
@@ -15,6 +16,7 @@ const REQUIRED_FIELDS = ["first", "last", "email", "phone", "address", "city"];
 
 export function Checkout() {
   const { cart, products, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup } = useStore();
+  useSeoTags({ noindex: true });
 
   // "Before a purchase": offer the sign-up coupon while the shopper is
   // filling in their order details (name/address/email), not by blocking
