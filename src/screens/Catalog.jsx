@@ -73,7 +73,6 @@ export function Catalog() {
         <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }} style={css("cursor:pointer;")}>בית</a> &nbsp;/&nbsp; קטלוג{catFilter !== "הכל" ? ` / ${catFilter}` : ""}
       </div>
       <div style={css("text-align:center;margin-bottom:var(--sp-6);")}>
-        <div className="eyebrow" style={css("margin-bottom:12px;")}>❀ קטלוג</div>
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);")}>{catFilter === "הכל" ? "כל התכשיטים" : catFilter}</h1>
       </div>
       <div className="r-sidebar-grid" style={css("display:grid;grid-template-columns:230px 1fr;gap:46px;align-items:start;")}>

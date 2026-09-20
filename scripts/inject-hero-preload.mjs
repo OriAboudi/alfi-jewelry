@@ -19,6 +19,24 @@ import { loadSupabaseEnv } from "./supabaseEnv.mjs";
 
 const START = "<!-- HERO_PRELOAD_START -->";
 const END = "<!-- HERO_PRELOAD_END -->";
+// A preload hint with fetchpriority=high is a promise the file is worth
+// racing ahead of everything else — for anything this big it's actively
+// harmful (it wins bandwidth exactly when that's the wrong call), so this
+// guards against ever preloading an oversized/legacy asset at high
+// priority. Product uploads get client-side compressed before reaching
+// storage (see imageCompress.js) and land well under this; anything over
+// it is almost certainly an old file from before that pipeline existed.
+const MAX_PRELOAD_BYTES = 600 * 1024;
+
+async function checkSize(url) {
+  try {
+    const res = await fetch(url, { method: "HEAD" });
+    const len = Number(res.headers.get("content-length") || 0);
+    return len || null;
+  } catch {
+    return null;
+  }
+}
 
 function preloadTag(href, media) {
   return `<link rel="preload" as="image" href="${href}" media="${media}" fetchpriority="high" />`;
@@ -35,7 +53,11 @@ async function main() {
       const { data, error } = await supabase.from("content").select("data").eq("id", 1).single();
       if (error) throw error;
       const c = data?.data || {};
-      const desktopImages = c.heroImages && c.heroImages.length ? c.heroImages : (c.heroImage ? [c.heroImage] : []);
+      // Mirrors Home.jsx exactly: the legacy single-image `heroImage` field
+      // is deliberately never used as a fallback (see Home.jsx's comment) —
+      // preloading it would just waste bandwidth on an image that's never
+      // actually rendered.
+      const desktopImages = c.heroImages && c.heroImages.length ? c.heroImages : [];
       const mobileImages = c.heroImagesMobile && c.heroImagesMobile.length ? c.heroImagesMobile : desktopImages;
       desktopUrl = desktopImages[0] || "";
       mobileUrl = mobileImages[0] || "";
@@ -47,13 +69,29 @@ async function main() {
   }
 
   const tags = [];
-  if (desktopUrl) tags.push(preloadTag(desktopUrl, "(min-width: 768px)"));
+  if (desktopUrl) {
+    const size = await checkSize(desktopUrl);
+    if (size !== null && size > MAX_PRELOAD_BYTES) {
+      console.warn(`[hero-preload] desktop hero image is ${(size / 1024 / 1024).toFixed(2)}MB — skipping high-priority preload (likely an old, uncompressed upload; consider replacing it via the admin panel).`);
+    } else {
+      tags.push(preloadTag(desktopUrl, "(min-width: 768px)"));
+    }
+  }
   // Only add a separate mobile tag when it's actually a different image —
   // otherwise the desktop tag alone (with no media condition needed) would
   // do, but keeping both conditioned tags is simplest and still correct:
   // a browser never matches more than one media condition pair here since
   // they're mutually exclusive breakpoints.
-  if (mobileUrl) tags.push(preloadTag(mobileUrl, "(max-width: 767px)"));
+  if (mobileUrl && mobileUrl !== desktopUrl) {
+    const size = await checkSize(mobileUrl);
+    if (size !== null && size > MAX_PRELOAD_BYTES) {
+      console.warn(`[hero-preload] mobile hero image is ${(size / 1024 / 1024).toFixed(2)}MB — skipping high-priority preload.`);
+    } else {
+      tags.push(preloadTag(mobileUrl, "(max-width: 767px)"));
+    }
+  } else if (mobileUrl === desktopUrl && tags.length) {
+    tags.push(preloadTag(mobileUrl, "(max-width: 767px)"));
+  }
 
   const block = tags.length ? `${START}\n    ${tags.join("\n    ")}\n    ${END}` : `${START}${END}`;
 

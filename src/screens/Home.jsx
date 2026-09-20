@@ -10,6 +10,7 @@ import { useStore } from "../context/StoreContext.jsx";
 import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
 import { pathFor } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { Reveal } from "../components/Reveal.jsx";
 // Fixed order for the homepage's 2x2 collections grid, per reference site.
 const HOME_TILE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים"];
 
@@ -24,7 +25,7 @@ const GoArrowIcon = () => (
 function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products }) {
   if (!products.length) return null;
   return (
-    <section className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
+    <Reveal as="section" className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
       <div className="glass rd-slider-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
         <div style={css("display:flex;align-items:baseline;gap:20px;")}>
           <h2 className="serif rd-slider-title" style={css("margin:0;font-weight:300;")}>
@@ -37,7 +38,7 @@ function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products }) {
       <CardSlider>
         {products.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
       </CardSlider>
-    </section>
+    </Reveal>
   );
 }
 
@@ -47,7 +48,7 @@ export function Home() {
 
   useSeoTags({
     title: "ALFI · תכשיטי כסף סטרלינג 925 לאישה — טבעות, שרשראות, עגילים וצמידים",
-    description: "ALFI — תכשיטי כסף סטרלינג 925 בהשראת הטבע. טבעות, שרשראות, עגילים וצמידים לאישה.",
+    description: "ALFI — תכשיטי כסף סטרלינג 925 באיכות אמיתית ובמחיר נגיש. טבעות, שרשראות, עגילים וצמידים לאישה.",
     canonical: "/",
   });
 
@@ -78,7 +79,13 @@ export function Home() {
   const leftover2 = slider2raw.filter((p) => !usedIds.has(p.id));
   const slider2 = (leftover2.length ? leftover2 : [...products].reverse()).slice(0, 8);
 
-  const heroImages = (C.heroImages && C.heroImages.length ? C.heroImages : (C.heroImage ? [C.heroImage] : []));
+  // Deliberately NOT falling back to the legacy single-image `heroImage`
+  // field here: it predates the admin gallery upload's client-side
+  // compression pipeline, so it can silently hold a multi-megabyte
+  // uncompressed original (found one live at ~7MB) — showing the existing
+  // gradient placeholder until a real image is uploaded to the gallery
+  // beats risking that as the page's largest, highest-priority image.
+  const heroImages = C.heroImages && C.heroImages.length ? C.heroImages : [];
   const heroImagesMobile = C.heroImagesMobile || [];
 
   const goCat = (c) => { setCatFilter(c); go("catalog"); };
@@ -86,22 +93,40 @@ export function Home() {
 
   return (
     <div>
-      {/* HERO — just the image (no glass panel/text over it). The page still
-          needs exactly one real H1 for SEO/screen readers, so it's
-          visually-hidden (sr-only) rather than disappearing entirely — a
-          legitimate accessibility pattern, not the deceptive "hidden text"
-          Google penalizes, since it accurately describes the page and isn't
-          stuffed with extra keywords. */}
-      <h1 style={css("position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;")}>ALFI — תכשיטי כסף סטרלינג 925 בהשראת הטבע</h1>
-      <section className="rd-hero" style={css("position:relative;overflow:hidden;display:flex;align-items:center;box-sizing:border-box;")}>
-        <HeroSlider images={heroImages} imagesMobile={heroImagesMobile} />
+      {/* HERO — real headline + CTA panel over the image, using content
+          fields that already existed in the data (authHeadline/heroBadge/
+          heroCtaLabel) but were never wired to any screen. This is also the
+          page's one real, visible H1 — a genuine heading beats a
+          visually-hidden one for both SEO and the people reading it. */}
+      <section className="rd-hero" style={css("position:relative;")}>
+        <HeroSlider images={heroImages} imagesMobile={heroImagesMobile}>
+          <div className="glass-strong rd-hero-panel" style={css("display:flex;flex-direction:column;align-items:flex-start;")}>
+            {C.heroBadge && (
+              <a
+                href={pathFor("collections")}
+                onClick={(e) => { e.preventDefault(); go("collections"); }}
+                className="rd-btn rd-btn-outline"
+                style={css("height:32px;padding:0 16px;display:flex;align-items:center;border:1px solid var(--ink);color:var(--ink);font-size:12.5px;letter-spacing:.14em;")}
+              >
+                {C.heroBadge}
+              </a>
+            )}
+            <h1 className="serif rd-hero-h1" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.authHeadline}</h1>
+            {C.authTagline && <p className="rd-hero-p" style={css("margin:0;color:var(--text-body);")}>{C.authTagline}</p>}
+            <div className="rd-hero-actions" style={css("display:flex;gap:12px;width:100%;")}>
+              <button onClick={goCatalog} className="rd-btn rd-btn-outline" style={css("height:52px;padding:0 28px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:15px;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;")}>
+                {C.heroCtaLabel || "לצפייה בקולקציה"}<GoArrowIcon />
+              </button>
+            </div>
+          </div>
+        </HeroSlider>
       </section>
 
       {/* FEATURED SLIDER */}
       <ProductSlider title={C.featuredTitle || "נבחרים מהסדנה"} mobileTitle="נבחרים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider1} />
 
       {/* COLLECTIONS 2x2 */}
-      <section className="rd-section-pad" style={css("display:flex;flex-direction:column;gap:32px;")}>
+      <Reveal as="section" className="rd-section-pad" style={css("display:flex;flex-direction:column;gap:32px;")}>
         <div className="glass rd-collections-head rd-only-desktop" style={css("display:flex;justify-content:space-between;align-items:center;")}>
           <h2 className="serif" style={css("margin:0;font-size:46px;font-weight:300;")}>הקולקציות</h2>
           <span style={css("font-size:15px;color:var(--text-body);")}>{tileCats.join(" · ")}</span>
@@ -121,7 +146,6 @@ export function Home() {
                   </div>
                 </div>
                 <div className="rd-cat-text" style={css("display:flex;flex-direction:column;justify-content:space-between;")}>
-                  <span style={css("font-size:13px;letter-spacing:.3em;color:var(--accent2);")}>{String(i + 1).padStart(2, "0")}</span>
                   <span className="serif rd-cat-name" style={css("font-weight:300;line-height:1;")}>{c}</span>
                   <span className="rd-go" style={css("align-self:flex-start;height:50px;padding:0 22px;border:1px solid var(--ink);display:flex;align-items:center;gap:12px;font-size:15px;letter-spacing:.06em;")}>לקולקציה<GoArrowIcon /></span>
                 </div>
@@ -148,12 +172,12 @@ export function Home() {
             );
           })}
         </div>
-      </section>
+      </Reveal>
 
       {/* PROMO BANNER — content.banner3* (existing admin fields; closest
           match to the mockup's "3 תכשיטים ב-220 ₪" promo slot). Full
           screen width, unlike the other sections. */}
-      <section className="rd-promo-section">
+      <Reveal as="section" className="rd-promo-section">
         <div className="rd-promo glass-strong rd-promo-box">
           <div style={css("position:relative;overflow:hidden;")}>
             <div
@@ -168,35 +192,30 @@ export function Home() {
             <button onClick={goCatalog} className="rd-btn rd-btn-outline rd-promo-cta" style={css("align-self:flex-start;display:flex;align-items:center;gap:14px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:16px;letter-spacing:.08em;cursor:pointer;")}>{C.banner3CtaLabel || "לבחירת התכשיטים"}<GoArrowIcon /></button>
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* SECOND SLIDER — best sellers */}
       <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} />
 
       {/* BRAND STORY PANEL */}
-      <section className="rd-section-pad-b">
+      <Reveal as="section" className="rd-section-pad-b">
         <div className="glass-strong rd-story-box">
           <div style={css("display:flex;flex-direction:column;gap:24px;")}>
-            <div style={css("font-size:13px;letter-spacing:.3em;color:var(--accent2);")}>מהסדנה</div>
-            <h2 className="serif rd-story-h2" style={css("margin:0;font-weight:300;")}>כל תכשיט<br />מתחיל בפרח אחד</h2>
+            <h2 className="serif rd-story-h2" style={css("margin:0;font-weight:300;")}>כל תכשיט<br />מתחיל באהבה</h2>
             <a href={pathFor("story")} onClick={(e) => { e.preventDefault(); go("story"); }} style={css("align-self:flex-start;cursor:pointer;font-size:15px;border-bottom:1px solid var(--ink);padding:10px 0 4px;")}>לסיפור המלא</a>
           </div>
           <div style={css("display:flex;flex-direction:column;gap:28px;")}>
             <p className="rd-story-p" style={css("margin:0;color:var(--text-body);")}>{C.aboutText}</p>
-            <div style={css("display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;border-top:1px solid #D9CACD;padding-top:28px;")}>
-              <div style={css("display:flex;flex-direction:column;gap:6px;")}><div className="serif" style={css("font-size:26px;")}>925</div><div style={css("font-size:14px;color:var(--text-muted);")}>כסף סטרלינג</div></div>
-              <div style={css("display:flex;flex-direction:column;gap:6px;")}><div className="serif" style={css("font-size:26px;")}>עיצוב</div><div style={css("font-size:14px;color:var(--text-muted);")}>עיצוב עדין ומוקפד</div></div>
-              <div style={css("display:flex;flex-direction:column;gap:6px;")}><div className="serif" style={css("font-size:26px;")}>טבע</div><div style={css("font-size:14px;color:var(--text-muted);")}>השראה מהגן</div></div>
-            </div>
+            <div style={css("font-size:15px;color:var(--ink);border-top:1px solid #D9CACD;padding-top:28px;")}>כסף סטרלינג 925 · עיצוב מוקפד · מחיר הוגן</div>
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* NEWSLETTER (desktop reference) — no separate email-capture backend
           exists; this opens the same sign-up/coupon popup as the footer's
           "קבלת קוד הנחה" button always has, per HANDOFF.md's "keep the
           existing newsletter submit logic if there is one". */}
-      <section className="rd-only-desktop" style={css("padding:0 64px 120px;display:flex;justify-content:center;")}>
+      <Reveal as="section" className="rd-only-desktop" style={css("padding:0 64px 120px;display:flex;justify-content:center;")}>
         <div className="glass" style={css("width:680px;padding:48px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center;")}>
           <h3 className="serif" style={css("margin:0;font-size:38px;font-weight:300;")}>הצטרפי לגן של ALFI</h3>
           <button
@@ -207,7 +226,7 @@ export function Home() {
             <span style={css("height:52px;display:flex;align-items:center;font-size:16px;letter-spacing:.08em;color:var(--ink);")}>הרשמה</span>
           </button>
         </div>
-      </section>
+      </Reveal>
     </div>
   );
 }

@@ -90,7 +90,11 @@
 }
 @keyframes rd-slowzoom { from { transform: scale(1.12); } to { transform: scale(1); } }
 
-/* ---------- rise-in on load (hero + section headers) ---------- */
+/* ---------- rise-in on scroll (Reveal.jsx) ---------- */
+/* Resting state before the section has scrolled into view — plain opacity,
+   no animation running yet, so there's nothing to "replay" once .rd-rise
+   takes over at the same opacity:0 starting point. */
+.rd-reveal-pending { opacity: 0; }
 @keyframes rd-rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
 .rd-rise { animation: rd-rise 1.1s cubic-bezier(.2, .7, .1, 1) both; }
 .rd-d1 { animation-delay: .15s; }
@@ -98,17 +102,20 @@
 .rd-d3 { animation-delay: .45s; }
 
 @media (prefers-reduced-motion: reduce) {
-  .rd-rise, .rd-hero-img { animation: none !important; opacity: 1 !important; transform: none !important; }
-  .rd-card, .rd-cat, .rd-promo, .rd-card .rd-ph, .rd-cat .rd-img, .rd-promo .rd-promo-img {
+  .rd-rise, .rd-reveal-pending, .rd-hero-img { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .rd-card, .rd-cat, .rd-promo, .rd-card .rd-ph, .rd-cat .rd-img, .rd-promo .rd-promo-img, .rd-btn-fill {
     transition: none !important;
   }
-  .rd-card:hover, .rd-cat:hover { transform: none !important; box-shadow: none !important; }
+  .rd-card:hover, .rd-cat:hover, .rd-btn-fill:hover { transform: none !important; box-shadow: none !important; }
 }
 
 /* ---------- nav hover underline (grows from the right, RTL) ---------- */
+/* transform:scaleX instead of animating width — same visual growth, no
+   layout thrash, and lets this share the site's one motion signature
+   (exponential ease-out) instead of a plain linear "ease". */
 .rd-nav a { position: relative; padding: 10px 0; color: var(--ink); }
-.rd-nav a::after { content: ""; position: absolute; right: 0; bottom: 4px; height: 1px; width: 0; background: var(--ink); transition: width .4s ease; }
-.rd-nav a:hover::after, .rd-nav a[aria-current="page"]::after { width: 100%; }
+.rd-nav a::after { content: ""; position: absolute; right: 0; left: 0; bottom: 4px; height: 1px; background: var(--ink); transform: scaleX(0); transform-origin: right; transition: transform .25s cubic-bezier(.2, .7, .1, 1); }
+.rd-nav a:hover::after, .rd-nav a[aria-current="page"]::after { transform: scaleX(1); }
 
 /* ---------- slider rail ---------- */
 .rd-rail { scrollbar-width: none; scroll-snap-type: x mandatory; gap: 12px; }
@@ -137,9 +144,9 @@
 }
 
 /* ---------- product card ---------- */
-.rd-card { transition: transform .6s cubic-bezier(.2, .7, .1, 1), box-shadow .6s, background .2s ease; padding: 8px 8px 12px; gap: 12px; }
+.rd-card { transition: transform .25s cubic-bezier(.2, .7, .1, 1), box-shadow .25s cubic-bezier(.2, .7, .1, 1), background .2s ease; padding: 8px 8px 12px; gap: 12px; }
 .rd-card:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -34px rgba(58, 45, 61, .5); }
-.rd-card .rd-ph { transition: transform 1s cubic-bezier(.2, .7, .1, 1); }
+.rd-card .rd-ph { transition: transform .3s cubic-bezier(.2, .7, .1, 1); }
 .rd-card:hover .rd-ph { transform: scale(1.05); }
 .rd-card:active .rd-ph { transform: scale(.97); }
 /* Same "lighter purple on tap" feedback as the mobile collection tiles —
@@ -168,7 +175,7 @@
   color: var(--ink);
   font-size: 14px;
   letter-spacing: .06em;
-  transition: background .35s ease, color .35s ease, border-color .35s ease;
+  transition: background .25s ease, color .25s ease, border-color .25s ease;
 }
 .rd-add-btn:disabled { opacity: .55; }
 .rd-add-btn.rd-outline:hover:not(:disabled) { background: var(--ink-fill); color: var(--cream); }
@@ -192,16 +199,16 @@
 }
 
 /* ---------- collection card ---------- */
-.rd-cat { transition: transform .6s cubic-bezier(.2, .7, .1, 1), box-shadow .6s; }
+.rd-cat { transition: transform .25s cubic-bezier(.2, .7, .1, 1), box-shadow .25s cubic-bezier(.2, .7, .1, 1); }
 .rd-cat:hover { transform: translateY(-6px); box-shadow: 0 30px 60px -30px rgba(58, 45, 61, .45); }
-.rd-cat .rd-img { transition: transform 1.2s cubic-bezier(.2, .7, .1, 1); }
+.rd-cat .rd-img { transition: transform .3s cubic-bezier(.2, .7, .1, 1); }
 .rd-cat:hover .rd-img { transform: scale(1.05); }
 .rd-cat:active .rd-img { transform: scale(.97); }
-.rd-cat .rd-go { transition: background .35s, color .35s; }
+.rd-cat .rd-go { transition: background .25s ease, color .25s ease; }
 .rd-cat:hover .rd-go { background: var(--ink-fill); color: var(--cream); }
 
 /* ---------- arrows (slider) ---------- */
-.rd-arrow { transition: background .3s, color .3s; }
+.rd-arrow { transition: background .25s ease, color .25s ease; }
 .rd-arrow:hover { background: var(--ink-fill) !important; color: var(--cream) !important; }
 
 /* Prev/next arrows overlaid on the product photo itself (desktop only), at
@@ -238,12 +245,17 @@
 }
 
 /* ---------- promo banner image zoom ---------- */
-.rd-promo .rd-promo-img { transition: transform 1.4s cubic-bezier(.2, .7, .1, 1); }
+.rd-promo .rd-promo-img { transition: transform .3s cubic-bezier(.2, .7, .1, 1); }
 .rd-promo:hover .rd-promo-img { transform: scale(1.04); }
 
 /* ---------- generic filled/outline hover-fill button ---------- */
-.rd-btn { transition: background .35s ease, color .35s ease, border-color .35s ease; }
-.rd-btn-outline:hover { background: var(--ink-fill) !important; color: var(--cream) !important; }
+/* Clean by default (ink outline/text, no fill) — the purple/plum fill is
+   feedback for an actual interaction, not the resting state. :active is
+   included alongside :hover specifically because :hover doesn't fire from
+   a touch tap on a phone — without it, a touch device never shows any
+   press feedback on this button at all. */
+.rd-btn { transition: background .25s ease, color .25s ease, border-color .25s ease; }
+.rd-btn-outline:hover, .rd-btn-outline:active { background: var(--ink-fill) !important; color: var(--cream) !important; }
 
 /* ---------- header: desktop/mobile bar swap ---------- */
 .rd-header-desktop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -302,14 +314,19 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 }
 
 /* ---------- hero ---------- */
-.rd-hero { height: 660px; padding: 0 16px 24px; align-items: flex-end; }
-.rd-hero-panel { width: 100%; padding: 26px 22px 22px; gap: 14px; }
+/* min-height, not height: the panel (headline/tagline/CTA) is a real flex
+   child of this element now (see HeroSlider.jsx), so if its actual content
+   is ever taller than the base hero size, the section grows to fit it
+   instead of clipping it — a fixed height plus overflow:hidden was cutting
+   the panel off on some real devices/font-rendering. */
+.rd-hero { display: flex; align-items: flex-end; min-height: 660px; padding: 0 16px 64px; box-sizing: border-box; }
+.rd-hero-panel { position: relative; z-index: 1; width: 100%; padding: 26px 22px 22px; gap: 14px; }
 .rd-hero-h1 { font-size: 46px; line-height: 1.04; }
 .rd-hero-p { font-size: 16px; line-height: 1.6; }
 .rd-hero-actions { margin-top: 4px; }
 .rd-hero-actions .rd-btn { flex: 1; }
 @media (min-width: 1024px) {
-  .rd-hero { height: 780px; padding: 0 64px; align-items: center; }
+  .rd-hero { min-height: 780px; align-items: center; padding: 0 64px; }
   .rd-hero-panel { width: 620px; padding: 56px 56px 52px; gap: 26px; }
   .rd-hero-h1 { font-size: 84px; line-height: 1.02; }
   .rd-hero-p { font-size: 20px; line-height: 1.7; max-width: 460px; }

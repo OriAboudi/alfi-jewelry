@@ -7,6 +7,7 @@ import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { CardSlider } from "../components/CardSlider.jsx";
 import { pathFor } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { Reveal } from "../components/Reveal.jsx";
 
 export function Product() {
   const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go, setCatFilter, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
@@ -109,8 +110,8 @@ export function Product() {
           )}
         </div>
         <div className="r-sticky" style={css("position:sticky;top:100px;")}>
-          <div className="eyebrow" style={css("margin-bottom:12px;")}>{sel.category} · {sel.material}</div>
-          <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:14px;")}>{sel.name}</h1>
+          <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:6px;")}>{sel.name}</h1>
+          <div style={css("font-size:14.5px;color:var(--c-ink-mute);margin-bottom:14px;")}>{sel.category} · {sel.material}</div>
           <div style={css("display:flex;align-items:baseline;gap:10px;margin-bottom:var(--sp-4);")}>
             <div style={css(`font-size:25px;color:var(--c-ink);${couponCode ? "text-decoration:line-through;color:var(--c-ink-faint);font-size:18px;" : ""}`)}>{fmt(sel.price)}</div>
             {couponCode && <div style={css("font-size:25px;color:var(--c-accent);font-weight:700;")}>{fmt(sel.price - (sel.price * couponPercent) / 100)}</div>}
@@ -173,9 +174,18 @@ export function Product() {
           </div>
 
           <div style={css("display:flex;flex-wrap:wrap;gap:14px;margin-bottom:8px;")}>
-            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>🔒 תשלום מאובטח</span>
-            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>↩ 14 יום החזרות</span>
-            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:5px;")}>✨ כסף סטרלינג 925</span>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:6px;")}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7a4 4 0 0 1 8 0v4" /></svg>
+              תשלום מאובטח
+            </span>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:6px;")}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 10h10a5 5 0 0 1 0 10h-2" /><path d="m8 6-4 4 4 4" /></svg>
+              14 יום החזרות
+            </span>
+            <span style={css("font-size:12.5px;color:var(--c-ink-mute);display:flex;align-items:center;gap:6px;")}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9 12 3l6 6-6 12z" /><path d="M6 9h12M9 9l3 12M15 9l-3 12" /></svg>
+              כסף סטרלינג 925
+            </span>
           </div>
 
           <div style={css("border-top:1px solid var(--c-line);margin-top:18px;")}>
@@ -200,7 +210,7 @@ export function Product() {
       </div>
 
       {related.length > 0 && (
-        <div style={css("margin-top:70px;")}>
+        <Reveal style={css("margin-top:70px;")}>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>אולי יתאים גם</h2>
           <div className="grid-4 r-related-grid">
             {related.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
@@ -210,16 +220,16 @@ export function Product() {
               {related.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
             </CardSlider>
           </div>
-        </div>
+        </Reveal>
       )}
 
       {moreProducts.length > 0 && (
-        <div className="r-more-slider" style={css("margin-top:40px;")}>
+        <Reveal className="r-more-slider" style={css("margin-top:40px;")}>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h1);margin-bottom:var(--sp-5);")}>עוד תכשיטים שתאהבי</h2>
           <CardSlider>
             {moreProducts.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
           </CardSlider>
-        </div>
+        </Reveal>
       )}
     </div>
   );

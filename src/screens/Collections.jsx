@@ -11,7 +11,7 @@ export function Collections() {
 
   useSeoTags({
     title: "קולקציות · ALFI",
-    description: "הקולקציות של ALFI — אוספי תכשיטים בהשראת הטבע.",
+    description: "הקולקציות של ALFI — אוספי תכשיטים באיכות אמיתית ובמחיר נגיש.",
     canonical: "/קולקציות",
   });
 
@@ -24,7 +24,6 @@ export function Collections() {
   return (
     <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:46px var(--sp-5) 64px;")}>
       <div style={css("text-align:center;margin-bottom:var(--sp-6);")}>
-        <div className="eyebrow" style={css("margin-bottom:12px;")}>❀ קולקציות</div>
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);margin-bottom:14px;")}>העולמות של ALFI</h1>
         <p style={css("font-size:16.5px;color:var(--c-ink-soft);max-width:560px;margin:0 auto;")}>כל קולקציה היא סיפור — אוסף תכשיטים שנולדו מאותה השראה.</p>
       </div>

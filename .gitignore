@@ -13,3 +13,10 @@ supabase/.temp
 
 # Local Netlify folder
 .netlify
+
+# Local AI-tool skill installs (Impeccable, etc.) — machine-local tooling,
+# not website source; large binaries, not meant to be shared via git.
+.claude
+.agents
+.codex
+skills-lock.json

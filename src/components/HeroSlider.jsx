@@ -37,11 +37,23 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
     );
   });
 
+  // The background photo layer is absolutely positioned (it must fill
+  // whatever height the hero ends up being) — but `children` (the text/CTA
+  // panel) is rendered as a plain sibling, NOT nested inside that absolute
+  // div. An absolutely-positioned parent can't be stretched taller by its
+  // own content, so if the panel lived inside it, real panel content
+  // (headline + tagline + button) taller than the hero's base height would
+  // just get clipped by the parent's overflow:hidden instead of the hero
+  // growing to fit it. As a sibling, the panel is a normal-flow child of
+  // whatever renders <HeroSlider> (Home.jsx's .rd-hero, a flex container),
+  // so its real height can push that container taller when it needs to.
   return (
-    <div style={css("position:absolute;inset:0;overflow:hidden;")}>
-      {layer(mobileSlides, "r-hero-layer-mobile")}
-      {layer(desktopSlides, "r-hero-layer-desktop")}
+    <>
+      <div className="rd-hero-bg" style={css("position:absolute;inset:0;overflow:hidden;")}>
+        {layer(mobileSlides, "r-hero-layer-mobile")}
+        {layer(desktopSlides, "r-hero-layer-desktop")}
+      </div>
       {children}
-    </div>
+    </>
   );
 }

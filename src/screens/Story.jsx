@@ -15,7 +15,7 @@ export function Story() {
 
   useSeoTags({
     title: "הסיפור שלנו · ALFI",
-    description: C.storyLead ? C.storyLead.slice(0, 155) : "הסיפור של ALFI — תכשיטי כסף סטרלינג 925 בהשראת הטבע.",
+    description: C.storyLead ? C.storyLead.slice(0, 155) : "הסיפור של ALFI — תכשיטי כסף סטרלינג 925 באיכות אמיתית ובמחיר נגיש.",
     canonical: "/הסיפור-שלנו",
   });
 
@@ -24,7 +24,6 @@ export function Story() {
       <section className="r-hero" style={css("position:relative;width:100%;min-height:clamp(300px,50vw,460px);")}>
         <div style={css(`position:absolute;inset:0;background:url("${heroImg}") center/cover;`)} />
         <div style={css("position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(rgba(250,245,239,.34),rgba(250,245,239,.6));padding:var(--sp-5);")}>
-          <div className="eyebrow" style={css("margin-bottom:14px;color:var(--c-accent-dark);")}>{C.storyKicker}</div>
           <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);max-width:760px;line-height:1.1;")}>{C.storyTitle}</h1>
         </div>
       </section>
@@ -51,7 +50,6 @@ export function Story() {
       </section>
       <section className="container r-split" style={css("max-width:1100px;margin:0 auto;padding:70px var(--sp-5);display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center;")}>
         <div>
-          <div className="eyebrow" style={css("margin-bottom:12px;")}>התהליך</div>
           <h2 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:18px;")}>{C.processTitle}</h2>
           <p style={css("font-size:16.5px;color:var(--c-ink-soft);margin-bottom:24px;line-height:1.8;")}>{C.processText}</p>
           <button onClick={() => go("catalog")} className="btn btn-primary">לקולקציה ←</button>
