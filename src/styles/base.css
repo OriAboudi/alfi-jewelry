@@ -47,4 +47,12 @@ button:focus-visible, a:focus-visible, [role="button"]:focus-visible {
   button, .tap-target, select, input[type="checkbox"], input[type="radio"] {
     min-height: var(--tap);
   }
+
+  /* iOS Safari auto-zooms (and shifts the page) when focusing any field
+     whose font-size is under 16px — the checkout/sign-up/coupon fields set
+     14.5–15px inline, hence !important. Fixing the size instead of
+     disabling zoom (maximum-scale=1) keeps pinch-zoom working. */
+  input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+    font-size: 16px !important;
+  }
 }
