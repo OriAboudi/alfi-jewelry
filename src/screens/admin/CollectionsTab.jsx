@@ -29,7 +29,7 @@ export function CollectionsTab() {
       ))}
 
       {draftCol && (
-        <Overlay onClose={cancelCol} maxWidth={520}>
+        <Overlay onClose={cancelCol}>
           <OverlayHeader title={draftCol._new ? "קולקציה חדשה" : "עריכת קולקציה"} onClose={cancelCol} />
           <div style={css("display:flex;flex-direction:column;gap:16px;")}>
             <div style={css("display:flex;gap:16px;align-items:flex-start;")}>

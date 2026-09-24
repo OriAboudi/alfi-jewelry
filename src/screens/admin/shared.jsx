@@ -1,10 +1,31 @@
 // Shared constants/components for every admin tab — extracted from the
 // original monolithic Admin.jsx so each tab file can stay focused.
-import React from "react";
+import React, { useEffect } from "react";
+import { createPortal } from "react-dom";
 import { css } from "../../lib/css.js";
 import { CAT_NAMES } from "../../lib/categories.js";
 
 export const STATUS_OPTS = ["התקבלה", "בהכנה", "נשלחה", "בדרך", "נמסר", "בוטלה"];
+
+// Starting text for the Orders tab's customer-email composer — the same
+// wording the automatic status emails used to send. Always editable before
+// sending; "" is a blank free-form message. (The email itself adds the order
+// number, tracking link and ALFI footer server-side — see send-order-email.)
+export const EMAIL_TEMPLATES = {
+  "התקבלה": { subject: "ההזמנה שלך התקבלה", body: "אנחנו כבר מתחילים לטפל בהזמנה שלך." },
+  "בהכנה": { subject: "ההזמנה שלך בהכנה", body: "אנחנו מכינים את התכשיט שלך באהבה ובקפידה." },
+  "נשלחה": { subject: "ההזמנה שלך נשלחה", body: "החבילה שלך יצאה לדרך ותגיע אליך בקרוב." },
+  "בדרך": { subject: "ההזמנה שלך בדרך אליך", body: "השליח כבר בדרך — כדאי לוודא שיש מי שיקבל את החבילה." },
+  "נמסר": { subject: "ההזמנה שלך נמסרה", body: "מקווים שתיהנו מהתכשיט החדש! תודה שקנית ב‑ALFI." },
+  "בוטלה": { subject: "ההזמנה שלך בוטלה", body: "ההזמנה שלך בוטלה. לשאלות ניתן לפנות אלינו בכל עת." },
+  "": { subject: "עדכון לגבי ההזמנה שלך", body: "" },
+};
+
+export function emailDraft(templateKey, firstName) {
+  const t = EMAIL_TEMPLATES[templateKey] || EMAIL_TEMPLATES[""];
+  const greeting = firstName ? `שלום ${firstName},` : "שלום,";
+  return { template: templateKey, subject: t.subject, message: t.body ? `${greeting}\n\n${t.body}` : `${greeting}\n\n` };
+}
 export { CAT_NAMES };
 // The 4 core jewelry categories, for inventory-by-category summaries —
 // Accessories excluded, matching the homepage's 4-tile convention.
@@ -51,22 +72,40 @@ export function Area({ label, value, onChange, rows = 3, placeholder }) {
   );
 }
 
-// Overlay shell shared by every editor/detail modal in the admin panel.
-export function Overlay({ onClose, maxWidth = 560, children }) {
-  return (
-    <div onClick={onClose} style={css("position:fixed;inset:0;z-index:80;background:rgba(46,34,49,.5);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:24px;")}>
-      <div onClick={(e) => e.stopPropagation()} dir="rtl" style={css(`background:var(--c-bg);border-radius:20px;width:100%;max-width:${maxWidth}px;max-height:90vh;overflow-y:auto;padding:32px;box-shadow:var(--shadow-modal);`)}>
+// Full-screen shell shared by every editor/detail modal in the admin panel.
+// Portaled to <body>: the admin card is a .glass-card, and its
+// backdrop-filter makes it the containing block for position:fixed
+// descendants — rendered in place, the "fixed" overlay was sized to the
+// (tall) card instead of the viewport, so it opened off-screen.
+export function Overlay({ onClose, children }) {
+  useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div role="dialog" aria-modal="true" dir="rtl" style={css("position:fixed;inset:0;z-index:80;background:var(--c-bg);overflow-y:auto;overscroll-behavior:contain;")}>
+      <div style={css("max-width:960px;margin:0 auto;padding:0 32px 48px;")}>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
+// Sticky so the title and close button stay reachable while scrolling a
+// long order/product.
 export function OverlayHeader({ title, onClose }) {
   return (
-    <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;")}>
+    <div style={css("position:sticky;top:0;z-index:1;background:var(--c-bg);display:flex;justify-content:space-between;align-items:center;padding:22px 0 16px;margin-bottom:22px;border-bottom:1px solid var(--c-line);")}>
       <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:26px;")}>{title}</h2>
-      <span onClick={onClose} style={css("cursor:pointer;font-size:24px;color:var(--c-ink-mute);")}>×</span>
+      <button type="button" onClick={onClose} aria-label="סגירה" style={css("border:none;background:none;cursor:pointer;font-size:28px;line-height:1;color:var(--c-ink-mute);width:40px;height:40px;")}>×</button>
     </div>
   );
 }

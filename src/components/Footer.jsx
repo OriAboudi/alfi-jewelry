@@ -11,18 +11,12 @@ const linkBtn = "cursor:pointer;background:none;border:none;padding:0;margin:0;f
 const colHeading = "font-weight:600;color:var(--cream);";
 const colList = "display:flex;flex-direction:column;gap:12px;font-size:15px;color:inherit;";
 
-// Desktop's "שירות"/mobile's "שירות לקוחות" column: "משלוחים והחזרות" maps to
-// the real shipping/returns page; the other two have no dedicated page or
-// data anywhere in the app (no ring-size guide, no standalone care page —
-// Product.jsx has a care *accordion*, not a route), so per HANDOFF.md
-// ("render missing content as static") they're plain non-interactive text,
-// not invented links.
+// Desktop's "שירות"/mobile's "שירות לקוחות" column.
 function ServiceList({ go, textStyle }) {
   return (
     <>
       <a href={pathFor("shipping")} onClick={(e) => { e.preventDefault(); go("shipping"); }} style={css(linkBtn + textStyle)}>משלוחים והחזרות</a>
-      <span style={css(textStyle)}>מידות טבעת</span>
-      <span style={css(textStyle)}>טיפול בכסף</span>
+      <a href={pathFor("privacy")} onClick={(e) => { e.preventDefault(); go("privacy"); }} style={css(linkBtn + textStyle)}>מדיניות פרטיות</a>
     </>
   );
 }

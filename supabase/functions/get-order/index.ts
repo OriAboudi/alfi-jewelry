@@ -21,6 +21,7 @@ Deno.serve(async (req) => {
   try {
     const { id } = await req.json();
     if (!id || typeof id !== "string") return json({ error: "מזהה הזמנה חסר" });
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return json({ error: "הזמנה לא נמצאה" });
 
     const { data: order, error } = await supabase
       .from("orders")
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
     return json({ order: { ...order, history: history || [] } });
   } catch (e) {
     console.error(e);
-    return json({ error: e.message || "שגיאה בטעינת ההזמנה" });
+    return json({ error: "שגיאה בטעינת ההזמנה" });
   }
 });
 

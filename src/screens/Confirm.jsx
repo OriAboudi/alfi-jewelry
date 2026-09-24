@@ -89,7 +89,7 @@ export function Confirm() {
         )}
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>סה״כ לתשלום</span><span style={css("font-weight:700;")}>{total}</span></div>
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>משלוח אל</span><span>{addr.city || "תל אביב, ישראל"}</span></div>
-        <div style={css("display:flex;justify-content:space-between;font-size:14.5px;")}><span style={css("color:var(--c-ink-mute);")}>הגעה משוערת</span><span>3–5 ימי עסקים</span></div>
+        <div style={css("display:flex;justify-content:space-between;font-size:14.5px;")}><span style={css("color:var(--c-ink-mute);")}>הגעה משוערת</span><span>עד 14 ימי עסקים</span></div>
       </div>
       <div style={css("display:flex;gap:14px;justify-content:center;flex-wrap:wrap;")}>
         <button onClick={() => go("status")} className="btn btn-primary" style={css("font-size:15.5px;")}>מעקב אחר ההזמנה</button>

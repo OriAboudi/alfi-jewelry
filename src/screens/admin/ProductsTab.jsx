@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../../lib/css.js";
-import { fmt } from "../../lib/format.js";
+import { fmt, productDetailsText } from "../../lib/format.js";
 import { thumb, GRAD_CARD } from "../../lib/ui.js";
 import { Disc } from "../../components/Ornaments.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
@@ -133,6 +133,7 @@ export function ProductsTab() {
             <Field label="חומר" value={draft.material} onChange={(v) => setDraft("material", v)} />
             <Field label="מידות (מופרדות בפסיק)" value={draft.sizesText} onChange={(v) => setDraft("sizesText", v)} placeholder="S, M, L, XL" />
             <Area label="תיאור" value={draft.description} onChange={(v) => setDraft("description", v)} />
+            <Area label="פרטי המוצר (ריק = טקסט ברירת המחדל)" value={draft.details} onChange={(v) => setDraft("details", v)} placeholder={productDetailsText({ material: draft.material })} />
             <label style={css("display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;")}>
               <input type="checkbox" checked={!!draft.featured} onChange={(e) => setDraft("featured", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />הצגה בעמוד הבית (נבחרים)
             </label>

@@ -7,6 +7,7 @@
 // (discount applied) + takbull-ipn (marked redeemed on confirmed payment).
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
+import { clientIp, withinRateLimit, cleanString } from "../_shared/security.ts";
 
 const supabase = createClient(
   Deno.env.get("SUPABASE_URL") ?? "",
@@ -18,8 +19,13 @@ Deno.serve(async (req) => {
 
   try {
     const { code: rawCode } = await req.json();
-    const code = String(rawCode || "").trim().toUpperCase();
+    const code = cleanString(rawCode, 32).toUpperCase();
     if (!code) return json({ error: "יש להזין קוד קופון" });
+
+    // Stops brute-forcing the coupon code space from a single client.
+    if (!(await withinRateLimit(supabase, `coupon-check:ip:${clientIp(req)}`, 20, 600))) {
+      return json({ error: "יותר מדי ניסיונות, נסי שוב בעוד כמה דקות" });
+    }
 
     const { data: coupon } = await supabase.from("coupons").select("*").eq("code", code).maybeSingle();
     if (!coupon) return json({ error: "קוד קופון לא נמצא" });
@@ -30,7 +36,7 @@ Deno.serve(async (req) => {
     return json({ valid: true, percent: Number(coupon.percent) || 0 });
   } catch (e) {
     console.error(e);
-    return json({ error: e.message || "בדיקת הקופון נכשלה" });
+    return json({ error: "בדיקת הקופון נכשלה" });
   }
 });
 

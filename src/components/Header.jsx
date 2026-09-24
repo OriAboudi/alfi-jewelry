@@ -43,6 +43,11 @@ export function Header() {
     setMenuOpen(false);
     go("collections");
   };
+  const goStory = (e) => {
+    e.preventDefault();
+    setMenuOpen(false);
+    go("story");
+  };
   const navigate = (target) => {
     setMenuOpen(false);
     go(target);
@@ -50,6 +55,7 @@ export function Header() {
 
   const isCatActive = (cat) => screen === "catalog" && catFilter === cat;
   const isCollectionsActive = screen === "collections";
+  const isStoryActive = screen === "story";
 
   // A plain <span> has no implicit ARIA role, and role-less/"generic"
   // elements don't accept aria-label (axe: aria-prohibited-attr) — these
@@ -91,12 +97,13 @@ export function Header() {
     <>
       <header className="glass" style={css("position:sticky;top:0;z-index:40;box-sizing:border-box;border-width:0 0 1px 0;")}>
         {/* ---- Desktop bar (>=768px) ---- */}
-        <div className="rd-header-desktop" style={css("height:92px;box-sizing:border-box;padding:0 64px;align-items:center;")}>
-          <nav className="rd-nav" style={css("display:flex;gap:36px;font-size:15px;letter-spacing:.04em;")}>
+        <div className="rd-header-desktop" style={css("height:92px;box-sizing:border-box;padding:0 clamp(24px, 4.4vw, 64px);align-items:center;")}>
+          <nav className="rd-nav" style={css("display:flex;gap:clamp(16px, 2vw, 36px);white-space:nowrap;font-size:15px;letter-spacing:.04em;")}>
             {CATEGORY_LINKS.map((cat) => (
               <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} aria-current={isCatActive(cat) ? "page" : undefined} style={css("cursor:pointer;")}>{cat}</a>
             ))}
             <a href={pathFor("collections")} {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>
+            <a href={pathFor("story")} {...asButton(goStory)} aria-current={isStoryActive ? "page" : undefined} style={css("cursor:pointer;")}>הסיפור</a>
           </nav>
           <span
             {...asButton(() => navigate("home"))}
@@ -150,6 +157,7 @@ export function Header() {
               <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{cat}</a>
             ))}
             <a href={pathFor("collections")} {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
+            <a href={pathFor("story")} {...asButton(goStory)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>הסיפור</a>
             <span {...asButton(() => navigate("favorites"))} className="tap-target" style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>
               מועדפים
               {favoritesCount > 0 && <span style={css("font-size:13px;color:var(--text-muted);")}>{favoritesCount}</span>}

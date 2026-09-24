@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
-import { fmt } from "../lib/format.js";
+import { fmt, productDetailsText } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
@@ -64,7 +64,7 @@ export function Product() {
 
   const [openInfo, setOpenInfo] = useState(null);
   const INFO_SECTIONS = [
-    { key: "details", title: "פרטי המוצר", body: `${sel.material || "כסף 925"}. כל תכשיט עשוי להיות שונה במעט מהתמונה בשל תהליך הייצור.` },
+    { key: "details", title: "פרטי המוצר", body: productDetailsText(sel) },
     { key: "shipping", title: "משלוח והחזרות", body: `משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)} (אחרת ${fmt(shipFee)}). ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית.` },
     { key: "care", title: "טיפוח התכשיט", body: "יש להימנע ממגע עם מים, בשמים וכימיקלים. לאחסן בנפרד, בשקית סגורה, הרחק מאור שמש ישיר." },
   ];

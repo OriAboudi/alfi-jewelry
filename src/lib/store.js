@@ -247,6 +247,19 @@ const local = {
     // Dev-only stand-in for the Supabase update-order-status Edge Function —
     // no email is sent locally, just the status change itself.
     async updateStatus(id, status) { return local.orders.update(id, { status }); },
+    // Dev-only stand-in for send-order-email: local mode never sends real
+    // email, so it just records the message so the Orders tab's email log works.
+    async sendEmail(id, { subject, message }) {
+      const order = (read(LS.orders, [])).find((o) => o.id === id);
+      const to = order?.shipping_address?.email;
+      if (!to) throw new Error("אין כתובת אימייל בהזמנה");
+      const log = read("alfi:orderEmails", []);
+      log.push({ order_id: id, to_email: to, subject, body: message, status: "sent", sent_at: new Date().toISOString() });
+      write("alfi:orderEmails", log);
+      console.info(`ALFI (local): email to ${to} — "${subject}" (not actually sent in local mode)`);
+      return { ok: true, to };
+    },
+    async emails(id) { return read("alfi:orderEmails", []).filter((e) => e.order_id === id); },
     async getPublic(id) {
       const o = read(LS.orders, []).find((x) => String(x.id) === String(id));
       if (!o) throw new Error("הזמנה לא נמצאה");
@@ -345,8 +358,11 @@ const local = {
       if (content.signupCouponEnabled === false) throw new Error("ההרשמה אינה זמינה כרגע");
       const percent = Number(content.signupCouponPercent || 5);
       const coupons = read(LS.coupons, []);
-      const existing = coupons.find((c) => c.email === cleanEmail && c.status === "active");
-      if (existing) return { code: existing.code, percent: Number(existing.percent) };
+      // One coupon per person, ever — same rule as the signup-coupon function.
+      const phoneDigits = String(phone || "").replace(/[^\d]/g, "");
+      if (coupons.some((c) => c.email === cleanEmail || (c.phone && String(c.phone).replace(/[^\d]/g, "") === phoneDigits))) {
+        throw new Error("כבר נרשמת בעבר — קוד ההנחה ניתן פעם אחת בלבד, בהרשמה הראשונה.");
+      }
       const code = generateCouponCode();
       coupons.unshift({ id: uid(), code, name, email: cleanEmail, phone, percent, status: "active", created_at: new Date().toISOString() });
       write(LS.coupons, coupons);
@@ -359,12 +375,7 @@ const local = {
         .filter((c) => c.phone && String(c.phone).replace(/[^\d]/g, "") === phoneDigits)
         .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
       if (!match) return { found: false };
-      return {
-        found: true,
-        name: match.name,
-        email: match.email,
-        coupon: match.status === "active" ? { code: match.code, percent: Number(match.percent) } : null,
-      };
+      return { found: true, name: String(match.name || "").trim().split(/\s+/)[0] || "" };
     },
   },
   coupon: {
@@ -503,6 +514,19 @@ function makeSupabase() {
       },
       // Admin-only — relies on the "order_status_history admin read" RLS
       // policy, so this simply returns [] for a non-admin session.
+      // Admin-written customer email about this order (send-order-email).
+      async sendEmail(id, { subject, message }) {
+        const { data, error } = await sb.functions.invoke("send-order-email", { body: { id, subject, message } });
+        if (error) throw new Error(error.message || "שליחת המייל נכשלה");
+        if (data?.error) throw new Error(data.error);
+        return data; // { ok, to }
+      },
+      // Admin-only — "order_emails admin read" RLS policy.
+      async emails(id) {
+        const { data, error } = await sb.from("order_emails").select("to_email, subject, body, status, error, sent_at").eq("order_id", id).order("sent_at", { ascending: true });
+        if (error) throw error;
+        return data || [];
+      },
       async history(id) {
         const { data, error } = await sb.from("order_status_history").select("status, changed_at, notified").eq("order_id", id).order("changed_at", { ascending: true });
         if (error) throw error;
@@ -567,7 +591,7 @@ function makeSupabase() {
         const { data, error } = await sb.functions.invoke("login-by-phone", { body: { phone } });
         if (error) throw new Error(error.message || "ההתחברות נכשלה");
         if (data?.error) throw new Error(data.error);
-        return data; // { found, name, email, coupon }
+        return data; // { found, name }
       },
     },
     coupon: {

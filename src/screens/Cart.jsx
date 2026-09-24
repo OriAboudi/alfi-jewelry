@@ -19,13 +19,14 @@ export function Cart() {
   const hasStockIssue = lines.some((l) => l.qty > Number(l.p.stock));
 
   return (
-    <div className="r-container glass-card" style={css("max-width:1100px;margin:30px auto;padding:46px var(--sp-5) 64px;")}>
-      <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>עגלת הקניות</h1>
-
+    // Same layout as Checkout: only the items column sits on the cream glass
+    // panel; the order summary sits straight on the site's floral background.
+    <div className="r-container" style={css("max-width:1100px;margin:30px auto 64px;")}>
       {lines.length > 0 ? (
         <>
-          <div className="r-cart-grid" style={css("display:grid;grid-template-columns:1fr 360px;gap:40px;align-items:start;")}>
-            <div>
+          <div className="r-cart-grid" style={css("display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start;")}>
+            <div className="glass-card" style={css("padding:40px var(--sp-5) 36px;")}>
+              <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>עגלת הקניות</h1>
               {lines.map((l) => (
                 <div key={l.id + l.size} style={css("display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--c-line);")}>
                   <div className="r-cart-thumb" style={thumb(l.p.image, GRAD_CARD, "width:96px;height:114px;flex:none;border-radius:var(--r-md);")}>
@@ -56,7 +57,7 @@ export function Cart() {
                 </div>
               ))}
             </div>
-            <div className="r-sticky" style={css("background:var(--c-line-soft);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
+            <div className="r-sticky" style={css("background:rgba(251,248,245,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.6);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
               <h3 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:20px;")}>סיכום הזמנה</h3>
               <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(subtotal)}</span></div>
               <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>משלוח</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
@@ -82,10 +83,13 @@ export function Cart() {
           </div>
         </>
       ) : (
-        <div style={css("text-align:center;padding:80px 0;")}>
+        <div className="glass-card" style={css("padding:46px var(--sp-5) 64px;")}>
+          <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>עגלת הקניות</h1>
+          <div style={css("text-align:center;padding:40px 0 16px;")}>
           <div style={css("font-size:40px;margin-bottom:16px;color:#c9b3ce;")}>❀</div>
           <p style={css("font-size:18px;color:var(--c-ink-mute);margin-bottom:24px;")}>העגלה ריקה עדיין.</p>
           <button onClick={() => go("catalog")} className="btn btn-primary" style={css("font-size:15.5px;")}>לקטלוג</button>
+          </div>
         </div>
       )}
     </div>

@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
-import { FlowerMark } from "./Ornaments.jsx";
+import { PrivacyConsent } from "./PrivacyConsent.jsx";
 
 const labelStyle = "display:block;font-size:12.5px;color:var(--c-ink-mute);margin-bottom:5px;";
-const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:#fff;transition:border-color .2s;";
+const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:transparent;transition:border-color .2s;";
 const fieldErrStyle = fieldStyle.replace("var(--c-line-strong)", "#d98a72");
 const errMsgStyle = "color:var(--c-danger);font-size:12px;margin-top:5px;";
 
@@ -20,6 +20,8 @@ export function SignupCouponPopup() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(null); // { code, percent }
   const [copied, setCopied] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [agreeError, setAgreeError] = useState("");
 
   // Reaching this popup from the header's phone-login flow (number not on
   // file yet) hands off the phone already typed there, so it doesn't need
@@ -45,7 +47,9 @@ export function SignupCouponPopup() {
   const percent = C.signupCouponPercent || 5;
 
   const submit = async () => {
+    if (!agreed) setAgreeError("יש לאשר את מדיניות הפרטיות כדי להמשיך");
     if (!formValid) { setTouched({ name: true, email: true, phone: true }); return; }
+    if (!agreed) return;
     setBusy(true);
     setError("");
     try {
@@ -96,14 +100,14 @@ export function SignupCouponPopup() {
       >
         <span onClick={close} className="tap-target" style={css("position:absolute;top:8px;left:8px;cursor:pointer;font-size:20px;color:var(--c-ink-mute);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;")}>×</span>
 
-        <FlowerMark width={72} height={28} variant="simple" style={{ margin: "0 auto 8px" }} />
+        <div className="serif" dir="ltr" style={css("font-size:24px;font-weight:400;letter-spacing:.36em;padding-left:.36em;color:var(--ink);line-height:1;margin-bottom:12px;")}>ALFI</div>
 
         {success ? (
           <>
             <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:7px;")}>ברוכה הבאה ל‑ALFI!</h2>
             <p style={css("font-size:12.5px;color:var(--c-ink-soft);margin-bottom:14px;")}>קוד ההנחה שלך ל‑{success.percent}% הנחה נשלח גם לאימייל שלך:</p>
             <div style={css("border:1.5px dashed var(--c-accent);border-radius:12px;padding:11px;font-size:18px;font-weight:700;letter-spacing:.07em;color:var(--c-accent);margin-bottom:12px;")}>{success.code}</div>
-            <button onClick={copyCode} className="tap-target" style={css("width:100%;padding:10px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:#fff;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;")}>
+            <button onClick={copyCode} className="tap-target" style={css("width:100%;padding:10px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:transparent;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;")}>
               {copied ? "✓ הועתק!" : "העתקת הקוד"}
             </button>
             <button onClick={close} className="btn btn-primary btn-block" style={css("font-size:14px;padding:11px;")}>
@@ -118,6 +122,9 @@ export function SignupCouponPopup() {
               {field("name", "שם מלא")}
               {field("email", "אימייל", { type: "email", placeholder: "example@mail.com" })}
               {field("phone", "טלפון", { onChange: setPhone, placeholder: "050-1234567" })}
+            </div>
+            <div style={css("margin-bottom:12px;")}>
+              <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
             </div>
             {error && <div style={css("color:var(--c-danger);font-size:12px;margin-bottom:10px;")}>{error}</div>}
             <button onClick={submit} disabled={busy} className="btn btn-primary btn-block" style={css("font-size:14px;padding:11px;margin-bottom:8px;")}>

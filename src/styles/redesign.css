@@ -392,3 +392,13 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
   .rd-story-h2 { font-size: 60px; line-height: 1.1; }
   .rd-story-p { font-size: 19px; line-height: 1.8; }
 }
+
+/* ---------- policy pages (Shipping): key-facts strip + dashed lists ---------- */
+.r-policy-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--c-line-strong); border-bottom: 1px solid var(--c-line-strong); }
+.r-policy-facts > * + * { border-right: 1px solid var(--c-line); }
+@media (max-width: 767px) {
+  .r-policy-facts { grid-template-columns: 1fr; }
+  .r-policy-facts > * + * { border-right: 0; border-top: 1px solid var(--c-line); }
+}
+.r-policy-list li { position: relative; padding-right: 22px; font-size: 15px; line-height: 1.85; color: var(--c-ink-soft); margin-bottom: 8px; }
+.r-policy-list li::before { content: ""; position: absolute; right: 0; top: .95em; width: 12px; height: 1px; background: var(--c-accent); }

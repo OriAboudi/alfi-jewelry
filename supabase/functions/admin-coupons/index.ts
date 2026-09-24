@@ -39,7 +39,8 @@ Deno.serve(async (req) => {
     }
 
     // list
-    const { page = 1, pageSize = 20 } = body || {};
+    const page = Math.max(1, Math.floor(Number(body?.page)) || 1);
+    const pageSize = Math.min(100, Math.max(1, Math.floor(Number(body?.pageSize)) || 20));
     const from = (page - 1) * pageSize;
     const { data, error, count } = await supabase
       .from("coupons")
@@ -50,7 +51,7 @@ Deno.serve(async (req) => {
     return json({ rows: data || [], count: count || 0 });
   } catch (e) {
     console.error(e);
-    return json({ error: e.message || "פעולת הקופונים נכשלה" });
+    return json({ error: (e as Error).message || "פעולת הקופונים נכשלה" });
   }
 });
 

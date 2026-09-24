@@ -46,3 +46,9 @@ export const isValidIsraeliPhone = (s) => {
   const digits = (s || "").replace(/[^\d]/g, "");
   return /^0\d{8,9}$/.test(digits);
 };
+
+// "פרטי המוצר" text on the product page: the product's own details if the
+// admin wrote any, otherwise the generic material + variance line.
+export function productDetailsText(p) {
+  return (p.details || "").trim() || `${p.material || "כסף 925"}. כל תכשיט עשוי להיות שונה במעט מהתמונה בשל תהליך הייצור.`;
+}

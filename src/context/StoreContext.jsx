@@ -341,12 +341,12 @@ export function StoreProvider({ children }) {
     try {
       const result = await store.signup.loginByPhone(phone);
       if (result.found) {
-        saveCustomer(result.name, result.email);
-        if (result.coupon) saveCoupon(result.coupon.code, result.coupon.percent);
+        // Phone login is unverified, so the server only returns a first name
+        // (never the email), and never a coupon — the sign-up coupon is a
+        // one-time offer shown only at registration. See login-by-phone.
+        saveCustomer(result.name);
         setState({
           customerName: result.name,
-          customerEmail: result.email,
-          ...(result.coupon ? { couponCode: result.coupon.code, couponPercent: result.coupon.percent } : {}),
           phoneLoginOpen: false,
           phoneLoginBusy: false,
         });
@@ -507,7 +507,7 @@ export function StoreProvider({ children }) {
       store.users.list().then((users) => setState({ users })).catch(() => {});
     }
   }, [setState]);
-  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", price: 0, stock: 1, material: "כסף 925", description: "", images: [], featured: false, sizesText: "S, M, L" } }), [setState]);
+  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", price: 0, stock: 1, material: "כסף 925", description: "", details: "", images: [], featured: false, sizesText: "S, M, L" } }), [setState]);
   const editProduct = useCallback((p) => setState({ draft: { ...p, images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []), sizesText: (p.sizes || []).join(", ") } }), [setState]);
   const setDraft = useCallback((k, v) => setState((s) => ({ draft: { ...s.draft, [k]: v } })), [setState]);
   const cancelDraft = useCallback(() => setState({ draft: null }), [setState]);
@@ -516,7 +516,7 @@ export function StoreProvider({ children }) {
     const images = (d.images || []).slice(0, 5);
     const payload = {
       name: d.name, category: d.category, price: Number(d.price) || 0, stock: Math.max(0, Number(d.stock) || 0), material: d.material,
-      description: d.description, image: images[0] || "", images, featured: !!d.featured,
+      description: d.description, details: (d.details || "").trim(), image: images[0] || "", images, featured: !!d.featured,
       sizes: (d.sizesText || "").split(",").map((x) => x.trim()).filter(Boolean),
     };
     if (!payload.sizes.length) payload.sizes = ["יחיד"];
@@ -564,8 +564,9 @@ export function StoreProvider({ children }) {
 
   /* ---------- admin: orders ---------- */
   // Goes through the update-order-status Edge Function (not a direct table
-  // write) so a "status changed" email always fires exactly once — see
-  // src/lib/store.js orders.updateStatus.
+  // write) so every change lands in the status history. It never emails the
+  // customer — that's a separate, explicit admin action (Orders tab →
+  // "שליחת מייל ללקוח", store.orders.sendEmail).
   const setOrderStatus = useCallback(async (id, status) => {
     try {
       return await store.orders.updateStatus(id, status);

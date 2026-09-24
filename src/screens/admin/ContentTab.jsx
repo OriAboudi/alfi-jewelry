@@ -15,6 +15,8 @@ export function ContentTab() {
       <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:24px;margin-bottom:20px;")}>תוכן האתר</h2>
       <div style={css("display:flex;flex-direction:column;gap:18px;")}>
         <Field label="תווית באנר (Hero)" value={cd.heroBadge} onChange={(v) => setCdraft("heroBadge", v)} />
+        <Field label="כותרת ראשית בבאנר" value={cd.authHeadline} onChange={(v) => setCdraft("authHeadline", v)} />
+        <Area label="טקסט משנה בבאנר" value={cd.authTagline} onChange={(v) => setCdraft("authTagline", v)} rows={2} />
         <Field label="טקסט כפתור הבאנר" value={cd.heroCtaLabel} onChange={(v) => setCdraft("heroCtaLabel", v)} />
         <div>
           <label style={css(lbl)}>תמונות באנר עמוד הבית — דסקטופ (סליידר, עד 5)</label>

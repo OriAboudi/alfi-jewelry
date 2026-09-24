@@ -4,6 +4,7 @@ import { fmt, isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../l
 import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { computeTotals } from "../lib/pricing.js";
 import { CouponInput } from "../components/CouponInput.jsx";
+import { PrivacyConsent } from "../components/PrivacyConsent.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 
@@ -27,6 +28,8 @@ export function Checkout() {
     first: "", last: "", email: "", address: "", city: "", zip: "", phone: "",
   });
   const [touched, setTouched] = useState({});
+  const [agreed, setAgreed] = useState(false);
+  const [agreeError, setAgreeError] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setPhone = (e) => setForm((f) => ({ ...f, phone: formatIsraeliPhone(e.target.value) }));
   const blur = (k) => () => setTouched((t) => ({ ...t, [k]: true }));
@@ -48,7 +51,9 @@ export function Checkout() {
   const formValid = REQUIRED_FIELDS.every((k) => !errors[k]);
 
   const submit = () => {
+    if (!agreed) setAgreeError("יש לאשר את מדיניות הפרטיות כדי להמשיך");
     if (!formValid) { setTouched(Object.fromEntries(REQUIRED_FIELDS.map((k) => [k, true]))); return; }
+    if (!agreed) return;
     startCheckout({ ...form });
   };
 
@@ -70,12 +75,15 @@ export function Checkout() {
   const disabled = checkoutBusy || lines.length === 0;
 
   return (
-    <div className="r-container glass-card" style={css("max-width:1100px;margin:30px auto;padding:46px var(--sp-5) 64px;")}>
-      <div style={css("display:flex;align-items:center;gap:12px;margin-bottom:var(--sp-6);font-size:14px;color:var(--c-ink-faint);")}>
-        <span onClick={() => go("cart")} style={css("cursor:pointer;")}>עגלה</span> ← <span style={css("color:var(--c-accent);font-weight:600;")}>תשלום</span> ← <span>אישור</span>
-      </div>
-      <div className="r-checkout-grid" style={css("display:grid;grid-template-columns:1fr 380px;gap:44px;align-items:start;")}>
-        <div>
+    // Only the form column sits on the cream glass panel; the order summary
+    // sits straight on the site's floral background (light frosted layer
+    // just for legibility).
+    <div className="r-container" style={css("max-width:1100px;margin:30px auto 64px;")}>
+      <div className="r-checkout-grid" style={css("display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start;")}>
+        <div className="glass-card" style={css("padding:40px var(--sp-5) 48px;")}>
+          <div style={css("display:flex;align-items:center;gap:12px;margin-bottom:var(--sp-6);font-size:14px;color:var(--c-ink-faint);")}>
+            <span onClick={() => go("cart")} style={css("cursor:pointer;")}>עגלה</span> ← <span style={css("color:var(--c-accent);font-weight:600;")}>תשלום</span> ← <span>אישור</span>
+          </div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>פרטי משלוח</h2>
           <div style={css("display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-bottom:var(--sp-6);")}>
             {field("first", "שם פרטי")}
@@ -87,15 +95,15 @@ export function Checkout() {
             <div><label style={css(labelStyle)}>מיקוד</label><input value={form.zip} onChange={set("zip")} style={css(fieldStyle)} /></div>
           </div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>אופן תשלום</h2>
-          <div className="card" style={css("padding:18px 20px;font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;display:flex;align-items:center;gap:10px;background:var(--c-line-soft);border-color:transparent;")}>
+          <div style={css("font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;")}>
             {BACKEND === "supabase" ? (
-              <>🔒 לאחר שליחת ההזמנה תועברי לדף תשלום מאובטח של Takbull. פרטי האשראי אינם נשמרים באתר.</>
+              <>לאחר שליחת ההזמנה תועברי לדף תשלום מאובטח של Takbull. פרטי האשראי אינם נשמרים באתר.</>
             ) : (
               <>לאחר שליחת ההזמנה ניצור איתך קשר לתיאום התשלום. עדיין אין חיבור לסליקת אשראי מקוונת באתר.</>
             )}
           </div>
         </div>
-        <div className="r-sticky" style={css("background:var(--c-line-soft);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
+        <div className="r-sticky" style={css("background:rgba(251,248,245,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.6);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
           <h3 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:18px;")}>ההזמנה שלך</h3>
           {lines.map((l) => (
             <div key={l.id + l.size} style={css("display:flex;gap:12px;align-items:center;margin-bottom:14px;")}>
@@ -124,6 +132,9 @@ export function Checkout() {
 
           <div style={css("height:1px;background:var(--c-line-strong);margin:16px 0;")} />
           <div style={css("display:flex;justify-content:space-between;font-size:19px;font-weight:700;margin-bottom:22px;")}><span>סה״כ</span><span>{fmt(total)}</span></div>
+          <div style={css("margin-bottom:16px;")}>
+            <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
+          </div>
           <button onClick={submit} disabled={disabled} className="btn btn-primary btn-block" style={css("font-size:16px;")}>
             {checkoutBusy ? "רגע…" : "שליחת ההזמנה"}
           </button>

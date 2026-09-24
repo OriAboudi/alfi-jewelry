@@ -23,7 +23,7 @@ const supabase = createClient(
 Deno.serve(async (req) => {
   try {
     const uniqId = new URL(req.url).searchParams.get("uniqId");
-    if (!uniqId) return new Response("missing uniqId", { status: 400 });
+    if (!uniqId || uniqId.length > 100) return new Response("missing uniqId", { status: 400 });
 
     const validateRes = await fetch("https://api.takbull.co.il/api/ExtranalAPI/ValidateNotification", {
       method: "POST",
@@ -37,6 +37,33 @@ Deno.serve(async (req) => {
     const result = await validateRes.json();
 
     if (result.internalCode === 0) {
+      // Integrity check: the amount Takbull actually captured must cover the
+      // order total we computed server-side. Only enforced when Takbull
+      // reports an amount (the transactions insert below already treats it
+      // as optional) — an underpaid order is logged for review, never
+      // marked paid, so it can't be shipped by mistake.
+      const paidAmount = Number(result.amount);
+      if (Number.isFinite(paidAmount) && paidAmount > 0) {
+        const { data: pending } = await supabase.from("orders").select("id, total").eq("takbull_uniq_id", uniqId).maybeSingle();
+        if (pending && paidAmount + 0.01 < Number(pending.total)) {
+          console.error("takbull amount mismatch — NOT marking paid", uniqId, "paid", paidAmount, "expected", pending.total);
+          await supabase.from("orders").update({ review_flag: `סכום ששולם (₪${paidAmount}) נמוך מסכום ההזמנה — לא לשלוח לפני בדיקה` }).eq("id", pending.id);
+          await supabase.from("transactions").insert({
+            order_id: pending.id,
+            provider: "takbull",
+            provider_txn_id: String(result.orderId ?? uniqId),
+            status: "amount_mismatch",
+            amount: paidAmount,
+            currency: "ILS",
+            raw: result,
+          });
+          return new Response(JSON.stringify({ received: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+
       // Atomic guard: only the request that actually flips pending -> paid
       // gets a row back, so a repeated IPN can't send a second email.
       const { data: updated, error } = await supabase
@@ -70,12 +97,33 @@ Deno.serve(async (req) => {
         if (updated.coupon_code) {
           // Atomic guard, same idea as the orders update above: only redeem
           // once, even if Takbull redelivers the same IPN.
-          await supabase
+          const { data: redeemed, error: couponErr } = await supabase
             .from("coupons")
             .update({ status: "redeemed", redeemed_at: new Date().toISOString(), order_id: updated.id })
             .eq("code", updated.coupon_code)
             .eq("status", "active")
-            .then(({ error: couponErr }) => couponErr && console.error("coupon redemption failed", updated.coupon_code, couponErr.message));
+            .select("id");
+          if (couponErr) console.error("coupon redemption failed", updated.coupon_code, couponErr.message);
+          else if (!redeemed?.length) {
+            // The coupon was already redeemed/voided by the time this payment
+            // cleared — e.g. the same one-time code used on several checkouts
+            // paid in parallel. The money is already captured, so flag it for
+            // the admin rather than silently accepting a second discount.
+            const { data: coupon } = await supabase.from("coupons").select("order_id, status").eq("code", updated.coupon_code).maybeSingle();
+            if (coupon?.order_id !== updated.id) {
+              console.error("coupon reused — order discounted with an already-used coupon", updated.coupon_code, updated.id, coupon);
+              await supabase.from("orders").update({ review_flag: `קופון ${updated.coupon_code} כבר נוצל בהזמנה אחרת — ההנחה ניתנה פעמיים` }).eq("id", updated.id);
+              await supabase.from("transactions").insert({
+                order_id: updated.id,
+                provider: "takbull",
+                provider_txn_id: String(result.orderId ?? uniqId),
+                status: "coupon_reused",
+                amount: Number(updated.discount) || 0,
+                currency: "ILS",
+                raw: { coupon_code: updated.coupon_code, coupon },
+              });
+            }
+          }
         }
         await sendOrderConfirmationEmail(updated).catch((e) => console.error("email send failed", e));
       }

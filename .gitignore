@@ -20,3 +20,5 @@ supabase/.temp
 .agents
 .codex
 skills-lock.json
+.impeccable
+.playwright-mcp
