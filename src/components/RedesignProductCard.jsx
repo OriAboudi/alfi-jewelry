@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { fmt } from "../lib/format.js";
+import { saleInfo } from "../lib/pricing.js";
+import { PriceTag } from "./PriceTag.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { slugify } from "../lib/routes.js";
 
@@ -11,6 +12,8 @@ import { slugify } from "../lib/routes.js";
 // mockup uses.
 const FALLBACK_TAGS = ["חדש", "מומלץ", "אחרונים"];
 function tagFor(p, i) {
+  const sale = saleInfo(p);
+  if (sale.onSale) return `${sale.percent}% הנחה`;
   if (p.featured) return "חדש";
   return FALLBACK_TAGS[i % FALLBACK_TAGS.length];
 }
@@ -87,7 +90,7 @@ export function RedesignProductCard({ product: p, index = 0 }) {
           <a href={productHref} onClick={openProductClick} tabIndex={0} onKeyDown={openProductKeys} className="serif rd-card-name" style={css("cursor:pointer;line-height:1.25;")}>{p.name}</a>
           <span className="rd-card-meta" style={css("color:var(--text-muted);")}>{p.category} · {p.material || "כסף 925"}</span>
         </div>
-        <span className="rd-card-price" style={css("font-weight:600;white-space:nowrap;")}>{fmt(p.price)}</span>
+        <span className="rd-card-price"><PriceTag product={p} showPercent={false} /></span>
       </div>
       <button
         onClick={quickAdd}

@@ -2,7 +2,8 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
-import { computeTotals } from "../lib/pricing.js";
+import { computeTotals, saleInfo } from "../lib/pricing.js";
+import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
@@ -15,7 +16,7 @@ export function Cart() {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", category: "", material: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { subtotal, shipping, discount, total } = computeTotals(lines.map((l) => ({ price: l.p.price, qty: l.qty })), C, couponCode ? couponPercent : 0);
+  const { regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0);
   const hasStockIssue = lines.some((l) => l.qty > Number(l.p.stock));
 
   return (
@@ -43,7 +44,7 @@ export function Cart() {
                           <div style={css("font-size:12.5px;color:var(--c-danger);font-weight:600;margin-top:4px;")}>נותרו {l.p.stock} יחידות בלבד במלאי</div>
                         )}
                       </div>
-                      <div style={css("font-size:17px;font-weight:600;")}>{fmt(l.p.price * l.qty)}</div>
+                      <PriceTag product={l.p} qty={l.qty} size={17} />
                     </div>
                     <div style={css("margin-top:auto;display:flex;justify-content:space-between;align-items:center;")}>
                       <div style={css("display:flex;align-items:center;border:1px solid var(--c-line-strong);border-radius:var(--r-sm);overflow:hidden;background:#fff;")}>
@@ -59,7 +60,10 @@ export function Cart() {
             </div>
             <div className="r-sticky" style={css("background:rgba(251,248,245,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.6);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
               <h3 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:20px;")}>סיכום הזמנה</h3>
-              <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(subtotal)}</span></div>
+              <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(regularSubtotal)}</span></div>
+              {saleSavings > 0 && (
+                <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
+              )}
               <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>משלוח</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
               {couponCode && discount > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-success);")}><span>הנחת קופון ({couponPercent}%)</span><span>-{fmt(discount)}</span></div>
@@ -76,6 +80,9 @@ export function Cart() {
 
               <div style={css("height:1px;background:var(--c-line-strong);margin:16px 0;")} />
               <div style={css("display:flex;justify-content:space-between;font-size:20px;font-weight:700;margin-bottom:22px;")}><span>סה״כ</span><span>{fmt(total)}</span></div>
+              {totalSaved > 0 && (
+                <div style={css("text-align:center;font-size:13.5px;font-weight:600;color:var(--c-success);background:var(--c-success-bg);border-radius:var(--r-sm);padding:8px 12px;margin:-8px 0 16px;")}>חסכת {fmt(totalSaved)} בהזמנה הזו</div>
+              )}
               <button onClick={goCheckout} disabled={hasStockIssue} className="btn btn-primary btn-block" style={css("margin-bottom:12px;font-size:16px;")}>למעבר לתשלום</button>
               {hasStockIssue && <div style={css("color:var(--c-danger);font-size:12.5px;text-align:center;margin-bottom:12px;")}>יש לעדכן את הכמות בפריטים שאזלו במלאי</div>}
               <button onClick={() => go("catalog")} className="tap-target" style={css("width:100%;background:transparent;border:none;font-size:14.5px;color:var(--c-ink-mute);cursor:pointer;")}>המשך בקניות</button>

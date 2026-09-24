@@ -21,6 +21,11 @@ const loadFavorites = () => {
 const saveFavorites = (ids) => {
   try { localStorage.setItem("alfi:favorites", JSON.stringify(ids)); } catch { /* ignore */ }
 };
+// Admin editor fields from a stored product (see saveDraft for the reverse).
+const draftPrices = (p) => {
+  const onSale = Number(p.compare_at_price) > Number(p.price);
+  return { regularPrice: onSale ? p.compare_at_price : p.price, salePrice: onSale ? p.price : "" };
+};
 const scrollTop = () => { if (typeof window !== "undefined") window.scrollTo(0, 0); };
 
 const isAdminPath = () => typeof window !== "undefined" && window.location.pathname === ADMIN_PATH;
@@ -508,15 +513,20 @@ export function StoreProvider({ children }) {
       store.users.list().then((users) => setState({ users })).catch(() => {});
     }
   }, [setState]);
-  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", price: 0, stock: 1, material: "כסף 925", description: "", details: "", images: [], featured: false, sizesText: "S, M, L" } }), [setState]);
-  const editProduct = useCallback((p) => setState({ draft: { ...p, images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []), sizesText: (p.sizes || []).join(", ") } }), [setState]);
+  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", regularPrice: "", salePrice: "", stock: 1, material: "כסף 925", description: "", details: "", images: [], featured: false, sizesText: "S, M, L" } }), [setState]);
+  const editProduct = useCallback((p) => setState({ draft: { ...p, ...draftPrices(p), images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []), sizesText: (p.sizes || []).join(", ") } }), [setState]);
   const setDraft = useCallback((k, v) => setState((s) => ({ draft: { ...s.draft, [k]: v } })), [setState]);
   const cancelDraft = useCallback(() => setState({ draft: null }), [setState]);
   const saveDraft = useCallback(async () => {
     const d = { ...ref.current.draft };
     const images = (d.images || []).slice(0, 5);
+    // Admin enters a regular price + optional sale price; stored as
+    // price (what's charged) + compare_at_price (regular, only when on sale).
+    const regular = Number(d.regularPrice) || 0;
+    const sale = Number(d.salePrice) || 0;
+    const onSale = sale > 0 && sale < regular;
     const payload = {
-      name: d.name, category: d.category, price: Number(d.price) || 0, stock: Math.max(0, Number(d.stock) || 0), material: d.material,
+      name: d.name, category: d.category, price: onSale ? sale : regular, compare_at_price: onSale ? regular : null, stock: Math.max(0, Number(d.stock) || 0), material: d.material,
       description: d.description, details: (d.details || "").trim(), image: images[0] || "", images, featured: !!d.featured,
       sizes: (d.sizesText || "").split(",").map((x) => x.trim()).filter(Boolean),
     };

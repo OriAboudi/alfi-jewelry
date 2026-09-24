@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { fmt, isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
-import { computeTotals } from "../lib/pricing.js";
+import { computeTotals, saleInfo } from "../lib/pricing.js";
+import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { PrivacyConsent } from "../components/PrivacyConsent.jsx";
 import { useStore } from "../context/StoreContext.jsx";
@@ -38,7 +39,7 @@ export function Checkout() {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { subtotal, shipping, discount, total } = computeTotals(lines.map((l) => ({ price: l.p.price, qty: l.qty })), C, couponCode ? couponPercent : 0);
+  const { regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0);
 
   const errors = {
     first: form.first.trim() ? "" : "שדה חובה",
@@ -111,11 +112,14 @@ export function Checkout() {
                 {!l.p.image && <div style={css("width:50%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 200deg,#efe9f1,#cfc0d2,#f6f0eb,#c3b6c6,#efe9f1);")} />}
               </div>
               <div style={css("flex:1;font-size:14px;min-width:0;")}><div style={css("font-weight:600;")}>{l.p.name}</div><div style={css("color:var(--c-ink-mute);font-size:12.5px;")}>כמות: {l.qty}</div></div>
-              <div style={css("font-size:14.5px;font-weight:600;")}>{fmt(l.p.price * l.qty)}</div>
+              <PriceTag product={l.p} qty={l.qty} size={14.5} showPercent={false} style="flex-direction:column;align-items:flex-end;gap:0;" />
             </div>
           ))}
           <div style={css("height:1px;background:var(--c-line-strong);margin:16px 0;")} />
-          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(subtotal)}</span></div>
+          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(regularSubtotal)}</span></div>
+              {saleSavings > 0 && (
+                <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
+              )}
           <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>משלוח</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
           {couponCode && discount > 0 && (
             <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-success);")}><span>הנחת קופון ({couponPercent}%)</span><span>-{fmt(discount)}</span></div>
@@ -132,6 +136,9 @@ export function Checkout() {
 
           <div style={css("height:1px;background:var(--c-line-strong);margin:16px 0;")} />
           <div style={css("display:flex;justify-content:space-between;font-size:19px;font-weight:700;margin-bottom:22px;")}><span>סה״כ</span><span>{fmt(total)}</span></div>
+              {totalSaved > 0 && (
+                <div style={css("text-align:center;font-size:13.5px;font-weight:600;color:var(--c-success);background:var(--c-success-bg);border-radius:var(--r-sm);padding:8px 12px;margin:-8px 0 16px;")}>חסכת {fmt(totalSaved)} בהזמנה הזו</div>
+              )}
           <div style={css("margin-bottom:16px;")}>
             <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
           </div>

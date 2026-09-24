@@ -3,6 +3,7 @@ import { css } from "../../lib/css.js";
 import { fmt, productDetailsText } from "../../lib/format.js";
 import { thumb, GRAD_CARD } from "../../lib/ui.js";
 import { Disc } from "../../components/Ornaments.jsx";
+import { PriceTag } from "../../components/PriceTag.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
 import { store } from "../../lib/store.js";
@@ -25,6 +26,7 @@ export function ProductsTab() {
   const [loading, setLoading] = React.useState(true);
   const [stockEdits, setStockEdits] = React.useState({});
   const [stockError, setStockError] = React.useState("");
+  const [priceError, setPriceError] = React.useState("");
 
   const reload = React.useCallback(() => {
     setLoading(true);
@@ -53,13 +55,17 @@ export function ProductsTab() {
   const onDelete = async (id) => { await deleteProduct(id); reload(); };
 
   const submitDraft = () => {
+    const regular = Number(draft?.regularPrice), sale = draft?.salePrice;
+    if (!(regular > 0)) { setPriceError("יש לציין מחיר רגיל"); return; }
+    if (sale !== "" && sale != null && Number(sale) > 0 && Number(sale) >= regular) { setPriceError("מחיר המבצע חייב להיות נמוך מהמחיר הרגיל"); return; }
+    setPriceError("");
     const v = draft?.stock;
     const valid = v !== "" && v !== null && v !== undefined && Number.isFinite(Number(v)) && Number(v) >= 0;
     if (!valid) { setStockError("יש לציין כמות מלאי (מספר 0 ומעלה)"); return; }
     setStockError("");
     saveDraft();
   };
-  const openDraft = (fn, ...args) => { setStockError(""); fn(...args); };
+  const openDraft = (fn, ...args) => { setStockError(""); setPriceError(""); fn(...args); };
 
   return (
     <div>
@@ -89,7 +95,7 @@ export function ProductsTab() {
               {!p.image && <Disc style="width:54%;aspect-ratio:1;" />}
             </div>
             <div style={css("flex:1;min-width:140px;")}><div style={css("font-family:var(--font-serif);font-size:17px;")}>{p.name}</div><div style={css("font-size:13px;color:var(--c-ink-mute);")}>{p.category} · {p.material}</div></div>
-            <div style={css("font-size:16px;font-weight:600;width:90px;")}>{fmt(p.price)}</div>
+            <div style={css("width:130px;")}><PriceTag product={p} size={16} /></div>
             <div style={css("display:flex;align-items:center;gap:6px;")}>
               <input
                 type="number" min="0"
@@ -127,7 +133,17 @@ export function ProductsTab() {
                   {CAT_NAMES.map((c) => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-              <Field label="מחיר (₪)" value={draft.price} onChange={(v) => setDraft("price", v)} type="number" />
+              <Field label="מחיר רגיל (₪) *" value={draft.regularPrice} onChange={(v) => { setPriceError(""); setDraft("regularPrice", v); }} type="number" error={priceError} />
+            </div>
+            <div>
+              <Field label="מחיר מבצע (₪) — אופציונלי" value={draft.salePrice} onChange={(v) => { setPriceError(""); setDraft("salePrice", v); }} type="number" placeholder="ריק = המוצר לא במבצע" />
+              {(() => {
+                const r = Number(draft.regularPrice) || 0, sp = Number(draft.salePrice) || 0;
+                if (!sp) return null;
+                return sp < r
+                  ? <div style={css("font-size:12.5px;color:var(--c-success);margin-top:5px;")}>{Math.round(((r - sp) / r) * 100)}% הנחה · חיסכון של {fmt(r - sp)} ללקוח</div>
+                  : <div style={css("font-size:12.5px;color:var(--c-danger);margin-top:5px;")}>מחיר המבצע חייב להיות נמוך מהמחיר הרגיל</div>;
+              })()}
             </div>
             <Field label="מלאי (יחידות זמינות) *" value={draft.stock} onChange={(v) => { setStockError(""); setDraft("stock", v); }} type="number" error={stockError} />
             <Field label="חומר" value={draft.material} onChange={(v) => setDraft("material", v)} />

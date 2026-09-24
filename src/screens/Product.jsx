@@ -3,6 +3,8 @@ import { css } from "../lib/css.js";
 import { fmt, productDetailsText } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
+import { PriceTag } from "../components/PriceTag.jsx";
+import { saleInfo } from "../lib/pricing.js";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { CardSlider } from "../components/CardSlider.jsx";
 import { pathFor } from "../lib/routes.js";
@@ -113,8 +115,15 @@ export function Product() {
           <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:clamp(28px, 2.8vw, 36px);line-height:1.2;margin-bottom:4px;")}>{sel.name}</h1>
           <div style={css("font-size:13.5px;color:var(--c-ink-mute);margin-bottom:12px;")}>{sel.category} · {sel.material}</div>
           <div style={css("display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;margin-bottom:10px;")}>
-            <div style={css(`font-size:22px;color:var(--c-ink);${couponCode ? "text-decoration:line-through;color:var(--c-ink-faint);font-size:17px;" : ""}`)}>{fmt(sel.price)}</div>
-            {couponCode && <div style={css("font-size:22px;color:var(--c-accent);font-weight:700;")}>{fmt(sel.price - (sel.price * couponPercent) / 100)}</div>}
+            {couponCode ? (
+              <>
+                <div style={css("font-size:22px;color:var(--c-accent);font-weight:700;")}>{fmt(sel.price - (sel.price * couponPercent) / 100)}</div>
+                <s style={css("font-size:17px;color:var(--c-ink-faint);")}>{fmt(saleInfo(sel).regular)}</s>
+              </>
+            ) : (
+              <PriceTag product={sel} size={22} showPercent={false} />
+            )}
+            {saleInfo(sel).onSale && <span style={css("font-size:12px;font-weight:700;color:#fff;background:var(--c-accent-fill);padding:3px 10px;border-radius:100px;")}>{saleInfo(sel).percent}% הנחה</span>}
             {outOfStock && <span className="badge badge-danger" style={css("font-size:12px;padding:3px 10px;")}>אזל במלאי</span>}
             {!outOfStock && Number(sel.stock) <= 5 && <span className="badge badge-accent" style={css("font-size:12px;padding:3px 10px;")}>{Number(sel.stock) === 1 ? "נותרה יחידה אחת בלבד" : `נותרו ${sel.stock} יחידות בלבד`}</span>}
           </div>

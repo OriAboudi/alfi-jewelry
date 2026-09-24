@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { css } from "../lib/css.js";
-import { fmt } from "../lib/format.js";
+import { PriceTag } from "./PriceTag.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 
 /**
@@ -70,7 +70,7 @@ export function SearchOverlay({ onClose }) {
                     <span className="serif" style={css("font-size:15px;color:var(--ink);")}>{p.name}</span>
                     <span style={css("font-size:12.5px;color:var(--text-muted);")}>{p.category}</span>
                   </span>
-                  <span style={css("font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;")}>{fmt(p.price)}</span>
+                  <PriceTag product={p} size={14} showPercent={false} style="color:var(--ink);" />
                 </button>
               ))
             )}

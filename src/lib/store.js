@@ -186,7 +186,7 @@ const local = {
     async create(data) {
       const items = read(LS.products, []);
       const id = items.reduce((m, p) => Math.max(m, Number(p.id) || 0), 0) + 1;
-      const p = { id, name: "", category: "טבעות", price: 0, material: "כסף 925", featured: false, image: "", images: [], sizes: ["S", "M", "L"], description: "", ...data };
+      const p = { id, name: "", category: "טבעות", price: 0, compare_at_price: null, material: "כסף 925", featured: false, image: "", images: [], sizes: ["S", "M", "L"], description: "", ...data };
       items.push(p); write(LS.products, items); return p;
     },
     async update(id, patch) {
