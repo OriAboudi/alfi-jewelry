@@ -269,6 +269,7 @@ export function StoreProvider({ children }) {
       if (isAdminPath()) return;
       const parsed = parsePath(window.location.pathname);
       if (parsed) setState((s) => ({ ...s, ...parsed, contentSaved: false }));
+      scrollTop();
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
