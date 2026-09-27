@@ -21,7 +21,7 @@ export function PhoneLoginPopup() {
     if (phoneLoginOpen) { setPhone(""); setTouched(false); }
   }, [phoneLoginOpen]);
 
-  const panelRef = useDialog(phoneLoginOpen, closePhoneLogin);
+  const panelRef = useDialog(phoneLoginOpen, closePhoneLogin, { initialFocus: "input" });
 
   if (!phoneLoginOpen) return null;
 

@@ -22,6 +22,8 @@
 
 /* A focus ring that stays visible on every background. */
 :focus-visible { outline: 3px solid var(--c-accent-dark, #5c3f6b) !important; outline-offset: 2px; }
+/* A dialog container focused on open (not via Tab) needs no ring around it. */
+[role="dialog"][tabindex="-1"]:focus { outline: none !important; }
 
 /* ---------- floating button + panel ---------- */
 .a11y-fab {

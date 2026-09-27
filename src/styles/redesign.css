@@ -384,10 +384,23 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
    hero opens straight into the store. */
 .rd-hero-shop { display: none; }
 
-/* Tablets: the square desktop photo, whole. */
+/* Phones: the photo is capped to a little over half the screen so the
+   headline lands in the first view; framed on the face + jewellery. */
+@media (max-width: 599px) {
+  .rd-hero-media { aspect-ratio: auto; height: min(133.33vw, 56vh); height: min(133.33vw, 56svh); }
+  .rd-hero-img { background-position: center 20%; }
+}
+
+/* Tablets: the square desktop photo, whole (contained — its backdrop already
+   blends into the cream, so the frame's edges stay invisible), capped so
+   the headline is in view. */
 @media (min-width: 600px) {
   .rd-hero-media { aspect-ratio: 1 / 1; }
   .rd-hero-panel { padding: 48px 48px 40px; }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  .rd-hero-media { aspect-ratio: auto; height: min(100vw, 64vh); height: min(100vw, 64svh); }
+  .rd-hero-img.r-hero-layer-desktop { background-size: contain; }
 }
 
 /* Side by side: the photo half is exactly square, so the whole picture

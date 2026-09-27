@@ -25,7 +25,14 @@ export function useDialog(open, onClose, { initialFocus } = {}) {
     // Defer so the panel's content has rendered.
     const t = setTimeout(() => {
       if (!panel || panel.contains(document.activeElement)) return;
-      const target = (initialFocus && panel.querySelector(initialFocus)) || focusables()[0] || panel;
+      let target = (initialFocus && panel.querySelector(initialFocus)) || focusables()[0] || panel;
+      // Touch devices, dialogs that open on their own (no initialFocus): never
+      // auto-focus a text field — it would pop the on-screen keyboard unasked
+      // and shove the page (and header) up. Focus the dialog itself; the
+      // keyboard opens when a field is tapped. Dialogs the visitor opened to
+      // type in (search, phone login) pass initialFocus and keep it.
+      const isTextField = target.matches?.('input:not([type="checkbox"]):not([type="radio"]), textarea, select');
+      if (!initialFocus && isTextField && window.matchMedia?.("(pointer: coarse)").matches) target = panel;
       if (target === panel && !panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
       target.focus({ preventScroll: true });
     }, 30);
