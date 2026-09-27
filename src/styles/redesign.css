@@ -284,6 +284,18 @@
   .rd-header-desktop { display: none; }
   .rd-header-mobile { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+/* Compact header: the translucent glass let the hero photo show straight
+   through once the page was scrolled at all (Safari restores scroll on
+   reopening a tab), so on phones it read as "the photo, no header". Near-
+   opaque cream, its own compositing layer, above everything in the page. */
+@media (max-width: 1023px) {
+  header.glass {
+    background: rgba(249, 245, 241, .97);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    z-index: 60 !important;
+  }
+}
 
 /* ---------- product page "אולי יתאים גם": grid on desktop, slider on mobile ---------- */
 .r-related-slider { display: none; }
@@ -384,11 +396,11 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
    hero opens straight into the store. */
 .rd-hero-shop { display: none; }
 
-/* Phones: the photo is capped to a little over half the screen so the
-   headline lands in the first view; framed on the face + jewellery. */
+/* Phones: the photo is capped to about two thirds of the screen so the
+   headline still starts in the first view; framed on the face + jewellery. */
 @media (max-width: 599px) {
-  .rd-hero-media { aspect-ratio: auto; height: min(133.33vw, 56vh); height: min(133.33vw, 56svh); }
-  .rd-hero-img { background-position: center 20%; }
+  .rd-hero-media { aspect-ratio: auto; height: min(133.33vw, 66vh); height: min(133.33vw, 66svh); }
+  .rd-hero-img { background-position: center 25%; }
 }
 
 /* Tablets: the square desktop photo, whole (contained — its backdrop already

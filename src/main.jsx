@@ -16,6 +16,10 @@ import { applyA11y } from "./components/AccessibilityMenu.jsx";
 // hero, with the header scrolled out of view.
 if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
 window.scrollTo(0, 0);
+// Safari/Chrome also restore a page from the back/forward cache (reopening
+// a tab, swiping back) WITHOUT re-running this file — the page reappears at
+// its old offset. Open those at the top too.
+window.addEventListener("pageshow", (e) => { if (e.persisted) window.scrollTo(0, 0); });
 
 // Visitor-saved accessibility-menu settings, applied before first paint.
 applyA11y();
