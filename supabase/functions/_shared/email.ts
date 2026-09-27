@@ -35,10 +35,12 @@ const ASSET_BASE = `${(Deno.env.get("SUPABASE_URL") || "").replace(/\/+$/, "")}/
 // blur + saturation + cream veil baked in — email clients ignore CSS
 // filters and gradient overlays, so the effect has to be in the pixels.
 const BG_URL = `${ASSET_BASE}/site-bg-v1.jpg`;
-// Card header: the floral artwork with the ALFI JEWELRY lettering baked in
-// (source: supabase/email-assets/header-v1.jpg). An <img>, so no mail app's
-// dark mode can recolour it, and the logo is always the real one.
-const HEADER_URL = `${ASSET_BASE}/header-v1.jpg`;
+// The "ALFI" wordmark as it appears in the site header (Frank Ruhl Libre,
+// .36em tracking, ink colour), rendered to a transparent PNG (source:
+// supabase/email-assets/wordmark-v1.png). It sits straight on the floral
+// background — as live text, dark mode would recolour it light-on-light;
+// as an image it always stays exactly as designed.
+const WORDMARK_URL = `${ASSET_BASE}/wordmark-v1.png`;
 
 // Palette — mirrors src/styles/tokens.css.
 const C = {
@@ -147,16 +149,16 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
 // background IMAGE — text sitting on the painted background turned light-on-
 // light and unreadable (iOS Mail, dark mode). So:
 //  1. The floral painting is used wherever there's no text: a wide frame
-//     around the card and the card's header image. Every word sits on the
-//     plain white card (bgcolor + background-color), which an app that
-//     recolours will recolour together with its text.
+//     around the card, with the ALFI wordmark (an image) on it. Every word
+//     sits on the plain white card (bgcolor + background-color), which an
+//     app that recolours will recolour together with its text.
 //  2. color-scheme "light only" (meta + CSS) — Apple Mail and others then
 //     don't recolour at all.
 //  3. prefers-color-scheme:dark + Outlook.com's [data-ogsc]/[data-ogsb]
 //     overrides pin the designed colours where a client applies its own.
 function emailShell(inner: string) {
-  // Floral header with the ALFI JEWELRY lettering (an image — see HEADER_URL).
-  const logo = `<tr><td style="padding:0;line-height:0;font-size:0;"><img src="${HEADER_URL}" width="560" alt="ALFI Jewelry" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:20px 20px 0 0;" /></td></tr>`;
+  // The site's "ALFI" wordmark, on the floral background above the card.
+  const logo = `<tr><td align="center" style="padding:6px 0 30px;"><img src="${WORDMARK_URL}" width="190" alt="ALFI" style="display:block;width:190px;height:auto;border:0;margin:0 auto;" /></td></tr>`;
   const footer = `<tr><td align="center" class="em-mute" style="padding:18px 24px 26px;border-top:1px solid ${C.line};font-family:${FONT};font-size:12px;color:${C.inkMute};">ALFI JEWELRY · תכשיטי כסף סטרלינג 925 לאישה</td></tr>`;
   return `<!doctype html>
 <html lang="he" dir="rtl">
@@ -197,10 +199,12 @@ function emailShell(inner: string) {
        attribute + inline background-image cover Gmail/Apple Mail; clients
        that drop images (e.g. Outlook desktop) show the cream colour. -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" background="${BG_URL}" style="background-color:${C.bg};background-image:url(${BG_URL});background-size:cover;background-position:center top;background-repeat:repeat;">
-    <tr><td align="center" style="padding:44px 18px 48px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-card" bgcolor="${C.card}" style="max-width:560px;background-color:${C.card};border-radius:20px;box-shadow:0 18px 40px rgba(58,45,61,.18);">
+    <tr><td align="center" style="padding:48px 30px 60px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:500px;">
         ${logo}
-        <tr><td dir="rtl" class="em-ink" style="padding:22px 28px 26px;font-family:${FONT};color:${C.ink};text-align:right;font-size:15px;line-height:1.7;">
+      </table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-card" bgcolor="${C.card}" style="max-width:500px;background-color:${C.card};border-radius:20px;box-shadow:0 18px 40px rgba(58,45,61,.18);">
+        <tr><td dir="rtl" class="em-ink" style="padding:30px 26px 26px;font-family:${FONT};color:${C.ink};text-align:right;font-size:15px;line-height:1.7;">
           ${inner}
         </td></tr>
         ${footer}
@@ -231,8 +235,7 @@ function orderSummaryHtml(order: any) {
   const itemRows = items.map((it: any) => `
     <tr>
       <td class="em-ink" style="padding:10px 0;border-bottom:1px solid ${C.line};text-align:right;color:${C.ink};">
-        ${escapeHtml(it.name)}${it.size ? ` <span class="em-mute" style="color:${C.inkMute};">(${escapeHtml(it.size)})</span>` : ""}
-        <span class="em-mute" style="color:${C.inkMute};"> × ${Number(it.qty) || 1}</span>
+        ${escapeHtml(it.name)} <span class="em-mute" style="color:${C.inkMute};white-space:nowrap;">${it.size ? `(${escapeHtml(it.size)}) ` : ""}× ${Number(it.qty) || 1}</span>
       </td>
       <td class="em-ink" style="padding:10px 0;border-bottom:1px solid ${C.line};text-align:left;white-space:nowrap;color:${C.ink};" dir="ltr">${money(Number(it.price) * (Number(it.qty) || 1))}</td>
     </tr>`).join("");
@@ -245,7 +248,7 @@ function orderSummaryHtml(order: any) {
 
   return `
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-soft" bgcolor="${C.card}" style="background-color:${C.card};border:1px solid ${C.line};border-radius:14px;margin:0 0 20px;">
-      <tr><td style="padding:18px 20px;">
+      <tr><td style="padding:16px 16px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-ink" style="font-family:${FONT};font-size:14.5px;color:${C.ink};">
           <tr><td colspan="2" class="em-mute" style="padding:0 0 8px;text-align:right;font-weight:bold;color:${C.inkMute};font-size:13px;">
             סיכום הזמנה ${ltr(order.number)}
