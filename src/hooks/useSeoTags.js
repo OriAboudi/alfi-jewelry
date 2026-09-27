@@ -53,7 +53,9 @@ export function useSeoTags({ title, description, canonical, image, type = "websi
     if (title) document.title = title;
 
     const canonicalUrl = canonical ? (canonical.startsWith("http") ? canonical : SITE + canonical) : null;
-    const imageUrl = image ? (image.startsWith("http") ? image : SITE + image) : null;
+    // Pages without their own image (everything but product pages) keep the
+    // brand link-preview image rather than dropping og:image entirely.
+    const imageUrl = image ? (image.startsWith("http") ? image : SITE + image) : SITE + "/og-image.jpg";
 
     upsertMeta("name", "description", description);
     upsertMeta("name", "robots", noindex ? "noindex" : null);

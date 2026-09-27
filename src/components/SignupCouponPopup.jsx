@@ -96,12 +96,17 @@ export function SignupCouponPopup() {
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
         className="r-signup-panel"
-        style={css("position:relative;background:var(--c-bg);border-radius:20px;width:100%;max-width:360px;max-height:85vh;overflow-y:auto;padding:26px 22px 20px;box-shadow:var(--shadow-modal);text-align:center;")}
+        // Top band: the brand painting with the ALFI JEWELRY logo
+        // (public/signup-bg.jpg). Behind the form: the site's own floral
+        // painting (no lettering to ghost through), under a frosted cream
+        // layer so every line stays readable.
+        style={css("position:relative;background:#efe4ec url(/floral-bg.jpg) center/cover;border-radius:20px;width:100%;max-width:380px;max-height:88vh;overflow:hidden;box-shadow:var(--shadow-modal);text-align:center;display:flex;flex-direction:column;")}
       >
-        <span onClick={close} className="tap-target" style={css("position:absolute;top:8px;left:8px;cursor:pointer;font-size:20px;color:var(--c-ink-mute);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;")}>×</span>
+        <button type="button" onClick={close} aria-label="סגירה" className="tap-target" style={css("position:absolute;top:10px;left:10px;z-index:2;cursor:pointer;font-size:20px;color:var(--c-ink);line-height:1;width:34px;height:34px;border:0;border-radius:50%;background:rgba(251,248,245,.82);display:flex;align-items:center;justify-content:center;")}>×</button>
 
-        <div className="serif" dir="ltr" style={css("font-size:24px;font-weight:400;letter-spacing:.36em;padding-left:.36em;color:var(--ink);line-height:1;margin-bottom:12px;")}>ALFI</div>
+        <div role="img" aria-label="ALFI Jewelry" style={css("flex:none;height:150px;background:url(/signup-bg.jpg) center 48%/100% auto no-repeat;")} />
 
+        <div style={css("flex:1;min-height:0;overflow-y:auto;padding:22px 22px 18px;background:rgba(248,243,238,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.7);")}>
         {success ? (
           <>
             <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:7px;")}>ברוכה הבאה ל‑ALFI!</h2>
@@ -135,6 +140,7 @@ export function SignupCouponPopup() {
             </span>
           </>
         )}
+        </div>
       </div>
     </div>
   );
