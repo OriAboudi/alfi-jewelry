@@ -104,7 +104,7 @@ export function SignupCouponPopup() {
       >
         <div role="img" aria-label="ALFI Jewelry" style={css("flex:none;height:150px;background:url(/signup-bg.jpg) center 48%/100% auto no-repeat;")} />
 
-        <div style={css("flex:1;min-height:0;overflow-y:auto;padding:22px 22px 18px;background:rgba(248,243,238,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.7);")}>
+        <div className="no-scrollbar" style={css("flex:1;min-height:0;overflow-y:auto;padding:22px 22px 18px;background:rgba(248,243,238,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.7);")}>
         {success ? (
           <>
             <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:7px;")}>ברוכה הבאה ל‑ALFI!</h2>

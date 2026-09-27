@@ -4,6 +4,7 @@ import { fmt, productDetailsText } from "../../lib/format.js";
 import { thumb, GRAD_CARD } from "../../lib/ui.js";
 import { Disc } from "../../components/Ornaments.jsx";
 import { PriceTag } from "../../components/PriceTag.jsx";
+import { ImageLightbox } from "../../components/ImageLightbox.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
 import { store } from "../../lib/store.js";
@@ -27,6 +28,7 @@ export function ProductsTab() {
   const [stockEdits, setStockEdits] = React.useState({});
   const [stockError, setStockError] = React.useState("");
   const [priceError, setPriceError] = React.useState("");
+  const [viewImages, setViewImages] = React.useState(null);
 
   const reload = React.useCallback(() => {
     setLoading(true);
@@ -91,7 +93,11 @@ export function ProductsTab() {
         const tc = TIER_COLOR[tier];
         return (
           <div key={p.id} className="r-admin-row" style={css("display:flex;align-items:center;gap:18px;background:#fff;border:1px solid var(--c-line);border-radius:14px;padding:14px 18px;margin-bottom:10px;flex-wrap:wrap;")}>
-            <div style={thumb(p.image, GRAD_CARD, "width:54px;height:64px;flex:none;border-radius:10px;")}>
+            <div
+              onClick={() => { const imgs = p.images && p.images.length ? p.images : (p.image ? [p.image] : []); if (imgs.length) setViewImages(imgs); }}
+              title={p.image ? "לחיצה להגדלה" : undefined}
+              style={thumb(p.image, GRAD_CARD, `width:54px;height:64px;flex:none;border-radius:10px;${p.image ? "cursor:zoom-in;" : ""}`)}
+            >
               {!p.image && <Disc style="width:54%;aspect-ratio:1;" />}
             </div>
             <div style={css("flex:1;min-width:140px;")}><div style={css("font-family:var(--font-serif);font-size:17px;")}>{p.name}</div><div style={css("font-size:13px;color:var(--c-ink-mute);")}>{p.category} · {p.material}</div></div>
@@ -116,6 +122,8 @@ export function ProductsTab() {
       })}
 
       <Pager page={page} pageSize={PAGE_SIZE} count={count} onPage={setPage} />
+
+      {viewImages && <ImageLightbox images={viewImages} onClose={() => setViewImages(null)} />}
 
       {draft && (
         <Overlay onClose={cancelDraft}>
