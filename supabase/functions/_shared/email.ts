@@ -39,6 +39,7 @@ const BG_URL = `${ASSET_BASE}/site-bg-v1.jpg`;
 // Palette — mirrors src/styles/tokens.css.
 const C = {
   bg: "#f6f0eb",
+  card: "#fbf8f5",
   surface: "#ffffff",
   ink: "#3a2d3d",
   inkSoft: "#4e4052",
@@ -48,7 +49,7 @@ const C = {
   accentDark: "#6e4f7a",
   accentSoft: "#ede3ee",
   line: "#e4dee6",
-  success: "#5f7a45",
+  success: "#4d6636",   // darker than the site token: 4.5:1+ on the email's cream panels
   successBg: "#e3edd6",
 };
 const FONT = "Arial,Helvetica,sans-serif";
@@ -108,7 +109,7 @@ export async function sendSignupCouponEmail({ name, email, code, percent }: { na
   const html = emailShell(`
     ${headingHtml(`ברוכה הבאה ל‑ALFI${name ? `, ${name}` : ""}!`)}
     ${paragraphHtml(`תודה שנרשמת. הנה קוד ההנחה שלך ל‑${Number(percent)}% הנחה על ההזמנה הבאה:`)}
-    <div style="background:${C.accentSoft};border-radius:12px;padding:18px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:.08em;color:${C.accent};margin:20px 0;">${escapeHtml(code)}</div>
+    <div class="em-code" style="background-color:${C.accentSoft};border-radius:12px;padding:18px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:.08em;color:${C.accent};margin:20px 0;">${escapeHtml(code)}</div>
     ${paragraphHtml("אפשר להזין את הקוד בעמוד המוצר או בקופה. הקוד תקף להזמנה אחת.", `font-size:13px;color:${C.inkMute};`)}
   `);
   const result = await sendViaResend(email, `קוד ההנחה שלך (${Number(percent)}%)`, html);
@@ -137,31 +138,70 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
 
 // Table-based layout: the only structure email clients (Outlook especially)
 // render consistently. All styles inline for the same reason.
+//
+// Dark mode: mail apps recolour text for dark mode but never recolour a
+// background IMAGE — text sitting on the painted background turned light-on-
+// light and unreadable (iOS Mail, dark mode). So:
+//  1. The painted background is only a decorative frame; NO text sits on it.
+//     Every word is on one solid card (bgcolor + background-color), which an
+//     app that recolours will recolour together with its text.
+//  2. color-scheme "light only" (meta + CSS) — Apple Mail and others then
+//     don't recolour at all.
+//  3. prefers-color-scheme:dark + Outlook.com's [data-ogsc]/[data-ogsb]
+//     overrides pin the designed colours where a client applies its own.
 function emailShell(inner: string) {
   // Text wordmark, styled like the site header's "ALFI" (serif, wide
   // letter-spacing; padding-right balances the trailing letter-space so it
   // stays optically centred). Georgia stands in for the site's web font,
   // which email clients can't load.
-  const logo = `<tr><td align="center" dir="ltr" style="padding:32px 24px 10px;font-family:Georgia,'Times New Roman',serif;font-size:34px;letter-spacing:.36em;padding-right:.36em;color:${C.ink};">ALFI</td></tr>`;
+  const logo = `<tr><td align="center" dir="ltr" class="em-ink" style="padding:34px 24px 6px;font-family:Georgia,'Times New Roman',serif;font-size:34px;letter-spacing:.36em;padding-right:.36em;color:${C.ink};">ALFI</td></tr>`;
+  const footer = `<tr><td align="center" class="em-mute" style="padding:18px 24px 26px;border-top:1px solid ${C.line};font-family:${FONT};font-size:12px;color:${C.inkMute};">ALFI JEWELRY · תכשיטי כסף סטרלינג 925 לאישה</td></tr>`;
   return `<!doctype html>
 <html lang="he" dir="rtl">
-<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light only" />
+<meta name="supported-color-schemes" content="light only" />
+<style>
+  :root { color-scheme: light only; supported-color-schemes: light only; }
+  @media (prefers-color-scheme: dark) {
+    .em-card { background-color: ${C.card} !important; }
+    .em-soft { background-color: ${C.bg} !important; }
+    .em-ink { color: ${C.ink} !important; }
+    .em-soft-ink { color: ${C.inkSoft} !important; }
+    .em-mute { color: ${C.inkMute} !important; }
+    .em-accent { color: ${C.accentDark} !important; }
+    .em-success { color: ${C.success} !important; }
+    .em-btn { background-color: ${C.accent} !important; color: #ffffff !important; }
+    .em-code { background-color: ${C.accentSoft} !important; color: ${C.accent} !important; }
+  }
+  [data-ogsc] .em-ink { color: ${C.ink} !important; }
+  [data-ogsc] .em-soft-ink { color: ${C.inkSoft} !important; }
+  [data-ogsc] .em-mute { color: ${C.inkMute} !important; }
+  [data-ogsc] .em-accent { color: ${C.accentDark} !important; }
+  [data-ogsc] .em-success { color: ${C.success} !important; }
+  [data-ogsc] .em-btn { color: #ffffff !important; }
+  [data-ogsb] .em-card { background-color: ${C.card} !important; }
+  [data-ogsb] .em-soft { background-color: ${C.bg} !important; }
+  [data-ogsb] .em-btn { background-color: ${C.accent} !important; }
+  [data-ogsc] .em-code { color: ${C.accent} !important; }
+  [data-ogsb] .em-code { background-color: ${C.accentSoft} !important; }
+  [data-ogsc] .em-card span:not([class]) { color: inherit !important; }
+</style>
+</head>
 <body style="margin:0;padding:0;background-color:${C.bg};">
-  <!-- Same painted background as the website. The background attribute and
-       inline background-image cover Gmail/Apple Mail; clients that drop
-       images (e.g. Outlook desktop) fall back to the cream background-color. -->
+  <!-- Painted background as a frame only (see note above). The background
+       attribute + inline background-image cover Gmail/Apple Mail; clients
+       that drop images (e.g. Outlook desktop) show the cream colour. -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" background="${BG_URL}" style="background-color:${C.bg};background-image:url(${BG_URL});background-size:cover;background-position:center top;background-repeat:repeat;">
-    <tr><td align="center" style="padding:36px 12px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="max-width:560px;">
+    <tr><td align="center" style="padding:32px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-card" bgcolor="${C.card}" style="max-width:560px;background-color:${C.card};border-radius:20px;">
         ${logo}
-        <tr><td dir="rtl" style="padding:8px 24px 24px;font-family:${FONT};color:${C.ink};text-align:right;font-size:15px;line-height:1.7;">
+        <tr><td dir="rtl" class="em-ink" style="padding:6px 28px 26px;font-family:${FONT};color:${C.ink};text-align:right;font-size:15px;line-height:1.7;">
           ${inner}
         </td></tr>
-      </table>
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;">
-        <tr><td align="center" style="padding:18px 12px 0;">
-          <span style="display:inline-block;background-color:${C.bg};border-radius:100px;padding:6px 14px;font-family:${FONT};font-size:12px;color:${C.inkMute};">ALFI JEWELRY · תכשיטי כסף סטרלינג 925 לאישה</span>
-        </td></tr>
+        ${footer}
       </table>
     </td></tr>
   </table>
@@ -170,11 +210,11 @@ function emailShell(inner: string) {
 }
 
 function headingHtml(text: string) {
-  return `<h1 style="margin:12px 0 14px;font-family:${FONT};font-size:22px;font-weight:bold;color:${C.accentDark};text-align:center;">${escapeHtml(text)}</h1>`;
+  return `<h1 class="em-accent" style="margin:12px 0 14px;font-family:${FONT};font-size:22px;font-weight:bold;color:${C.accentDark};text-align:center;">${escapeHtml(text)}</h1>`;
 }
 
 function paragraphHtml(html: string, extraStyle = "") {
-  return `<p style="margin:0 0 18px;${extraStyle}">${html}</p>`;
+  return `<p class="em-ink" style="margin:0 0 18px;color:${C.ink};${extraStyle}">${html}</p>`;
 }
 
 const money = (n: unknown) => `₪${Number(n || 0).toFixed(2)}`;
@@ -188,35 +228,35 @@ function orderSummaryHtml(order: any) {
 
   const itemRows = items.map((it: any) => `
     <tr>
-      <td style="padding:10px 0;border-bottom:1px solid ${C.line};text-align:right;">
-        ${escapeHtml(it.name)}${it.size ? ` <span style="color:${C.inkMute};">(${escapeHtml(it.size)})</span>` : ""}
-        <span style="color:${C.inkMute};"> × ${Number(it.qty) || 1}</span>
+      <td class="em-ink" style="padding:10px 0;border-bottom:1px solid ${C.line};text-align:right;color:${C.ink};">
+        ${escapeHtml(it.name)}${it.size ? ` <span class="em-mute" style="color:${C.inkMute};">(${escapeHtml(it.size)})</span>` : ""}
+        <span class="em-mute" style="color:${C.inkMute};"> × ${Number(it.qty) || 1}</span>
       </td>
-      <td style="padding:10px 0;border-bottom:1px solid ${C.line};text-align:left;white-space:nowrap;" dir="ltr">${money(Number(it.price) * (Number(it.qty) || 1))}</td>
+      <td class="em-ink" style="padding:10px 0;border-bottom:1px solid ${C.line};text-align:left;white-space:nowrap;color:${C.ink};" dir="ltr">${money(Number(it.price) * (Number(it.qty) || 1))}</td>
     </tr>`).join("");
 
-  const line = (label: string, value: string, style = "") => `
+  const line = (label: string, value: string, style = "", cls = "em-soft-ink") => `
     <tr>
-      <td style="padding:5px 0;text-align:right;color:${C.inkSoft};${style}">${label}</td>
-      <td style="padding:5px 0;text-align:left;white-space:nowrap;${style}" dir="ltr">${value}</td>
+      <td class="${cls}" style="padding:5px 0;text-align:right;color:${C.inkSoft};${style}">${label}</td>
+      <td class="${cls}" style="padding:5px 0;text-align:left;white-space:nowrap;color:${C.ink};${style}" dir="ltr">${value}</td>
     </tr>`;
 
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" bgcolor="${C.bg}" style="background-color:rgba(246,240,235,.8);border-radius:14px;margin:0 0 20px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-soft" bgcolor="${C.bg}" style="background-color:${C.bg};border-radius:14px;margin:0 0 20px;">
       <tr><td style="padding:18px 20px;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" style="font-family:${FONT};font-size:14.5px;color:${C.ink};">
-          <tr><td colspan="2" style="padding:0 0 8px;text-align:right;font-weight:bold;color:${C.inkMute};font-size:13px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-ink" style="font-family:${FONT};font-size:14.5px;color:${C.ink};">
+          <tr><td colspan="2" class="em-mute" style="padding:0 0 8px;text-align:right;font-weight:bold;color:${C.inkMute};font-size:13px;">
             סיכום הזמנה ${ltr(order.number)}
           </td></tr>
           ${itemRows}
           ${line("סכום ביניים", money(order.subtotal))}
           ${line("משלוח", Number(order.shipping) ? money(order.shipping) : "חינם")}
-          ${Number(order.discount) > 0 ? line(`הנחת קופון${order.coupon_code ? ` (${ltr(order.coupon_code)})` : ""}`, `-${money(order.discount)}`, `color:${C.success};`) : ""}
+          ${Number(order.discount) > 0 ? line(`הנחת קופון${order.coupon_code ? ` (${ltr(order.coupon_code)})` : ""}`, `-${money(order.discount)}`, `color:${C.success};`, "em-success") : ""}
           <tr>
-            <td style="padding:12px 0 0;border-top:1px solid ${C.line};text-align:right;font-weight:bold;font-size:16px;">
-              ${paid ? `סה״כ <span style="color:${C.success};">· שולם ✓</span>` : "סה״כ"}
+            <td class="em-ink" style="padding:12px 0 0;border-top:1px solid ${C.line};text-align:right;font-weight:bold;font-size:16px;color:${C.ink};">
+              ${paid ? `סה״כ <span class="em-success" style="color:${C.success};">· שולם ✓</span>` : "סה״כ"}
             </td>
-            <td style="padding:12px 0 0;border-top:1px solid ${C.line};text-align:left;font-weight:bold;font-size:16px;white-space:nowrap;" dir="ltr">${money(order.total)}</td>
+            <td class="em-ink" style="padding:12px 0 0;border-top:1px solid ${C.line};text-align:left;font-weight:bold;font-size:16px;white-space:nowrap;color:${C.ink};" dir="ltr">${money(order.total)}</td>
           </tr>
         </table>
       </td></tr>
@@ -230,9 +270,9 @@ function trackLinkHtml(order: any) {
     return "";
   }
   return `<div style="text-align:center;margin:26px 0 6px;">
-      <a href="${trackUrl}" style="display:inline-block;background:${C.accent};color:#ffffff;text-decoration:none;padding:13px 28px;border-radius:12px;font-weight:bold;font-family:${FONT};">מעקב אחר ההזמנה</a>
+      <a href="${trackUrl}" class="em-btn" style="display:inline-block;background-color:${C.accent};color:#ffffff;text-decoration:none;padding:13px 28px;border-radius:12px;font-weight:bold;font-family:${FONT};">מעקב אחר ההזמנה</a>
     </div>
-    <p style="margin:10px 0 0;text-align:center;font-size:12.5px;color:${C.inkSoft};">אפשר לחזור לקישור הזה בכל זמן כדי לראות את הסטטוס המעודכן.</p>`;
+    <p class="em-soft-ink" style="margin:10px 0 0;text-align:center;font-size:12.5px;color:${C.inkSoft};">אפשר לחזור לקישור הזה בכל זמן כדי לראות את הסטטוס המעודכן.</p>`;
 }
 
 // Latin identifiers (order numbers like "#ALF-2419", coupon codes) inside
