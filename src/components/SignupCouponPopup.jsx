@@ -102,8 +102,6 @@ export function SignupCouponPopup() {
         // layer so every line stays readable.
         style={css("position:relative;background:#efe4ec url(/floral-bg.jpg) center/cover;border-radius:20px;width:100%;max-width:380px;max-height:88vh;overflow:hidden;box-shadow:var(--shadow-modal);text-align:center;display:flex;flex-direction:column;")}
       >
-        <button type="button" onClick={close} aria-label="סגירה" className="tap-target" style={css("position:absolute;top:10px;left:10px;z-index:2;cursor:pointer;font-size:20px;color:var(--c-ink);line-height:1;width:34px;height:34px;border:0;border-radius:50%;background:rgba(251,248,245,.82);display:flex;align-items:center;justify-content:center;")}>×</button>
-
         <div role="img" aria-label="ALFI Jewelry" style={css("flex:none;height:150px;background:url(/signup-bg.jpg) center 48%/100% auto no-repeat;")} />
 
         <div style={css("flex:1;min-height:0;overflow-y:auto;padding:22px 22px 18px;background:rgba(248,243,238,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.7);")}>
@@ -121,8 +119,7 @@ export function SignupCouponPopup() {
           </>
         ) : (
           <>
-            <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:6px;")}>{percent}% הנחה על ההזמנה הראשונה</h2>
-            <p style={css("font-size:12.5px;color:var(--c-ink-soft);margin-bottom:14px;")}>הרשמה של פחות מדקה — הקוד יישלח מיד אליך במייל.</p>
+            <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:14px;")}>{percent}% הנחה על ההזמנה הראשונה</h2>
             <div style={css("display:flex;flex-direction:column;gap:9px;text-align:right;margin-bottom:12px;")}>
               {field("name", "שם מלא")}
               {field("email", "אימייל", { type: "email", placeholder: "example@mail.com" })}
