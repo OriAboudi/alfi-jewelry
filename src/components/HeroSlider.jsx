@@ -1,6 +1,41 @@
 import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 
+// The hero photos are shot on a light-grey studio backdrop. Rendered with
+// mix-blend-mode: multiply over the hero's cream glass surface, that grey
+// would print as a slightly dirty cream; lifting the photo's brightness so
+// its backdrop reaches ~white makes the backdrop vanish into the glass
+// (white x surface = surface) while the model and jewellery stay intact.
+// The lift is measured per photo from its top corners (pure backdrop), so
+// future uploads with a different backdrop tone calibrate themselves.
+function measureLift(src) {
+  return new Promise((resolve) => {
+    if (!src) return resolve(null);
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    img.onload = () => {
+      try {
+        const S = 64;
+        const c = document.createElement("canvas");
+        c.width = S; c.height = S;
+        const ctx = c.getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, S, S);
+        const corner = (x0) => {
+          const d = ctx.getImageData(x0, 0, 6, 6).data;
+          let m = 0;
+          for (let i = 0; i < d.length; i += 4) m += Math.max(d[i], d[i + 1], d[i + 2]);
+          return m / (d.length / 4);
+        };
+        const backdrop = (corner(0) + corner(S - 6)) / 2;
+        resolve(Math.min(1.25, Math.max(1, 252 / Math.max(backdrop, 1))).toFixed(3));
+      } catch { resolve(null); } // no CORS / tainted canvas: CSS default lift stays
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
 /**
  * HeroSlider — full-bleed autoplay crossfade slider for the homepage hero.
  * Accepts separate desktop/mobile image sets (like tzufa.co.il does — their
@@ -16,6 +51,7 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
   const slideCount = Math.max(desktopSlides.length, mobileSlides.length);
   const [active, setActive] = useState(0);
   const timer = useRef(null);
+  const mediaRef = useRef(null);
   // WCAG 2.2.2 (Pause, Stop, Hide): auto-rotation can be paused with a
   // visible button, and never starts for visitors who asked for less motion
   // (OS setting, or "עצירת אנימציות" in the accessibility menu).
@@ -30,6 +66,23 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
     return () => window.removeEventListener("a11y-change", onA11y);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Calibrate the active photo's brightness lift (CSS vars on the hero
+  // section; see .rd-hero-img in redesign.css).
+  useEffect(() => {
+    const host = mediaRef.current?.parentElement;
+    if (!host) return undefined;
+    let alive = true;
+    const d = desktopSlides[active % desktopSlides.length];
+    const m = mobileSlides[active % mobileSlides.length];
+    Promise.all([measureLift(d), measureLift(m)]).then(([dl, ml]) => {
+      if (!alive) return;
+      if (dl) host.style.setProperty("--hero-lift-desktop", dl);
+      if (ml) host.style.setProperty("--hero-lift-mobile", ml);
+    });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, desktopSlides.join("|"), mobileSlides.join("|")]);
 
   useEffect(() => {
     if (slideCount <= 1 || paused) return undefined;
@@ -49,35 +102,30 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
     );
   });
 
-  // The background photo layer is absolutely positioned (it must fill
-  // whatever height the hero ends up being) — but `children` (the text/CTA
-  // panel) is rendered as a plain sibling, NOT nested inside that absolute
-  // div. An absolutely-positioned parent can't be stretched taller by its
-  // own content, so if the panel lived inside it, real panel content
-  // (headline + tagline + button) taller than the hero's base height would
-  // just get clipped by the parent's overflow:hidden instead of the hero
-  // growing to fit it. As a sibling, the panel is a normal-flow child of
-  // whatever renders <HeroSlider> (Home.jsx's .rd-hero, a flex container),
-  // so its real height can push that container taller when it needs to.
+  // The photo is its own block (.rd-hero-media) beside/above the text
+  // panel — the pictures are product shots (jewellery on a model), so
+  // nothing sits on top of them except the small pause control. `children`
+  // (the headline/CTA panel) stays a normal-flow sibling, so the hero grows
+  // to fit real content instead of clipping it.
   return (
     <>
-      <div className="rd-hero-bg" style={css("position:absolute;inset:0;overflow:hidden;")}>
+      <div ref={mediaRef} className="rd-hero-media">
         {layer(mobileSlides, "r-hero-layer-mobile")}
         {layer(desktopSlides, "r-hero-layer-desktop")}
-      </div>
-      {slideCount > 1 && (
-        <button
+        {slideCount > 1 && (
+          <button
           type="button"
           onClick={() => setPaused((p) => !p)}
           aria-label={paused ? "הפעלת החלפת התמונות" : "עצירת החלפת התמונות"}
           aria-pressed={paused}
-          style={css("position:absolute;bottom:14px;left:14px;z-index:3;width:40px;height:40px;border:0;border-radius:50%;background:rgba(251,248,245,.85);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;")}
+          style={css("position:absolute;bottom:14px;left:14px;z-index:3;width:40px;height:40px;border:0;border-radius:50%;background:rgba(251,248,245,.92);box-shadow:0 2px 8px rgba(58,45,61,.18);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;")}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             {paused ? <path d="M8 5v14l11-7z" /> : <path d="M7 5h4v14H7zM13 5h4v14h-4z" />}
           </svg>
         </button>
       )}
+      </div>
       {children}
     </>
   );

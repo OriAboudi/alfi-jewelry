@@ -179,7 +179,10 @@
    viewport detection (avoids hydration/resize flicker). */
 .r-hero-layer-desktop { display: none; }
 .r-hero-layer-mobile { display: block; }
-@media (min-width: 860px) {
+/* Square desktop photo from 600px: tablets show it whole in a square frame;
+   phones get the portrait crop. Keep in step with .rd-hero-media in
+   redesign.css. */
+@media (min-width: 600px) {
   .r-hero-layer-desktop { display: block; }
   .r-hero-layer-mobile { display: none; }
 }

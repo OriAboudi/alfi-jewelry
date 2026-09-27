@@ -1,5 +1,7 @@
 import React from "react";
 import { css } from "../lib/css.js";
+import { saleInfo } from "../lib/pricing.js";
+import { PriceTag } from "../components/PriceTag.jsx";
 import { GRAD_CARD } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
 import { HeroSlider } from "../components/HeroSlider.jsx";
@@ -43,7 +45,7 @@ function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products }) {
 }
 
 export function Home() {
-  const { content: C, products, go, setCatFilter, openSignupPopup } = useStore();
+  const { content: C, products, go, setCatFilter, openSignupPopup, openProduct } = useStore();
   const [bestSellers, setBestSellers] = React.useState([]);
 
   useSeoTags({
@@ -73,6 +75,18 @@ export function Home() {
   const tileCats = HOME_TILE_CATS.filter((c) => cats.includes(c)).length ? HOME_TILE_CATS.filter((c) => cats.includes(c)) : cats.slice(0, 4);
 
   const featuredList = products.filter((p) => p.featured);
+
+  // Hero mini-shop (desktop): four real, in-stock pieces with live prices.
+  // Real best-sellers (from actual orders) when there are enough of them,
+  // otherwise the admin's featured picks — the label says which, truthfully.
+  const inStock = (p) => Number(p.stock) > 0;
+  const heroBest = bestSellers.filter(inStock);
+  const heroShopIsBest = heroBest.length >= 3;
+  const heroShop = (heroShopIsBest ? heroBest : [...featuredList, ...products].filter(inStock))
+    .filter((p, i, a) => a.findIndex((x) => x.id === p.id) === i)
+    .slice(0, 4);
+  // Live sale hook: only rendered when a product is actually on sale.
+  const maxSalePct = products.filter(inStock).reduce((m, p) => Math.max(m, saleInfo(p).percent), 0);
   const slider1 = (featuredList.length ? featuredList : products).slice(0, 8);
   const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
   const usedIds = new Set(slider1.map((p) => p.id));
@@ -100,24 +114,48 @@ export function Home() {
           visually-hidden one for both SEO and the people reading it. */}
       <section className="rd-hero" style={css("position:relative;")}>
         <HeroSlider images={heroImages} imagesMobile={heroImagesMobile}>
-          <div className="glass-strong rd-hero-panel" style={css("display:flex;flex-direction:column;align-items:flex-start;")}>
-            {C.heroBadge && (
-              <a
-                href={pathFor("collections")}
-                onClick={(e) => { e.preventDefault(); go("collections"); }}
-                className="rd-btn rd-btn-outline"
-                style={css("height:32px;padding:0 16px;display:flex;align-items:center;border:1px solid var(--ink);color:var(--ink);font-size:12.5px;letter-spacing:.14em;")}
-              >
-                {C.heroBadge}
-              </a>
-            )}
+          <div className="rd-hero-panel" style={css("display:flex;flex-direction:column;align-items:flex-start;")}>
             <h1 className="serif rd-hero-h1" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.authHeadline}</h1>
             {C.authTagline && <p className="rd-hero-p" style={css("margin:0;color:var(--text-body);")}>{C.authTagline}</p>}
-            <div className="rd-hero-actions" style={css("display:flex;gap:12px;width:100%;")}>
+            <div className="rd-hero-actions" style={css("display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;width:100%;")}>
               <button onClick={goCatalog} className="rd-btn rd-btn-outline" style={css("height:52px;padding:0 28px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:15px;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;")}>
                 {C.heroCtaLabel || "לצפייה בקולקציה"}<GoArrowIcon />
               </button>
+              {maxSalePct > 0 && (
+                <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); goCatalog(); }} className="rd-hero-sale">
+                  <span className="rd-hero-sale-chip">מבצע</span>
+                  עד {maxSalePct}% הנחה על פריטים נבחרים
+                </a>
+              )}
             </div>
+            {/* The admin "hero badge" line — a quiet signature under the CTA
+                (linking to the collections), not a boxed label above the H1. */}
+            {C.heroBadge && (
+              <div className={`rd-hero-note${heroShop.length >= 3 ? " rd-hero-note--shop" : ""}`}>
+                <a href={pathFor("collections")} onClick={(e) => { e.preventDefault(); go("collections"); }}>{C.heroBadge}</a>
+              </div>
+            )}
+            {heroShop.length >= 3 && (
+              <div className="rd-hero-shop">
+                <div className="rd-hero-shop-head">
+                  <span>{heroShopIsBest ? "הנמכרים ביותר" : (C.heroBadge || "נבחרות מהקולקציה")}</span>
+                  <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); goCatalog(); }}>לכל התכשיטים</a>
+                </div>
+                <ul className="rd-hero-shop-list">
+                  {heroShop.map((p) => (
+                    <li key={p.id}>
+                      <a href={pathFor("product", { pid: p.id, products })} onClick={(e) => { e.preventDefault(); openProduct(p.id); }} className="rd-hero-shop-item">
+                        <span className="rd-hero-shop-thumb">
+                          {p.image ? <img src={p.image} alt="" loading="lazy" decoding="async" /> : <Disc style="width:46%;aspect-ratio:1;" />}
+                        </span>
+                        <span className="serif rd-hero-shop-name">{p.name}</span>
+                        <PriceTag product={p} size={13} showPercent={false} />
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </HeroSlider>
       </section>
@@ -127,9 +165,9 @@ export function Home() {
 
       {/* COLLECTIONS 2x2 */}
       <Reveal as="section" className="rd-section-pad" style={css("display:flex;flex-direction:column;gap:32px;")}>
-        <div className="glass rd-collections-head rd-only-desktop" style={css("display:flex;justify-content:space-between;align-items:center;")}>
-          <h2 className="serif" style={css("margin:0;font-size:46px;font-weight:300;")}>הקולקציות</h2>
-          <span style={css("font-size:15px;color:var(--text-body);")}>{tileCats.join(" · ")}</span>
+        <div className="glass rd-collections-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
+          <h2 className="serif rd-collections-title" style={css("margin:0;font-weight:300;")}>הקולקציות</h2>
+          <span className="rd-only-desktop" style={css("font-size:15px;color:var(--text-body);")}>{tileCats.join(" · ")}</span>
         </div>
         <div className="rd-cat-grid">
           {tileCats.map((c, i) => {
@@ -153,20 +191,23 @@ export function Home() {
             );
           })}
         </div>
-        {/* Mobile: plain white tiles, image only — no text label, no glass
-            wrapper, shadow, or arrow icon. Category name moves to aria-label
-            for screen readers since it no longer appears visually. */}
+        {/* Mobile: the desktop card in miniature — cream card, photo on top,
+            category name + arrow as a visible caption, spaced 2-up grid. */}
         <div className="rd-cat-grid-mobile">
           {tileCats.map((c) => {
             const img = (C.categoryImages || {})[c] || "";
             return (
-              <a key={c} href={pathFor("catalog", { catFilter: c })} onClick={(e) => { e.preventDefault(); goCat(c); }} onKeyDown={(e) => { if (e.key === " ") { e.preventDefault(); goCat(c); } }} tabIndex={0} aria-label={c} className="rd-cat-mobile tap-target">
+              <a key={c} href={pathFor("catalog", { catFilter: c })} onClick={(e) => { e.preventDefault(); goCat(c); }} onKeyDown={(e) => { if (e.key === " ") { e.preventDefault(); goCat(c); } }} tabIndex={0} className="rd-cat-mobile glass-strong tap-target">
                 <div className="rd-tile" style={css(`border-radius:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background-color:${GRAD_CARD};`)}>
                   {img ? (
                     <img src={img} alt={`${c} כסף 925`} loading="lazy" decoding="async" style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
                   ) : (
                     <Disc style="width:62%;aspect-ratio:1;" />
                   )}
+                </div>
+                <div className="rd-cat-caption">
+                  <span className="serif rd-cat-caption-name">{c}</span>
+                  <span className="rd-cat-caption-go" aria-hidden="true"><GoArrowIcon /></span>
                 </div>
               </a>
             );

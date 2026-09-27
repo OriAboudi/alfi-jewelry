@@ -95,7 +95,7 @@ export function Header() {
 
   return (
     <>
-      <header className="glass" style={css("position:sticky;top:0;z-index:40;box-sizing:border-box;border-width:0 0 1px 0;")}>
+      <header className="glass" style={css("position:sticky;top:0;z-index:40;box-sizing:border-box;border-width:0 0 1px 0;border-color:rgba(58,45,61,.08);")}>
         {/* ---- Desktop bar (>=768px) ---- */}
         <div className="rd-header-desktop" style={css("height:92px;box-sizing:border-box;padding:0 clamp(24px, 4.4vw, 64px);align-items:center;")}>
           <nav className="rd-nav" style={css("display:flex;gap:clamp(16px, 2vw, 36px);white-space:nowrap;font-size:15px;letter-spacing:.04em;")}>
