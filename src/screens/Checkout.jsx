@@ -60,8 +60,14 @@ export function Checkout() {
 
   const field = (k, label, opts = {}) => (
     <div style={opts.span2 ? css("grid-column:1/-1;") : undefined}>
-      <label style={css(labelStyle)}>{label}{opts.optional ? "" : " *"}</label>
+      <label htmlFor={`co-${k}`} style={css(labelStyle)}>{label}{opts.optional ? "" : <span aria-hidden="true"> *</span>}</label>
       <input
+        id={`co-${k}`}
+        required={!opts.optional}
+        aria-required={!opts.optional}
+        aria-invalid={!!(touched[k] && errors[k])}
+        aria-describedby={touched[k] && errors[k] ? `co-${k}-err` : undefined}
+        autoComplete={opts.autoComplete}
         value={form[k]}
         onChange={opts.onChange || set(k)}
         onBlur={blur(k)}
@@ -69,7 +75,7 @@ export function Checkout() {
         placeholder={opts.placeholder}
         style={css(touched[k] && errors[k] ? fieldErrStyle : fieldStyle)}
       />
-      {touched[k] && errors[k] && <div style={css(errMsgStyle)}>{errors[k]}</div>}
+      {touched[k] && errors[k] && <div id={`co-${k}-err`} role="alert" style={css(errMsgStyle)}>{errors[k]}</div>}
     </div>
   );
 
@@ -83,17 +89,17 @@ export function Checkout() {
       <div className="r-checkout-grid" style={css("display:grid;grid-template-columns:1fr 380px;gap:28px;align-items:start;")}>
         <div className="glass-card" style={css("padding:40px var(--sp-5) 48px;")}>
           <div style={css("display:flex;align-items:center;gap:12px;margin-bottom:var(--sp-6);font-size:14px;color:var(--c-ink-faint);")}>
-            <span onClick={() => go("cart")} style={css("cursor:pointer;")}>עגלה</span> ← <span style={css("color:var(--c-accent);font-weight:600;")}>תשלום</span> ← <span>אישור</span>
+            <nav aria-label="שלבי ההזמנה" style={css("display:contents;")}><button type="button" onClick={() => go("cart")} style={css("background:none;border:0;padding:0;font:inherit;text-align:right;color:inherit;cursor:pointer;")}>עגלה</button> <span aria-hidden="true">←</span> <span aria-current="step" style={css("color:var(--c-accent);font-weight:600;")}>תשלום</span> <span aria-hidden="true">←</span> <span>אישור</span></nav>
           </div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>פרטי משלוח</h2>
           <div style={css("display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-bottom:var(--sp-6);")}>
-            {field("first", "שם פרטי")}
-            {field("last", "שם משפחה")}
-            {field("email", "אימייל", { type: "email", placeholder: "לשליחת אישור ומעקב הזמנה", span2: true })}
-            {field("phone", "טלפון", { onChange: setPhone, placeholder: "050-1234567" })}
-            {field("address", "כתובת", { placeholder: "רחוב ומספר" })}
-            {field("city", "עיר")}
-            <div><label style={css(labelStyle)}>מיקוד</label><input value={form.zip} onChange={set("zip")} style={css(fieldStyle)} /></div>
+            {field("first", "שם פרטי", { autoComplete: "given-name" })}
+            {field("last", "שם משפחה", { autoComplete: "family-name" })}
+            {field("email", "אימייל", { type: "email", placeholder: "לשליחת אישור ומעקב הזמנה", span2: true, autoComplete: "email" })}
+            {field("phone", "טלפון", { type: "tel", onChange: setPhone, placeholder: "050-1234567", autoComplete: "tel" })}
+            {field("address", "כתובת", { placeholder: "רחוב ומספר", autoComplete: "street-address" })}
+            {field("city", "עיר", { autoComplete: "address-level2" })}
+            <div><label htmlFor="co-zip" style={css(labelStyle)}>מיקוד</label><input id="co-zip" autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={set("zip")} style={css(fieldStyle)} /></div>
           </div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>אופן תשלום</h2>
           <div style={css("font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;")}>
@@ -128,7 +134,7 @@ export function Checkout() {
           {couponCode ? (
             <div style={css("display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--c-success-bg);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:12px;font-size:13px;color:var(--c-success);")}>
               <span>קוד {couponCode} מופעל</span>
-              <span onClick={removeCoupon} className="tap-target" style={css("cursor:pointer;font-weight:700;")}>✕</span>
+              <button type="button" onClick={removeCoupon} aria-label="הסרת הקופון" className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;color:inherit;cursor:pointer;font-weight:700;")}>✕</button>
             </div>
           ) : (
             <CouponInput applyCoupon={applyCoupon} couponBusy={couponBusy} couponError={couponError} />

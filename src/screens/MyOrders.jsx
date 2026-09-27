@@ -18,7 +18,7 @@ export function MyOrders() {
       <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:8px;")}>ההזמנות שלי</h1>
       {customerName && (
         <p style={css("font-size:14.5px;color:var(--c-ink-mute);margin-bottom:var(--sp-6);")}>
-          שלום, {customerName} · <span onClick={customerLogout} className="tap-target" style={css("cursor:pointer;color:var(--c-accent);")}>יציאה</span>
+          שלום, {customerName} · <button type="button" onClick={customerLogout} className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;cursor:pointer;color:var(--c-accent);")}>יציאה</button>
         </p>
       )}
 

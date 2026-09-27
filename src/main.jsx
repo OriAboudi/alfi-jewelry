@@ -6,6 +6,8 @@ import "./styles/base.css";
 import "./styles/utilities.css";
 import "./styles/redesign.css";
 import "./index.css";
+import "./styles/a11y.css";
+import { applyA11y } from "./components/AccessibilityMenu.jsx";
 
 // Every screen change already scrolls to the top itself (StoreContext's go/
 // openProduct/popstate). Left on "auto", mobile browsers re-apply the old
@@ -14,6 +16,9 @@ import "./index.css";
 // hero, with the header scrolled out of view.
 if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
 window.scrollTo(0, 0);
+
+// Visitor-saved accessibility-menu settings, applied before first paint.
+applyA11y();
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>

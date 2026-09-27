@@ -89,20 +89,22 @@ export function Catalog() {
           <div className={`r-catalog-filter-body${mobileFiltersOpen ? " is-open" : ""}`}>
             <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>קטגוריות</div>
             <div style={css("display:flex;flex-direction:column;gap:11px;margin-bottom:var(--sp-6);font-size:15px;")}>
-              <span onClick={() => setCatFilter("הכל")} className="tap-target" style={css(`cursor:pointer;font-weight:${catFilter === "הכל" ? 700 : 600};color:${catFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</span>
+              <button type="button" aria-pressed={catFilter === "הכל"} onClick={() => setCatFilter("הכל")} className="tap-target" style={css(`background:none;border:0;padding:0;font:inherit;text-align:right;cursor:pointer;font-weight:${catFilter === "הכל" ? 700 : 600};color:${catFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</button>
               {cats.map((c) => (
-                <span key={c} onClick={() => setCatFilter(c)} className="tap-target" style={css(`cursor:pointer;font-weight:${catFilter === c ? 700 : 400};color:${catFilter === c ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{c}</span>
+                <button type="button" key={c} aria-pressed={catFilter === c} onClick={() => setCatFilter(c)} className="tap-target" style={css(`background:none;border:0;padding:0;font:inherit;text-align:right;cursor:pointer;font-weight:${catFilter === c ? 700 : 400};color:${catFilter === c ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{c}</button>
               ))}
             </div>
             <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>חומר</div>
             <div style={css("display:flex;flex-direction:column;gap:11px;font-size:15px;margin-bottom:var(--sp-6);")}>
-              <span onClick={() => setMatFilter("הכל")} className="tap-target" style={css(`cursor:pointer;font-weight:${matFilter === "הכל" ? 700 : 400};color:${matFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</span>
+              <button type="button" aria-pressed={matFilter === "הכל"} onClick={() => setMatFilter("הכל")} className="tap-target" style={css(`background:none;border:0;padding:0;font:inherit;text-align:right;cursor:pointer;font-weight:${matFilter === "הכל" ? 700 : 400};color:${matFilter === "הכל" ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>הכל</button>
               {materials.map((m) => (
-                <span key={m} onClick={() => setMatFilter(m)} className="tap-target" style={css(`cursor:pointer;font-weight:${matFilter === m ? 700 : 400};color:${matFilter === m ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{m}</span>
+                <button type="button" key={m} aria-pressed={matFilter === m} onClick={() => setMatFilter(m)} className="tap-target" style={css(`background:none;border:0;padding:0;font:inherit;text-align:right;cursor:pointer;font-weight:${matFilter === m ? 700 : 400};color:${matFilter === m ? "var(--c-accent)" : "var(--c-ink-soft)"};`)}>{m}</button>
               ))}
             </div>
-            <div style={css("font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>מחיר עד {fmt(effectivePriceMax)}</div>
+            <label htmlFor="catalog-price-max" style={css("display:block;font-size:13px;font-weight:700;letter-spacing:.06em;color:var(--c-ink-mute);margin-bottom:14px;")}>מחיר עד {fmt(effectivePriceMax)}</label>
             <input
+              id="catalog-price-max"
+              aria-valuetext={`עד ${fmt(effectivePriceMax)}`}
               type="range" min={priceMin} max={priceMaxBound} value={effectivePriceMax}
               onChange={(e) => setPriceMax(Number(e.target.value))}
               style={css("width:100%;accent-color:var(--c-accent);cursor:pointer;margin-bottom:var(--sp-6);")}
@@ -117,11 +119,11 @@ export function Catalog() {
           <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-5);padding-bottom:16px;border-bottom:1px solid var(--c-line);position:relative;")}>
             <span style={css("font-size:14.5px;color:var(--c-ink-mute);")}>{list.length} מוצרים</span>
             <div style={css("position:relative;")}>
-              <span onClick={() => setSortOpen((v) => !v)} className="tap-target" style={css("font-size:14.5px;color:var(--c-ink-soft);cursor:pointer;display:flex;align-items:center;gap:4px;")}>מיון: {sortLabel} ▾</span>
+              <button type="button" aria-expanded={sortOpen} aria-haspopup="true" onClick={() => setSortOpen((v) => !v)} onKeyDown={(e) => { if (e.key === "Escape") setSortOpen(false); }} className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;font-size:14.5px;color:var(--c-ink-soft);cursor:pointer;display:flex;align-items:center;gap:4px;")}>מיון: {sortLabel} <span aria-hidden="true">▾</span></button>
               {sortOpen && (
                 <div onMouseLeave={() => setSortOpen(false)} style={css("position:absolute;left:0;top:100%;margin-top:6px;background:#fff;border:1px solid var(--c-line);border-radius:var(--r-md);box-shadow:var(--shadow-md);overflow:hidden;z-index:10;min-width:180px;")}>
                   {SORTS.map(([k, label]) => (
-                    <div key={k} onClick={() => { setSortBy(k); setSortOpen(false); }} style={css(`padding:12px 16px;font-size:14px;cursor:pointer;color:${sortBy === k ? "var(--c-accent)" : "var(--c-ink)"};font-weight:${sortBy === k ? 700 : 400};`)}>{label}</div>
+                    <button type="button" key={k} aria-pressed={sortBy === k} onClick={() => { setSortBy(k); setSortOpen(false); }} onKeyDown={(e) => { if (e.key === "Escape") setSortOpen(false); }} style={css(`background:none;border:0;padding:0;font:inherit;text-align:right;display:block;width:100%;padding:12px 16px;font-size:14px;cursor:pointer;color:${sortBy === k ? "var(--c-accent)" : "var(--c-ink)"};font-weight:${sortBy === k ? 700 : 400};`)}>{label}</button>
                   ))}
                 </div>
               )}

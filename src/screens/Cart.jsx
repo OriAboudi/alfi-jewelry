@@ -72,7 +72,7 @@ export function Cart() {
               {couponCode ? (
                 <div style={css("display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--c-success-bg);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:14px;font-size:13px;color:var(--c-success);")}>
                   <span>קוד {couponCode} מופעל</span>
-                  <span onClick={removeCoupon} className="tap-target" style={css("cursor:pointer;font-weight:700;")}>✕</span>
+                  <button type="button" onClick={removeCoupon} aria-label="הסרת הקופון" className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;color:inherit;cursor:pointer;font-weight:700;")}>✕</button>
                 </div>
               ) : (
                 <CouponInput applyCoupon={applyCoupon} couponBusy={couponBusy} couponError={couponError} />

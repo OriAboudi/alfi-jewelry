@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { css } from "../lib/css.js";
 import { PrivacyPolicyContent, PRIVACY_UPDATED } from "./PrivacyPolicyContent.jsx";
+import { useDialog } from "../hooks/useDialog.js";
 
 /**
  * Required "I agree to the privacy policy" checkbox for forms that collect
@@ -49,18 +50,13 @@ export function PrivacyConsent({ checked, onChange, error }) {
 
 function PrivacyPolicyModal({ onClose }) {
   const closeBtnRef = useRef(null);
+  const panelRef = useDialog(true, onClose, { initialFocus: "[data-autofocus]" });
 
   useEffect(() => {
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    closeBtnRef.current?.focus();
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [onClose]);
+    return () => { document.body.style.overflow = prevOverflow; };
+  }, []);
 
   return createPortal(
     <div
@@ -68,6 +64,7 @@ function PrivacyPolicyModal({ onClose }) {
       style={css("position:fixed;inset:0;z-index:120;background:rgba(46,34,49,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;")}
     >
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="מדיניות פרטיות"
@@ -86,7 +83,7 @@ function PrivacyPolicyModal({ onClose }) {
           <PrivacyPolicyContent />
         </div>
         <div style={css("padding:14px 24px;border-top:1px solid var(--c-line);flex:none;")}>
-          <button ref={closeBtnRef} type="button" onClick={onClose} className="btn btn-primary btn-block" style={css("font-size:15px;")}>חזרה לטופס</button>
+          <button ref={closeBtnRef} data-autofocus type="button" onClick={onClose} className="btn btn-primary btn-block" style={css("font-size:15px;")}>חזרה לטופס</button>
         </div>
       </div>
     </div>,

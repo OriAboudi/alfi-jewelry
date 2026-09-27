@@ -20,6 +20,8 @@ import { Favorites } from "./screens/Favorites.jsx";
 import { Loading } from "./screens/Loading.jsx";
 import { Contact } from "./screens/Contact.jsx";
 import { Privacy } from "./screens/Privacy.jsx";
+import { Accessibility } from "./screens/Accessibility.jsx";
+import { AccessibilityMenu } from "./components/AccessibilityMenu.jsx";
 import { Terms } from "./screens/Terms.jsx";
 import { Shipping } from "./screens/Shipping.jsx";
 
@@ -45,6 +47,7 @@ const SCREENS = {
   loading: Loading,
   contact: Contact,
   privacy: Privacy,
+  accessibility: Accessibility,
   terms: Terms,
   shipping: Shipping,
   admin: Admin,
@@ -61,7 +64,7 @@ const PAGE_BG =
   "min-height:100vh;font-weight:400;line-height:1.65;-webkit-font-smoothing:antialiased;";
 
 export default function App() {
-  const { screen } = useStore();
+  const { screen, go } = useStore();
 
   // The admin login gate is a full-bleed page with its own layout (no
   // header/footer) and keeps the old plain background — admin is an
@@ -81,6 +84,7 @@ export default function App() {
 
   return (
     <div dir="rtl" className="r-page-bg" style={css(PAGE_BG)}>
+      {showChrome && <a href="#main-content" className="skip-link">דלג לתוכן הראשי</a>}
       {showChrome && <div className="rd-bg-paint" aria-hidden="true" />}
       {showChrome && <div className="rd-bg-veil" aria-hidden="true" />}
       {/* position:relative + z-index:1 — .r-page-bg's own opaque background
@@ -94,7 +98,7 @@ export default function App() {
           full-bleed.) */}
       <div style={css("position:relative;z-index:1;")}>
         {showChrome && <Header />}
-        <main>
+        <main id="main-content" tabIndex={-1} style={css("outline:none;")}>
           <Suspense fallback={null}>
             <Screen />
           </Suspense>
@@ -102,6 +106,7 @@ export default function App() {
         {showChrome && <Footer />}
         {showChrome && <SignupCouponPopup />}
         {showChrome && <PhoneLoginPopup />}
+        {showChrome && <AccessibilityMenu go={go} />}
       </div>
     </div>
   );

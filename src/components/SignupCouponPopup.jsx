@@ -3,6 +3,7 @@ import { css } from "../lib/css.js";
 import { isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { PrivacyConsent } from "./PrivacyConsent.jsx";
+import { useDialog } from "../hooks/useDialog.js";
 
 const labelStyle = "display:block;font-size:12.5px;color:var(--c-ink-mute);margin-bottom:5px;";
 const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:transparent;transition:border-color .2s;";
@@ -31,6 +32,8 @@ export function SignupCouponPopup() {
       setForm((f) => ({ ...f, phone: formatIsraeliPhone(signupPopupPrefillPhone) }));
     }
   }, [signupPopupOpen, signupPopupPrefillPhone]);
+
+  const panelRef = useDialog(signupPopupOpen, closeSignupPopup);
 
   if (!signupPopupOpen) return null;
 
@@ -74,8 +77,14 @@ export function SignupCouponPopup() {
 
   const field = (k, label, opts = {}) => (
     <div>
-      <label style={css(labelStyle)}>{label}</label>
+      <label htmlFor={`signup-${k}`} style={css(labelStyle)}>{label}</label>
       <input
+        id={`signup-${k}`}
+        required
+        aria-required="true"
+        aria-invalid={!!(touched[k] && errors[k])}
+        aria-describedby={touched[k] && errors[k] ? `signup-${k}-err` : undefined}
+        autoComplete={opts.autoComplete}
         value={form[k]}
         onChange={opts.onChange || set(k)}
         onBlur={blur(k)}
@@ -83,7 +92,7 @@ export function SignupCouponPopup() {
         placeholder={opts.placeholder}
         style={css(touched[k] && errors[k] ? fieldErrStyle : fieldStyle)}
       />
-      {touched[k] && errors[k] && <div style={css(errMsgStyle)}>{errors[k]}</div>}
+      {touched[k] && errors[k] && <div id={`signup-${k}-err`} role="alert" style={css(errMsgStyle)}>{errors[k]}</div>}
     </div>
   );
 
@@ -93,6 +102,10 @@ export function SignupCouponPopup() {
       style={css("position:fixed;inset:0;z-index:90;background:rgba(46,34,49,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;")}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="signup-title"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
         className="r-signup-panel"
@@ -107,7 +120,7 @@ export function SignupCouponPopup() {
         <div className="no-scrollbar" style={css("flex:1;min-height:0;overflow-y:auto;padding:22px 22px 18px;background:rgba(248,243,238,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.7);")}>
         {success ? (
           <>
-            <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:7px;")}>ברוכה הבאה ל‑ALFI!</h2>
+            <h2 id="signup-title" style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:7px;")}>ברוכה הבאה ל‑ALFI!</h2>
             <p style={css("font-size:12.5px;color:var(--c-ink-soft);margin-bottom:14px;")}>קוד ההנחה שלך ל‑{success.percent}% הנחה נשלח גם לאימייל שלך:</p>
             <div style={css("border:1.5px dashed var(--c-accent);border-radius:12px;padding:11px;font-size:18px;font-weight:700;letter-spacing:.07em;color:var(--c-accent);margin-bottom:12px;")}>{success.code}</div>
             <button onClick={copyCode} className="tap-target" style={css("width:100%;padding:10px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:transparent;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;")}>
@@ -119,22 +132,22 @@ export function SignupCouponPopup() {
           </>
         ) : (
           <>
-            <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:14px;")}>{percent}% הנחה על ההזמנה הראשונה</h2>
+            <h2 id="signup-title" style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:14px;")}>{percent}% הנחה על ההזמנה הראשונה</h2>
             <div style={css("display:flex;flex-direction:column;gap:9px;text-align:right;margin-bottom:12px;")}>
-              {field("name", "שם מלא")}
-              {field("email", "אימייל", { type: "email", placeholder: "example@mail.com" })}
-              {field("phone", "טלפון", { onChange: setPhone, placeholder: "050-1234567" })}
+              {field("name", "שם מלא", { autoComplete: "name" })}
+              {field("email", "אימייל", { type: "email", placeholder: "example@mail.com", autoComplete: "email" })}
+              {field("phone", "טלפון", { type: "tel", onChange: setPhone, placeholder: "050-1234567", autoComplete: "tel" })}
             </div>
             <div style={css("margin-bottom:12px;")}>
               <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
             </div>
-            {error && <div style={css("color:var(--c-danger);font-size:12px;margin-bottom:10px;")}>{error}</div>}
+            {error && <div role="alert" style={css("color:var(--c-danger);font-size:12px;margin-bottom:10px;")}>{error}</div>}
             <button onClick={submit} disabled={busy} className="btn btn-primary btn-block" style={css("font-size:14px;padding:11px;margin-bottom:8px;")}>
               {busy ? "רגע…" : "קבלת הקופון"}
             </button>
-            <span onClick={close} className="tap-target" style={css("display:inline-block;cursor:pointer;font-size:12px;color:var(--c-ink-mute);")}>
+            <button type="button" onClick={close} className="tap-target" style={css("display:inline-block;background:none;border:0;padding:0 6px;font-family:inherit;cursor:pointer;font-size:12px;color:var(--c-ink-mute);")}>
               {signupPopupPendingCheckout ? "להמשיך בלי קופון" : "אולי מאוחר יותר"}
-            </span>
+            </button>
           </>
         )}
         </div>

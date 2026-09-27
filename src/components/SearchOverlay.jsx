@@ -1,7 +1,8 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 import { PriceTag } from "./PriceTag.jsx";
 import { useStore } from "../context/StoreContext.jsx";
+import { useDialog } from "../hooks/useDialog.js";
 
 /**
  * SearchOverlay — instant client-side search over the already-loaded
@@ -13,13 +14,9 @@ export function SearchOverlay({ onClose }) {
   const { products, openProduct } = useStore();
   const [q, setQ] = useState("");
   const inputRef = useRef(null);
-
-  useEffect(() => { inputRef.current?.focus(); }, []);
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Escape") onClose(); };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  // Focus lands on the search field; Escape closes; focus returns to the
+  // search button that opened it.
+  const panelRef = useDialog(true, onClose, { initialFocus: "input" });
 
   const results = useMemo(() => {
     const term = q.trim();
@@ -38,6 +35,10 @@ export function SearchOverlay({ onClose }) {
       style={css("position:fixed;inset:0;z-index:95;background:rgba(46,34,49,.5);display:flex;align-items:flex-start;justify-content:center;padding:80px 16px 16px;")}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="חיפוש תכשיטים"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
         className="glass-strong"
@@ -48,14 +49,16 @@ export function SearchOverlay({ onClose }) {
             ref={inputRef}
             value={q}
             onChange={(e) => setQ(e.target.value)}
+            type="search"
+            aria-label="חיפוש תכשיטים"
             placeholder="חיפוש תכשיטים…"
-            style={css("flex:1;padding:14px 16px;border:1px solid var(--ink);background:var(--cream);font:inherit;font-size:16px;color:var(--ink);box-sizing:border-box;outline:none;")}
+            style={css("flex:1;padding:14px 16px;border:1px solid var(--ink);background:var(--cream);font:inherit;font-size:16px;color:var(--ink);box-sizing:border-box;")}
           />
           <button onClick={onClose} aria-label="סגירת חיפוש" className="tap-target" style={css("width:44px;height:44px;flex:none;border:0;background:transparent;cursor:pointer;color:var(--ink);font-size:22px;line-height:1;")}>×</button>
         </div>
 
         {q.trim() && (
-          <div style={css("margin-top:14px;display:flex;flex-direction:column;max-height:60vh;overflow-y:auto;")}>
+          <div aria-live="polite" style={css("margin-top:14px;display:flex;flex-direction:column;max-height:60vh;overflow-y:auto;")}>
             {results.length === 0 ? (
               <div style={css("padding:16px 4px;color:var(--text-muted);font-size:14px;")}>לא נמצאו תוצאות עבור "{q}"</div>
             ) : (

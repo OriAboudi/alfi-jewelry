@@ -16,14 +16,26 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
   const slideCount = Math.max(desktopSlides.length, mobileSlides.length);
   const [active, setActive] = useState(0);
   const timer = useRef(null);
+  // WCAG 2.2.2 (Pause, Stop, Hide): auto-rotation can be paused with a
+  // visible button, and never starts for visitors who asked for less motion
+  // (OS setting, or "עצירת אנימציות" in the accessibility menu).
+  const prefersStill = () => typeof window !== "undefined" && (
+    window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ||
+    document.documentElement.classList.contains("a11y-nomotion"));
+  const [paused, setPaused] = useState(prefersStill);
 
   useEffect(() => {
-    setActive(0);
-    if (slideCount <= 1) return undefined;
+    const onA11y = () => { if (prefersStill()) setPaused(true); };
+    window.addEventListener("a11y-change", onA11y);
+    return () => window.removeEventListener("a11y-change", onA11y);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (slideCount <= 1 || paused) return undefined;
     timer.current = setInterval(() => setActive((i) => (i + 1) % slideCount), autoplayMs);
     return () => clearInterval(timer.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slideCount, autoplayMs]);
+  }, [slideCount, autoplayMs, paused]);
 
   const layer = (slides, className) => slides.map((src, i) => {
     const isActive = i === active % slides.length;
@@ -53,6 +65,19 @@ export function HeroSlider({ images, imagesMobile, autoplayMs = 5500, children }
         {layer(mobileSlides, "r-hero-layer-mobile")}
         {layer(desktopSlides, "r-hero-layer-desktop")}
       </div>
+      {slideCount > 1 && (
+        <button
+          type="button"
+          onClick={() => setPaused((p) => !p)}
+          aria-label={paused ? "הפעלת החלפת התמונות" : "עצירת החלפת התמונות"}
+          aria-pressed={paused}
+          style={css("position:absolute;bottom:14px;left:14px;z-index:3;width:40px;height:40px;border:0;border-radius:50%;background:rgba(251,248,245,.85);color:var(--ink);cursor:pointer;display:flex;align-items:center;justify-content:center;")}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            {paused ? <path d="M8 5v14l11-7z" /> : <path d="M7 5h4v14H7zM13 5h4v14h-4z" />}
+          </svg>
+        </button>
+      )}
       {children}
     </>
   );

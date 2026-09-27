@@ -17,6 +17,7 @@ function ServiceList({ go, textStyle }) {
     <>
       <a href={pathFor("shipping")} onClick={(e) => { e.preventDefault(); go("shipping"); }} style={css(linkBtn + textStyle)}>משלוחים והחזרות</a>
       <a href={pathFor("privacy")} onClick={(e) => { e.preventDefault(); go("privacy"); }} style={css(linkBtn + textStyle)}>מדיניות פרטיות</a>
+      <a href={pathFor("accessibility")} onClick={(e) => { e.preventDefault(); go("accessibility"); }} style={css(linkBtn + textStyle)}>הצהרת נגישות</a>
     </>
   );
 }

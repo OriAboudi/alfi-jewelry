@@ -10,6 +10,7 @@ export function CouponInput({ applyCoupon, couponBusy, couponError }) {
     <div style={css("margin-bottom:14px;")}>
       <div style={css("display:flex;gap:8px;")}>
         <input
+          aria-label="קוד קופון"
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="קוד קופון"
@@ -24,7 +25,7 @@ export function CouponInput({ applyCoupon, couponBusy, couponError }) {
           {couponBusy ? "בודק…" : "החלה"}
         </button>
       </div>
-      {couponError && <div style={css("color:var(--c-danger);font-size:12px;margin-top:6px;")}>{couponError}</div>}
+      {couponError && <div role="alert" style={css("color:var(--c-danger);font-size:12px;margin-top:6px;")}>{couponError}</div>}
     </div>
   );
 }

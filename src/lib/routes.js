@@ -42,6 +42,8 @@ export function pathFor(screen, ctx = {}) {
       return "/מדיניות-פרטיות";
     case "terms":
       return "/תנאי-שימוש";
+    case "accessibility":
+      return "/הצהרת-נגישות";
     default:
       return null;
   }
@@ -56,6 +58,7 @@ const STATIC_ROUTES = {
   "/משלוחים-והחזרות": { screen: "shipping" },
   "/מדיניות-פרטיות": { screen: "privacy" },
   "/תנאי-שימוש": { screen: "terms" },
+  "/הצהרת-נגישות": { screen: "accessibility" },
 };
 
 // pathname only — never location.search. Keeping this pure and search-blind

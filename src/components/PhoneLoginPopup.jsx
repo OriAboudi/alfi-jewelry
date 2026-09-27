@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
+import { useDialog } from "../hooks/useDialog.js";
 
 const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:#fff;transition:border-color .2s;";
 const fieldErrStyle = fieldStyle.replace("var(--c-line-strong)", "#d98a72");
@@ -20,6 +21,8 @@ export function PhoneLoginPopup() {
     if (phoneLoginOpen) { setPhone(""); setTouched(false); }
   }, [phoneLoginOpen]);
 
+  const panelRef = useDialog(phoneLoginOpen, closePhoneLogin);
+
   if (!phoneLoginOpen) return null;
 
   const valid = isValidIsraeliPhone(phone);
@@ -35,20 +38,29 @@ export function PhoneLoginPopup() {
       style={css("position:fixed;inset:0;z-index:90;background:rgba(46,34,49,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;")}
     >
       <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="phone-login-title"
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
         className="r-signup-panel"
         style={css("position:relative;background:var(--c-bg);border-radius:20px;width:100%;max-width:360px;padding:26px 22px 20px;box-shadow:var(--shadow-modal);text-align:center;")}
       >
-        <span onClick={closePhoneLogin} className="tap-target" style={css("position:absolute;top:8px;left:8px;cursor:pointer;font-size:20px;color:var(--c-ink-mute);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;")}>×</span>
+        <button type="button" onClick={closePhoneLogin} aria-label="סגירה" className="tap-target" style={css("position:absolute;top:8px;left:8px;background:none;border:0;padding:0;cursor:pointer;font-size:20px;color:var(--c-ink-mute);line-height:1;width:32px;height:32px;display:flex;align-items:center;justify-content:center;")}>×</button>
 
-        <div className="serif" style={css("font-size:24px;letter-spacing:.36em;padding-right:.36em;color:var(--ink);margin-bottom:10px;")}>ALFI</div>
+        <div className="serif" aria-hidden="true" style={css("font-size:24px;letter-spacing:.36em;padding-right:.36em;color:var(--ink);margin-bottom:10px;")}>ALFI</div>
 
-        <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:6px;")}>כניסה עם מספר טלפון</h2>
+        <h2 id="phone-login-title" style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:6px;")}>כניסה עם מספר טלפון</h2>
         <p style={css("font-size:12.5px;color:var(--c-ink-soft);margin-bottom:16px;")}>הזינו את הטלפון שנרשמתם איתו — אם עדיין לא נרשמתם, ניצור לכם חשבון וקופון חדש.</p>
 
         <div style={css("text-align:right;margin-bottom:12px;")}>
+          <label htmlFor="phone-login-input" style={css("display:block;font-size:12.5px;color:var(--c-ink-mute);margin-bottom:5px;")}>מספר טלפון</label>
           <input
+            id="phone-login-input"
+            autoComplete="tel"
+            aria-invalid={touched && !valid}
+            aria-describedby={touched && !valid ? "phone-login-err" : undefined}
             value={phone}
             onChange={(e) => setPhone(formatIsraeliPhone(e.target.value))}
             onBlur={() => setTouched(true)}
@@ -56,12 +68,11 @@ export function PhoneLoginPopup() {
             type="tel"
             placeholder="050-1234567"
             style={css(touched && !valid ? fieldErrStyle : fieldStyle)}
-            autoFocus
           />
-          {touched && !valid && <div style={css("color:var(--c-danger);font-size:12px;margin-top:5px;")}>מספר טלפון לא תקין</div>}
+          {touched && !valid && <div id="phone-login-err" role="alert" style={css("color:var(--c-danger);font-size:12px;margin-top:5px;")}>מספר טלפון לא תקין</div>}
         </div>
 
-        {phoneLoginError && <div style={css("color:var(--c-danger);font-size:12px;margin-bottom:10px;")}>{phoneLoginError}</div>}
+        {phoneLoginError && <div role="alert" style={css("color:var(--c-danger);font-size:12px;margin-bottom:10px;")}>{phoneLoginError}</div>}
 
         <button onClick={submit} disabled={phoneLoginBusy} className="btn btn-primary btn-block" style={css("font-size:14px;padding:11px;")}>
           {phoneLoginBusy ? "רגע…" : "כניסה"}

@@ -131,12 +131,14 @@ export function Product() {
           {couponCode ? (
             <div style={css("display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--c-success-bg);border-radius:var(--r-sm);padding:9px 12px;margin-bottom:16px;font-size:13px;color:var(--c-success);")}>
               <span>קוד {couponCode} מופעל · {couponPercent}% הנחה (לאחר הנחה בקופה)</span>
-              <span onClick={removeCoupon} className="tap-target" style={css("cursor:pointer;font-weight:700;")}>✕</span>
+              <button type="button" onClick={removeCoupon} aria-label="הסרת הקופון" className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;color:inherit;cursor:pointer;font-weight:700;")}>✕</button>
             </div>
           ) : showCouponField ? (
             <div style={css("margin-bottom:16px;")}>
               <div style={css("display:flex;gap:8px;")}>
                 <input
+                  aria-label="קוד קופון"
+                  autoFocus
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
                   placeholder="קוד קופון"
@@ -151,10 +153,10 @@ export function Product() {
                   {couponBusy ? "בודק…" : "החלה"}
                 </button>
               </div>
-              {couponError && <div style={css("color:var(--c-danger);font-size:12.5px;margin-top:6px;")}>{couponError}</div>}
+              {couponError && <div role="alert" style={css("color:var(--c-danger);font-size:12.5px;margin-top:6px;")}>{couponError}</div>}
             </div>
           ) : (
-            <div onClick={() => setShowCouponField(true)} className="tap-target" style={css("display:block;width:fit-content;cursor:pointer;font-size:13px;color:var(--c-accent);font-weight:600;margin-bottom:16px;")}>יש לך קוד קופון?</div>
+            <button type="button" onClick={() => setShowCouponField(true)} className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;display:block;width:fit-content;cursor:pointer;font-size:13px;color:var(--c-accent);font-weight:600;margin-bottom:16px;")}>יש לך קוד קופון?</button>
           )}
 
           <p style={css("font-family:var(--font-serif);font-weight:300;font-size:16px;line-height:1.65;letter-spacing:.01em;color:var(--c-ink-soft);margin-bottom:20px;max-width:46ch;")}>{sel.description}</p>
