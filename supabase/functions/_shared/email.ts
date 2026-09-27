@@ -35,11 +35,15 @@ const ASSET_BASE = `${(Deno.env.get("SUPABASE_URL") || "").replace(/\/+$/, "")}/
 // blur + saturation + cream veil baked in — email clients ignore CSS
 // filters and gradient overlays, so the effect has to be in the pixels.
 const BG_URL = `${ASSET_BASE}/site-bg-v1.jpg`;
+// Card header: the floral artwork with the ALFI JEWELRY lettering baked in
+// (source: supabase/email-assets/header-v1.jpg). An <img>, so no mail app's
+// dark mode can recolour it, and the logo is always the real one.
+const HEADER_URL = `${ASSET_BASE}/header-v1.jpg`;
 
 // Palette — mirrors src/styles/tokens.css.
 const C = {
   bg: "#f6f0eb",
-  card: "#fbf8f5",
+  card: "#ffffff",
   surface: "#ffffff",
   ink: "#3a2d3d",
   inkSoft: "#4e4052",
@@ -109,7 +113,7 @@ export async function sendSignupCouponEmail({ name, email, code, percent }: { na
   const html = emailShell(`
     ${headingHtml(`ברוכה הבאה ל‑ALFI${name ? `, ${name}` : ""}!`)}
     ${paragraphHtml(`תודה שנרשמת. הנה קוד ההנחה שלך ל‑${Number(percent)}% הנחה על ההזמנה הבאה:`)}
-    <div class="em-code" style="background-color:${C.accentSoft};border-radius:12px;padding:18px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:.08em;color:${C.accent};margin:20px 0;">${escapeHtml(code)}</div>
+    <div class="em-code" style="background-color:${C.card};border:1.5px dashed ${C.accent};border-radius:12px;padding:18px;text-align:center;font-size:22px;font-weight:bold;letter-spacing:.08em;color:${C.accent};margin:20px 0;">${escapeHtml(code)}</div>
     ${paragraphHtml("אפשר להזין את הקוד בעמוד המוצר או בקופה. הקוד תקף להזמנה אחת.", `font-size:13px;color:${C.inkMute};`)}
   `);
   const result = await sendViaResend(email, `קוד ההנחה שלך (${Number(percent)}%)`, html);
@@ -142,19 +146,17 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
 // Dark mode: mail apps recolour text for dark mode but never recolour a
 // background IMAGE — text sitting on the painted background turned light-on-
 // light and unreadable (iOS Mail, dark mode). So:
-//  1. The painted background is only a decorative frame; NO text sits on it.
-//     Every word is on one solid card (bgcolor + background-color), which an
-//     app that recolours will recolour together with its text.
+//  1. The floral painting is used wherever there's no text: a wide frame
+//     around the card and the card's header image. Every word sits on the
+//     plain white card (bgcolor + background-color), which an app that
+//     recolours will recolour together with its text.
 //  2. color-scheme "light only" (meta + CSS) — Apple Mail and others then
 //     don't recolour at all.
 //  3. prefers-color-scheme:dark + Outlook.com's [data-ogsc]/[data-ogsb]
 //     overrides pin the designed colours where a client applies its own.
 function emailShell(inner: string) {
-  // Text wordmark, styled like the site header's "ALFI" (serif, wide
-  // letter-spacing; padding-right balances the trailing letter-space so it
-  // stays optically centred). Georgia stands in for the site's web font,
-  // which email clients can't load.
-  const logo = `<tr><td align="center" dir="ltr" class="em-ink" style="padding:34px 24px 6px;font-family:Georgia,'Times New Roman',serif;font-size:34px;letter-spacing:.36em;padding-right:.36em;color:${C.ink};">ALFI</td></tr>`;
+  // Floral header with the ALFI JEWELRY lettering (an image — see HEADER_URL).
+  const logo = `<tr><td style="padding:0;line-height:0;font-size:0;"><img src="${HEADER_URL}" width="560" alt="ALFI Jewelry" style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:20px 20px 0 0;" /></td></tr>`;
   const footer = `<tr><td align="center" class="em-mute" style="padding:18px 24px 26px;border-top:1px solid ${C.line};font-family:${FONT};font-size:12px;color:${C.inkMute};">ALFI JEWELRY · תכשיטי כסף סטרלינג 925 לאישה</td></tr>`;
   return `<!doctype html>
 <html lang="he" dir="rtl">
@@ -167,14 +169,14 @@ function emailShell(inner: string) {
   :root { color-scheme: light only; supported-color-schemes: light only; }
   @media (prefers-color-scheme: dark) {
     .em-card { background-color: ${C.card} !important; }
-    .em-soft { background-color: ${C.bg} !important; }
+    .em-soft { background-color: ${C.card} !important; }
     .em-ink { color: ${C.ink} !important; }
     .em-soft-ink { color: ${C.inkSoft} !important; }
     .em-mute { color: ${C.inkMute} !important; }
     .em-accent { color: ${C.accentDark} !important; }
     .em-success { color: ${C.success} !important; }
     .em-btn { background-color: ${C.accent} !important; color: #ffffff !important; }
-    .em-code { background-color: ${C.accentSoft} !important; color: ${C.accent} !important; }
+    .em-code { background-color: ${C.card} !important; color: ${C.accent} !important; }
   }
   [data-ogsc] .em-ink { color: ${C.ink} !important; }
   [data-ogsc] .em-soft-ink { color: ${C.inkSoft} !important; }
@@ -183,10 +185,10 @@ function emailShell(inner: string) {
   [data-ogsc] .em-success { color: ${C.success} !important; }
   [data-ogsc] .em-btn { color: #ffffff !important; }
   [data-ogsb] .em-card { background-color: ${C.card} !important; }
-  [data-ogsb] .em-soft { background-color: ${C.bg} !important; }
+  [data-ogsb] .em-soft { background-color: ${C.card} !important; }
   [data-ogsb] .em-btn { background-color: ${C.accent} !important; }
   [data-ogsc] .em-code { color: ${C.accent} !important; }
-  [data-ogsb] .em-code { background-color: ${C.accentSoft} !important; }
+  [data-ogsb] .em-code { background-color: ${C.card} !important; }
   [data-ogsc] .em-card span:not([class]) { color: inherit !important; }
 </style>
 </head>
@@ -195,10 +197,10 @@ function emailShell(inner: string) {
        attribute + inline background-image cover Gmail/Apple Mail; clients
        that drop images (e.g. Outlook desktop) show the cream colour. -->
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" background="${BG_URL}" style="background-color:${C.bg};background-image:url(${BG_URL});background-size:cover;background-position:center top;background-repeat:repeat;">
-    <tr><td align="center" style="padding:32px 12px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-card" bgcolor="${C.card}" style="max-width:560px;background-color:${C.card};border-radius:20px;">
+    <tr><td align="center" style="padding:44px 18px 48px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-card" bgcolor="${C.card}" style="max-width:560px;background-color:${C.card};border-radius:20px;box-shadow:0 18px 40px rgba(58,45,61,.18);">
         ${logo}
-        <tr><td dir="rtl" class="em-ink" style="padding:6px 28px 26px;font-family:${FONT};color:${C.ink};text-align:right;font-size:15px;line-height:1.7;">
+        <tr><td dir="rtl" class="em-ink" style="padding:22px 28px 26px;font-family:${FONT};color:${C.ink};text-align:right;font-size:15px;line-height:1.7;">
           ${inner}
         </td></tr>
         ${footer}
@@ -242,7 +244,7 @@ function orderSummaryHtml(order: any) {
     </tr>`;
 
   return `
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-soft" bgcolor="${C.bg}" style="background-color:${C.bg};border-radius:14px;margin:0 0 20px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-soft" bgcolor="${C.card}" style="background-color:${C.card};border:1px solid ${C.line};border-radius:14px;margin:0 0 20px;">
       <tr><td style="padding:18px 20px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" dir="rtl" class="em-ink" style="font-family:${FONT};font-size:14.5px;color:${C.ink};">
           <tr><td colspan="2" class="em-mute" style="padding:0 0 8px;text-align:right;font-weight:bold;color:${C.inkMute};font-size:13px;">
