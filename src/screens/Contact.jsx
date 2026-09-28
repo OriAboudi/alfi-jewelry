@@ -28,7 +28,7 @@ function ContactRow({ icon, label, value, href, external }) {
 export function Contact() {
   useSeoTags({
     title: "יצירת קשר · ALFI",
-    description: "יצירת קשר עם ALFI — וואטסאפ, אימייל ואינסטגרם.",
+    description: "יצירת קשר עם ALFI בוואטסאפ, באימייל ובאינסטגרם.",
     canonical: "/צור-קשר",
   });
 

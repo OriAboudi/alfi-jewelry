@@ -11,7 +11,7 @@ export function Collections() {
 
   useSeoTags({
     title: "קולקציות · ALFI",
-    description: "הקולקציות של ALFI — אוספי תכשיטים באיכות אמיתית ובמחיר נגיש.",
+    description: "הקולקציות של ALFI: אוספי תכשיטי כסף באיכות אמיתית ובמחיר נגיש.",
     canonical: "/קולקציות",
   });
 

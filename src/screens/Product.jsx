@@ -28,7 +28,7 @@ export function Product() {
   const canonicalPath = pathFor("product", { pid: sel.id, products });
   const canonicalUrl = `https://alfi-jewelry.com${canonicalPath}`;
   useSeoTags({
-    title: sel.id ? `${sel.name} — ${sel.material || "כסף 925"} · ALFI` : undefined,
+    title: sel.id ? `${sel.name} · ${sel.material || "כסף 925"} · ALFI` : undefined,
     description: sel.description ? sel.description.slice(0, 155) : undefined,
     canonical: sel.id ? canonicalPath : undefined,
     image: images[0],

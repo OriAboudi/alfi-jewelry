@@ -15,7 +15,7 @@ export function Story() {
 
   useSeoTags({
     title: "הסיפור שלנו · ALFI",
-    description: C.storyLead ? C.storyLead.slice(0, 155) : "הסיפור של ALFI — תכשיטי כסף סטרלינג 925 באיכות אמיתית ובמחיר נגיש.",
+    description: C.storyLead ? C.storyLead.slice(0, 155) : "הסיפור של ALFI: תכשיטי כסף סטרלינג 925 באיכות אמיתית ובמחיר נגיש.",
     canonical: "/הסיפור-שלנו",
   });
 
