@@ -5,18 +5,21 @@ import { thumb, GRAD_CARD } from "../lib/ui.js";
 import { computeTotals, saleInfo } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
+import { DeliveryMethodPicker } from "../components/DeliveryMethodPicker.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Cart() {
-  const { cart, products, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
+  const { cart, products, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, deliveryMethod, setDeliveryMethod } = useStore();
   useSeoTags({ noindex: true });
 
   const lines = cart.map((c) => {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", category: "", material: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0);
+  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0, deliveryMethod);
+  // What home delivery costs for this cart — shown on its option.
+  const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
   const hasStockIssue = lines.some((l) => l.qty > Number(l.p.stock));
 
   return (
@@ -60,11 +63,12 @@ export function Cart() {
             </div>
             <div className="r-sticky" style={css("background:rgba(251,248,245,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.6);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
               <h3 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:20px;")}>סיכום הזמנה</h3>
+              <DeliveryMethodPicker value={deliveryMethod} onChange={setDeliveryMethod} deliveryFee={deliveryFee} content={C} />
               <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(regularSubtotal)}</span></div>
               {saleSavings > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
               )}
-              <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>משלוח</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
+              <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>{deliveryMethod === "pickup" ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
               {couponCode && discount > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-success);")}><span>הנחת קופון ({couponPercent}%)</span><span>-{fmt(discount)}</span></div>
               )}

@@ -6,6 +6,11 @@ import { pathFor, parsePath } from "../lib/routes.js";
 const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
 
+// Delivery method picked in the cart ("delivery" | "pickup"), remembered
+// like the cart itself so checkout (and a reload) keep the choice.
+const loadDeliveryMethod = () => {
+  try { return localStorage.getItem("alfi:deliveryMethod") === "pickup" ? "pickup" : "delivery"; } catch { return "delivery"; }
+};
 const loadCart = () => {
   try { return JSON.parse(localStorage.getItem("alfi:cart") || "[]"); } catch { return []; }
 };
@@ -117,6 +122,7 @@ export function StoreProvider({ children }) {
       user: null,
       users: [],
       cart: loadCart(),
+      deliveryMethod: loadDeliveryMethod(),
       favorites: loadFavorites(),
       catFilter: routed?.catFilter || "הכל",
       adminForm: { email: "", password: "" },
@@ -592,11 +598,18 @@ export function StoreProvider({ children }) {
   // server, which looks up real prices and creates the order there. For the
   // Supabase backend this opens a Takbull payment page (card data never
   // touches this app); the local dev backend places the order directly.
-  const startCheckout = useCallback(async (addr, deliveryMethod = "delivery") => {
+  const setDeliveryMethod = useCallback((m) => {
+    const v = m === "pickup" ? "pickup" : "delivery";
+    try { localStorage.setItem("alfi:deliveryMethod", v); } catch { /* ignore */ }
+    setState({ deliveryMethod: v });
+  }, [setState]);
+
+  const startCheckout = useCallback(async (addr) => {
     if (ref.current.checkoutBusy) return;
     setState({ checkoutBusy: true });
     const s = ref.current;
     const items = s.cart.map((c) => ({ id: c.id, qty: c.qty, size: c.size }));
+    const deliveryMethod = s.deliveryMethod === "pickup" ? "pickup" : "delivery";
     try {
       const { url, order } = await store.checkout.createSession({ items, shipping_address: addr, deliveryMethod, couponCode: s.couponCode || undefined });
       addMyOrder(order);
@@ -646,7 +659,7 @@ export function StoreProvider({ children }) {
     favoritesCount: state.favorites.length,
     // actions
     go, openProduct, goAdmin, goCheckout,
-    addToCart, changeQty, removeItem, addCurrent, toggleFavorite,
+    addToCart, changeQty, removeItem, addCurrent, toggleFavorite, setDeliveryMethod,
     setAdminField, submitAdminLogin, logout,
     setQty, setSize, setCatFilter,
     setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,

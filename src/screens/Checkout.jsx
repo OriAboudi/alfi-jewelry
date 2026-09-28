@@ -20,7 +20,7 @@ const CONTACT_FIELDS = ["first", "last", "email", "phone"];
 const ADDRESS_FIELDS = ["address", "city"];
 
 export function Checkout() {
-  const { cart, products, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup } = useStore();
+  const { cart, products, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup, deliveryMethod } = useStore();
   useSeoTags({ noindex: true });
 
   // "Before a purchase": offer the sign-up coupon while the shopper is
@@ -32,7 +32,7 @@ export function Checkout() {
     first: "", last: "", email: "", address: "", city: "", zip: "", phone: "",
   });
   const [touched, setTouched] = useState({});
-  const [deliveryMethod, setDeliveryMethod] = useState("delivery"); // "delivery" | "pickup"
+  // Chosen in the cart (store.deliveryMethod); shown here, changed in the cart.
   const isPickup = deliveryMethod === "pickup";
   const pickupAddress = pickupAddressOf(C);
   const requiredFields = isPickup ? CONTACT_FIELDS : [...CONTACT_FIELDS, ...ADDRESS_FIELDS];
@@ -66,7 +66,7 @@ export function Checkout() {
     if (!agreed) return;
     // Pickup orders carry no delivery address; the server records the
     // pickup address from the admin setting itself.
-    startCheckout(isPickup ? { ...form, address: "", city: "", zip: "" } : { ...form }, deliveryMethod);
+    startCheckout(isPickup ? { ...form, address: "", city: "", zip: "" } : { ...form });
   };
 
   const field = (k, label, opts = {}) => (
@@ -102,27 +102,13 @@ export function Checkout() {
           <div style={css("display:flex;align-items:center;gap:12px;margin-bottom:var(--sp-6);font-size:14px;color:var(--c-ink-faint);")}>
             <nav aria-label="שלבי ההזמנה" style={css("display:contents;")}><button type="button" onClick={() => go("cart")} style={css("background:none;border:0;padding:0;font:inherit;text-align:right;color:inherit;cursor:pointer;")}>עגלה</button> <span aria-hidden="true">←</span> <span aria-current="step" style={css("color:var(--c-accent);font-weight:600;")}>תשלום</span> <span aria-hidden="true">←</span> <span>אישור</span></nav>
           </div>
-          <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:16px;")}>אופן קבלת ההזמנה</h2>
-          <div role="radiogroup" aria-label="אופן קבלת ההזמנה" style={css("display:flex;flex-direction:column;gap:10px;margin-bottom:var(--sp-6);")}>
-            {[
-              { key: "delivery", label: "משלוח עד הבית", price: deliveryFee ? fmt(deliveryFee) : "חינם" },
-              { key: "pickup", label: "איסוף עצמי", price: "חינם" },
-            ].map((o) => {
-              const on = deliveryMethod === o.key;
-              return (
-                <label key={o.key} style={css(`display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid ${on ? "var(--c-accent)" : "var(--c-line-strong)"};border-radius:var(--r-md);cursor:pointer;background:${on ? "rgba(255,255,255,.7)" : "transparent"};`)}>
-                  <input type="radio" name="delivery-method" value={o.key} checked={on} onChange={() => setDeliveryMethod(o.key)} style={css("width:18px;height:18px;margin:0;accent-color:var(--c-accent);flex:none;")} />
-                  <span style={css("flex:1;font-size:15px;color:var(--c-ink);")}>{o.label}</span>
-                  <span style={css("font-size:14.5px;font-weight:600;color:var(--c-ink);")}>{o.price}</span>
-                </label>
-              );
-            })}
-            {isPickup && (
-              <div aria-live="polite" style={css("padding:12px 16px;border-radius:var(--r-md);background:var(--c-line-soft);font-size:14.5px;line-height:1.6;color:var(--c-ink-soft);")}>
-                <div style={css("font-size:12.5px;color:var(--c-ink-mute);margin-bottom:2px;")}>כתובת לאיסוף</div>
-                <div style={css("color:var(--c-ink);font-weight:600;")}>{pickupAddress}</div>
-              </div>
-            )}
+          <div style={css("display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px 16px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);margin-bottom:var(--sp-6);")}>
+            <div style={css("font-size:14.5px;line-height:1.6;")}>
+              <div style={css("font-size:12.5px;color:var(--c-ink-mute);")}>אופן קבלת ההזמנה</div>
+              <div style={css("font-weight:600;color:var(--c-ink);")}>{isPickup ? "איסוף עצמי – חינם" : `משלוח עד הבית – ${deliveryFee ? fmt(deliveryFee) : "חינם"}`}</div>
+              {isPickup && <div style={css("color:var(--c-ink-soft);")}>{pickupAddress}</div>}
+            </div>
+            <button type="button" onClick={() => go("cart")} style={css("background:none;border:0;padding:0;font:inherit;font-size:13.5px;color:var(--c-accent-dark);text-decoration:underline;text-underline-offset:3px;cursor:pointer;flex:none;")}>שינוי בעגלה</button>
           </div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>{isPickup ? "פרטי התקשרות" : "פרטי משלוח"}</h2>
           <div style={css("display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-bottom:var(--sp-6);")}>

@@ -169,6 +169,8 @@ export function Header() {
           </nav>
         )}
       </header>
+      {/* Reserves the fixed mobile header's height (see redesign.css). */}
+      <div className="rd-header-spacer" aria-hidden="true" />
       {searchOpen && <SearchOverlay onClose={() => setSearchOpen(false)} />}
     </>
   );

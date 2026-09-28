@@ -273,6 +273,8 @@
 /* ---------- header: desktop/mobile bar swap ---------- */
 .rd-header-desktop { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .rd-header-mobile { display: none; }
+.rd-header-spacer { display: none; }
+@media (max-width: 1023px) { .rd-header-spacer { display: block; } }
 /* Compact (☰) header below 1024px: six nav links + the centred logo need
    more width than a tablet has (they overlapped the logo at 768–1000px). */
 @media (max-width: 1023px) {
@@ -292,12 +294,21 @@ header.glass {
    reopening a tab), so on phones it read as "the photo, no header". Near-
    opaque cream, its own compositing layer, above everything in the page. */
 @media (max-width: 1023px) {
+  /* Pinned with position:fixed (not sticky) on phones/tablets: a fixed bar
+     can't be scrolled away or restored off-screen on any iOS setup. The
+     spacer right after it reserves its height (64px bar + 1px border +
+     the iPhone status-bar inset). */
   header.glass {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
     background: rgba(249, 245, 241, .97);
     -webkit-transform: translateZ(0);
     transform: translateZ(0);
     z-index: 60 !important;
   }
+  .rd-header-spacer { height: calc(65px + env(safe-area-inset-top, 0px)); }
 }
 
 /* ---------- product page "אולי יתאים גם": grid on desktop, slider on mobile ---------- */
