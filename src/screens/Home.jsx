@@ -49,8 +49,8 @@ export function Home() {
   const [bestSellers, setBestSellers] = React.useState([]);
 
   useSeoTags({
-    title: "ALFI · תכשיטי כסף סטרלינג 925 לאישה — טבעות, שרשראות, עגילים וצמידים",
-    description: "ALFI — תכשיטי כסף סטרלינג 925 באיכות אמיתית ובמחיר נגיש. טבעות, שרשראות, עגילים וצמידים לאישה.",
+    title: "תכשיטי כסף סטרלינג 925 לאישה · ALFI",
+    description: "תכשיטי כסף סטרלינג 925 לאישה באיכות אמיתית ובמחיר נגיש: טבעות, שרשראות, עגילים וצמידים מבית ALFI.",
     canonical: "/",
   });
 
