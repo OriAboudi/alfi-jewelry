@@ -4,7 +4,8 @@ import { fmt } from "../lib/format.js";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
-import { pathFor } from "../lib/routes.js";
+import { pathFor, DEAL_FILTER } from "../lib/routes.js";
+import { bundleConfig } from "../lib/pricing.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 const BASE_MATERIALS = ["כסף 925", "כסף + זירקון", "כסף מוזהב"];
 const SORTS = [
@@ -15,7 +16,10 @@ const SORTS = [
 ];
 
 export function Catalog() {
-  const { products, catFilter, setCatFilter, go } = useStore();
+  const { products, catFilter, setCatFilter, go, content } = useStore();
+  const isDeal = catFilter === DEAL_FILTER;
+  const deal = bundleConfig(content);
+  const dealTitle = `מבצע ${deal.size} ב־₪${deal.price}`;
   const [matFilter, setMatFilter] = React.useState("הכל");
   const [sortBy, setSortBy] = React.useState("featured");
   const [sortOpen, setSortOpen] = React.useState(false);
@@ -35,7 +39,7 @@ export function Catalog() {
   const priceMaxBound = allPrices.length ? Math.max(...allPrices) : 1000;
   const effectivePriceMax = priceMax ?? priceMaxBound;
 
-  let list = catFilter === "הכל" ? products : products.filter((p) => p.category === catFilter);
+  let list = catFilter === "הכל" ? products : isDeal ? products.filter((p) => p.in_bundle) : products.filter((p) => p.category === catFilter);
   if (matFilter !== "הכל") list = list.filter((p) => p.material === matFilter);
   list = list.filter((p) => Number(p.price) <= effectivePriceMax);
   if (inStockOnly) list = list.filter((p) => Number(p.stock) > 0);
@@ -52,9 +56,11 @@ export function Catalog() {
   const isCategory = catFilter !== "הכל";
   const canonicalPath = pathFor("catalog", { catFilter });
   useSeoTags({
-    title: isCategory ? `${catFilter} · ALFI` : "כל התכשיטים · ALFI",
-    description: isCategory
-      ? `${catFilter} בכסף סטרלינג 925 — קולקציית ALFI.`
+    title: isDeal ? `${dealTitle} · ALFI` : isCategory ? `${catFilter} · ALFI` : "כל התכשיטים · ALFI",
+    description: isDeal
+      ? `${dealTitle}: בוחרים ${deal.size} תכשיטי כסף מהמבצע ומשלמים ₪${deal.price}.`
+      : isCategory
+      ? `${catFilter} בכסף סטרלינג 925 מקולקציית ALFI.`
       : "כל תכשיטי הכסף של ALFI במקום אחד — טבעות, שרשראות, עגילים וצמידים בכסף סטרלינג 925.",
     canonical: canonicalPath,
     jsonLd: isCategory ? {
@@ -70,10 +76,11 @@ export function Catalog() {
   return (
     <div className="r-container container glass-card" style={css("max-width:1240px;margin:30px auto;padding:30px var(--sp-5) 64px;")}>
       <div style={css("font-size:13.5px;color:var(--c-ink-faint);margin-bottom:var(--sp-4);")}>
-        <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }} style={css("cursor:pointer;")}>בית</a> &nbsp;/&nbsp; קטלוג{catFilter !== "הכל" ? ` / ${catFilter}` : ""}
+        <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }} style={css("cursor:pointer;")}>בית</a> &nbsp;/&nbsp; קטלוג{catFilter !== "הכל" ? ` / ${isDeal ? dealTitle : catFilter}` : ""}
       </div>
       <div style={css("text-align:center;margin-bottom:var(--sp-6);")}>
-        <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);")}>{catFilter === "הכל" ? "כל התכשיטים" : catFilter}</h1>
+        <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);")}>{catFilter === "הכל" ? "כל התכשיטים" : isDeal ? dealTitle : catFilter}</h1>
+        {isDeal && <p style={css("margin:10px auto 0;font-size:16px;color:var(--c-ink-soft);")}>בוחרים {deal.size} תכשיטים מהמבצע ומשלמים ₪{deal.price} בלבד. המחיר מתעדכן אוטומטית בעגלה.</p>}
       </div>
       <div className="r-sidebar-grid" style={css("display:grid;grid-template-columns:230px 1fr;gap:46px;align-items:start;")}>
         <aside className="r-sticky" style={css("position:sticky;top:100px;")}>

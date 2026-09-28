@@ -545,6 +545,13 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 .rd-promo-h2 { font-size: 46px; line-height: 1; }
 .rd-promo-p { font-size: 15px; line-height: 1.6; }
 .rd-promo-cta { height: 54px; width: 100%; justify-content: center; }
+/* The deal's products directly under the promo banner (same section). */
+.rd-promo-deal { margin-top: 18px; display: flex; flex-direction: column; }
+.rd-promo-deal-all {
+  align-self: center; display: inline-flex; align-items: center; gap: 10px;
+  margin-top: 4px; padding: 10px 0 4px; font-size: 15px; letter-spacing: .06em; color: var(--ink);
+  border-bottom: 1px solid var(--ink);
+}
 @media (min-width: 1024px) {
   .rd-promo-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; height: 540px; padding: 14px; box-sizing: border-box; }
   .rd-promo .rd-promo-img { height: auto; position: absolute; inset: 0; }

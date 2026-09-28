@@ -17,6 +17,9 @@ export function slugify(str) {
 // confirm, payment-failed, status, my-orders, favorites, loading, admin,
 // admin-login) intentionally has no entry here — pathFor returns null for
 // them, which callers treat as "leave the current URL alone."
+// Catalog filter value for "only the products in the bundle deal".
+export const DEAL_FILTER = "מבצע";
+
 export function pathFor(screen, ctx = {}) {
   const { catFilter, pid, products } = ctx;
   switch (screen) {
@@ -24,6 +27,7 @@ export function pathFor(screen, ctx = {}) {
       return "/";
     case "catalog":
       if (!catFilter || catFilter === "הכל") return "/קטלוג";
+      if (catFilter === DEAL_FILTER) return "/מבצע";
       if (CAT_NAMES.includes(catFilter)) return `/${catFilter}`;
       return "/קטלוג";
     case "product": {
@@ -52,6 +56,7 @@ export function pathFor(screen, ctx = {}) {
 const STATIC_ROUTES = {
   "/": { screen: "home" },
   "/קטלוג": { screen: "catalog", catFilter: "הכל" },
+  "/מבצע": { screen: "catalog", catFilter: "מבצע" },
   "/קולקציות": { screen: "collections" },
   "/הסיפור-שלנו": { screen: "story" },
   "/צור-קשר": { screen: "contact" },

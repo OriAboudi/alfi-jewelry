@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { saleInfo, bundleConfig } from "../lib/pricing.js";
+import { saleInfo } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { GRAD_CARD } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
@@ -10,7 +10,7 @@ import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { store } from "../lib/store.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
-import { pathFor } from "../lib/routes.js";
+import { pathFor, DEAL_FILTER } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { Reveal } from "../components/Reveal.jsx";
 // Fixed order for the homepage's 2x2 collections grid, per reference site.
@@ -89,7 +89,6 @@ export function Home() {
   const maxSalePct = products.filter(inStock).reduce((m, p) => Math.max(m, saleInfo(p).percent), 0);
   const slider1 = (featuredList.length ? featuredList : products).slice(0, 8);
   // "N for ₪X" deal pieces, shown in a slider right after the promo banner.
-  const bundle = bundleConfig(C);
   const bundleProducts = products.filter((p) => p.in_bundle && Number(p.stock) > 0);
   const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
   const usedIds = new Set(slider1.map((p) => p.id));
@@ -107,6 +106,7 @@ export function Home() {
 
   const goCat = (c) => { setCatFilter(c); go("catalog"); };
   const goCatalog = () => go("catalog");
+  const goDeal = () => { setCatFilter(DEAL_FILTER); go("catalog"); };
 
   return (
     <div>
@@ -233,13 +233,22 @@ export function Home() {
             <span style={css("align-self:flex-start;height:34px;padding:0 16px;display:flex;align-items:center;background:var(--ink-fill);color:var(--cream);font-size:13px;letter-spacing:.2em;")}>מבצע</span>
             <h2 className="serif rd-promo-h2" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.banner3Title || "3 תכשיטים ב־220 ₪"}</h2>
             <p className="rd-promo-p" style={css("margin:0;color:var(--text-body);")}>{C.banner3Subtitle || "בוחרים כל שלושה תכשיטים ומשלמים 220 ₪ בלבד. [תנאי המבצע — אילו פריטים משתתפים ועד מתי]"}</p>
-            <button onClick={goCatalog} className="rd-btn rd-btn-outline rd-promo-cta" style={css("align-self:flex-start;display:flex;align-items:center;gap:14px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:16px;letter-spacing:.08em;cursor:pointer;")}>{C.banner3CtaLabel || "לבחירת התכשיטים"}<GoArrowIcon /></button>
+            <button onClick={bundleProducts.length ? goDeal : goCatalog} className="rd-btn rd-btn-outline rd-promo-cta" style={css("align-self:flex-start;display:flex;align-items:center;gap:14px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:16px;letter-spacing:.08em;cursor:pointer;")}>{C.banner3CtaLabel || "לבחירת התכשיטים"}<GoArrowIcon /></button>
           </div>
         </div>
+        {/* The deal's products belong to the banner itself: one section, no
+            second heading — just the pieces and one link to all of them. */}
+        {bundleProducts.length > 0 && (
+          <div className="rd-promo-deal">
+            <CardSlider>
+              {bundleProducts.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
+            </CardSlider>
+            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} onClick={(e) => { e.preventDefault(); goDeal(); }} className="rd-promo-deal-all">
+              לכל התכשיטים במבצע ({bundleProducts.length})<GoArrowIcon />
+            </a>
+          </div>
+        )}
       </Reveal>
-
-      {/* DEAL SLIDER — products the admin marked for the "N for ₪X" deal */}
-      <ProductSlider title={`מבצע ${bundle.size} ב־₪${bundle.price}`} mobileTitle={`${bundle.size} ב־₪${bundle.price}`} ctaLabel="לכל התכשיטים" onCta={goCatalog} products={bundleProducts} />
 
       {/* SECOND SLIDER — best sellers */}
       <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} />
