@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
+import { OrderBrandBanner } from "../components/OrderBrandBanner.jsx";
 import { isPickup, deliveryLine } from "../lib/delivery.js";
 import { fmt, fmtDateTime } from "../lib/format.js";
 import { OrderProgress } from "../components/OrderProgress.jsx";
@@ -25,8 +26,9 @@ export function Status() {
   const items = Array.isArray(lo?.items) ? lo.items : [];
 
   return (
-    <div className="r-container glass-card" style={css("max-width:820px;margin:30px auto;padding:46px var(--sp-5) 64px;")}>
-      <div style={css("display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;flex-wrap:wrap;gap:8px;")}>
+    <div className="r-container glass-card" style={css("max-width:820px;margin:30px auto;padding:28px var(--sp-5) 64px;")}>
+      <OrderBrandBanner />
+      <div style={css("display:flex;justify-content:space-between;align-items:flex-end;margin:28px 0 8px;flex-wrap:wrap;gap:8px;")}>
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);")}>מעקב הזמנה</h1>
         <span style={css("font-size:15px;color:var(--c-ink-mute);")}>הזמנה {number}</span>
       </div>

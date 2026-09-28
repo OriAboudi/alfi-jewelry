@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { isPickup, deliveryLine } from "../lib/delivery.js";
 import { fmt } from "../lib/format.js";
-import { FlowerMark } from "../components/Ornaments.jsx";
+import { OrderBrandBanner } from "../components/OrderBrandBanner.jsx";
 import { OrderProgress } from "../components/OrderProgress.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
@@ -56,9 +56,9 @@ export function Confirm() {
   }
 
   return (
-    <div className="r-container glass-card" style={css("max-width:680px;margin:30px auto;padding:64px var(--sp-5);text-align:center;")}>
-      <div style={css("width:84px;height:84px;border-radius:50%;background:var(--c-accent-fill);display:flex;align-items:center;justify-content:center;margin:0 auto 28px;font-size:40px;color:#fff;")}>✓</div>
-      <FlowerMark width={150} height={50} style={{ margin: "0 auto 18px", display: "block" }} />
+    <div className="r-container glass-card" style={css("max-width:680px;margin:30px auto;padding:28px var(--sp-5) 64px;text-align:center;")}>
+      <OrderBrandBanner />
+      <div style={css("width:72px;height:72px;border-radius:50%;background:var(--c-accent-fill);display:flex;align-items:center;justify-content:center;margin:-36px auto 22px;position:relative;font-size:34px;color:#fff;box-shadow:0 0 0 6px var(--c-bg);")} aria-hidden="true">✓</div>
       <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:14px;")}>תודה על ההזמנה!</h1>
       <p style={css("font-size:17px;color:var(--c-ink-soft);margin-bottom:8px;")}>ההזמנה שלך התקבלה.{addr.email ? ` אישור נשלח אל ${addr.email}.` : ""}</p>
       <div style={css("display:inline-block;background:var(--c-line-soft);border-radius:var(--r-pill);padding:9px 22px;font-size:15px;font-weight:600;margin:20px 0 8px;")}>מספר הזמנה: <span style={css("color:var(--c-accent);")}>{number}</span></div>
