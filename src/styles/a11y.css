@@ -7,7 +7,7 @@
 /* ---------- skip link: hidden until it receives keyboard focus ---------- */
 .skip-link {
   position: fixed;
-  top: 8px;
+  top: calc(8px + env(safe-area-inset-top, 0px));
   right: 8px;
   z-index: 200;
   padding: 12px 18px;
@@ -28,8 +28,8 @@
 /* ---------- floating button + panel ---------- */
 .a11y-fab {
   position: fixed;
-  left: 16px;
-  bottom: 16px;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
   z-index: 85;
   width: 52px;
   height: 52px;
@@ -45,8 +45,8 @@
 }
 .a11y-panel {
   position: fixed;
-  left: 16px;
-  bottom: 80px;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  bottom: calc(80px + env(safe-area-inset-bottom, 0px));
   z-index: 86;
   width: min(320px, calc(100vw - 32px));
   max-height: calc(100dvh - 110px);
