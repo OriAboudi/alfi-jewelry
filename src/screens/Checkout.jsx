@@ -8,13 +8,16 @@ import { CouponInput } from "../components/CouponInput.jsx";
 import { PrivacyConsent } from "../components/PrivacyConsent.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { pickupAddressOf } from "../lib/delivery.js";
 
 const fieldStyle = "width:100%;padding:12px 13px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);font-size:14.5px;background:#fff;";
 const fieldErrStyle = "width:100%;padding:12px 13px;border:1px solid #d98a72;border-radius:var(--r-md);font-size:14.5px;background:#fff;";
 const labelStyle = "display:block;font-size:12.5px;color:var(--c-ink-mute);margin-bottom:5px;";
 const errMsgStyle = "color:var(--c-danger);font-size:12px;margin-top:5px;";
 
-const REQUIRED_FIELDS = ["first", "last", "email", "phone", "address", "city"];
+// Address fields are only required for home delivery, not self pickup.
+const CONTACT_FIELDS = ["first", "last", "email", "phone"];
+const ADDRESS_FIELDS = ["address", "city"];
 
 export function Checkout() {
   const { cart, products, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup } = useStore();
@@ -29,6 +32,10 @@ export function Checkout() {
     first: "", last: "", email: "", address: "", city: "", zip: "", phone: "",
   });
   const [touched, setTouched] = useState({});
+  const [deliveryMethod, setDeliveryMethod] = useState("delivery"); // "delivery" | "pickup"
+  const isPickup = deliveryMethod === "pickup";
+  const pickupAddress = pickupAddressOf(C);
+  const requiredFields = isPickup ? CONTACT_FIELDS : [...CONTACT_FIELDS, ...ADDRESS_FIELDS];
   const [agreed, setAgreed] = useState(false);
   const [agreeError, setAgreeError] = useState("");
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -39,7 +46,9 @@ export function Checkout() {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0);
+  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0, deliveryMethod);
+  // What home delivery would cost for this cart — shown on its option.
+  const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
 
   const errors = {
     first: form.first.trim() ? "" : "שדה חובה",
@@ -49,13 +58,15 @@ export function Checkout() {
     address: form.address.trim() ? "" : "שדה חובה",
     city: form.city.trim() ? "" : "שדה חובה",
   };
-  const formValid = REQUIRED_FIELDS.every((k) => !errors[k]);
+  const formValid = requiredFields.every((k) => !errors[k]);
 
   const submit = () => {
     if (!agreed) setAgreeError("יש לאשר את מדיניות הפרטיות כדי להמשיך");
-    if (!formValid) { setTouched(Object.fromEntries(REQUIRED_FIELDS.map((k) => [k, true]))); return; }
+    if (!formValid) { setTouched(Object.fromEntries(requiredFields.map((k) => [k, true]))); return; }
     if (!agreed) return;
-    startCheckout({ ...form });
+    // Pickup orders carry no delivery address; the server records the
+    // pickup address from the admin setting itself.
+    startCheckout(isPickup ? { ...form, address: "", city: "", zip: "" } : { ...form }, deliveryMethod);
   };
 
   const field = (k, label, opts = {}) => (
@@ -91,15 +102,37 @@ export function Checkout() {
           <div style={css("display:flex;align-items:center;gap:12px;margin-bottom:var(--sp-6);font-size:14px;color:var(--c-ink-faint);")}>
             <nav aria-label="שלבי ההזמנה" style={css("display:contents;")}><button type="button" onClick={() => go("cart")} style={css("background:none;border:0;padding:0;font:inherit;text-align:right;color:inherit;cursor:pointer;")}>עגלה</button> <span aria-hidden="true">←</span> <span aria-current="step" style={css("color:var(--c-accent);font-weight:600;")}>תשלום</span> <span aria-hidden="true">←</span> <span>אישור</span></nav>
           </div>
-          <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>פרטי משלוח</h2>
+          <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:16px;")}>אופן קבלת ההזמנה</h2>
+          <div role="radiogroup" aria-label="אופן קבלת ההזמנה" style={css("display:flex;flex-direction:column;gap:10px;margin-bottom:var(--sp-6);")}>
+            {[
+              { key: "delivery", label: "משלוח עד הבית", price: deliveryFee ? fmt(deliveryFee) : "חינם" },
+              { key: "pickup", label: "איסוף עצמי", price: "חינם" },
+            ].map((o) => {
+              const on = deliveryMethod === o.key;
+              return (
+                <label key={o.key} style={css(`display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid ${on ? "var(--c-accent)" : "var(--c-line-strong)"};border-radius:var(--r-md);cursor:pointer;background:${on ? "rgba(255,255,255,.7)" : "transparent"};`)}>
+                  <input type="radio" name="delivery-method" value={o.key} checked={on} onChange={() => setDeliveryMethod(o.key)} style={css("width:18px;height:18px;margin:0;accent-color:var(--c-accent);flex:none;")} />
+                  <span style={css("flex:1;font-size:15px;color:var(--c-ink);")}>{o.label}</span>
+                  <span style={css("font-size:14.5px;font-weight:600;color:var(--c-ink);")}>{o.price}</span>
+                </label>
+              );
+            })}
+            {isPickup && (
+              <div aria-live="polite" style={css("padding:12px 16px;border-radius:var(--r-md);background:var(--c-line-soft);font-size:14.5px;line-height:1.6;color:var(--c-ink-soft);")}>
+                <div style={css("font-size:12.5px;color:var(--c-ink-mute);margin-bottom:2px;")}>כתובת לאיסוף</div>
+                <div style={css("color:var(--c-ink);font-weight:600;")}>{pickupAddress}</div>
+              </div>
+            )}
+          </div>
+          <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>{isPickup ? "פרטי התקשרות" : "פרטי משלוח"}</h2>
           <div style={css("display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-bottom:var(--sp-6);")}>
             {field("first", "שם פרטי", { autoComplete: "given-name" })}
             {field("last", "שם משפחה", { autoComplete: "family-name" })}
             {field("email", "אימייל", { type: "email", placeholder: "לשליחת אישור ומעקב הזמנה", span2: true, autoComplete: "email" })}
             {field("phone", "טלפון", { type: "tel", onChange: setPhone, placeholder: "050-1234567", autoComplete: "tel" })}
-            {field("address", "כתובת", { placeholder: "רחוב ומספר", autoComplete: "street-address" })}
-            {field("city", "עיר", { autoComplete: "address-level2" })}
-            <div><label htmlFor="co-zip" style={css(labelStyle)}>מיקוד</label><input id="co-zip" autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={set("zip")} style={css(fieldStyle)} /></div>
+            {!isPickup && field("address", "כתובת", { placeholder: "רחוב ומספר", autoComplete: "street-address" })}
+            {!isPickup && field("city", "עיר", { autoComplete: "address-level2" })}
+            {!isPickup && <div><label htmlFor="co-zip" style={css(labelStyle)}>מיקוד</label><input id="co-zip" autoComplete="postal-code" inputMode="numeric" value={form.zip} onChange={set("zip")} style={css(fieldStyle)} /></div>}
           </div>
           <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:var(--fs-h2);margin-bottom:20px;")}>אופן תשלום</h2>
           <div style={css("font-size:14.5px;color:var(--c-ink-soft);line-height:1.7;")}>
@@ -126,7 +159,7 @@ export function Checkout() {
               {saleSavings > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
               )}
-          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>משלוח</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
+          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>{isPickup ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
           {couponCode && discount > 0 && (
             <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-success);")}><span>הנחת קופון ({couponPercent}%)</span><span>-{fmt(discount)}</span></div>
           )}

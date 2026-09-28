@@ -25,11 +25,16 @@ const supabase = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
 );
 
+// Self pickup: free, collected at the admin-configured address
+// (content.pickupAddress). Keep the default in sync with src/lib/delivery.js.
+const DEFAULT_PICKUP_ADDRESS = "Dan 13, Nahalal";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { items, shipping_address: rawAddress, testAmount, couponCode } = await req.json();
+    const { items, shipping_address: rawAddress, deliveryMethod, testAmount, couponCode } = await req.json();
+    const isPickup = deliveryMethod === "pickup";
     const isAdmin = await isAdminRequest(req);
 
     // Each call creates a real order row and a Takbull payment page, so cap
@@ -47,9 +52,10 @@ Deno.serve(async (req) => {
       last: cleanString(a.last, 60),
       email: cleanString(a.email, 254),
       phone: cleanString(a.phone, 20),
-      address: cleanString(a.address, 200),
-      city: cleanString(a.city, 80) || "תל אביב",
-      zip: cleanString(a.zip, 12),
+      // Pickup orders have no delivery address.
+      address: isPickup ? "" : cleanString(a.address, 200),
+      city: isPickup ? "" : (cleanString(a.city, 80) || "תל אביב"),
+      zip: isPickup ? "" : cleanString(a.zip, 12),
     };
 
     let verified: any[];
@@ -66,7 +72,9 @@ Deno.serve(async (req) => {
 
       // Required fields are validated client-side too, but the client can't
       // be trusted — re-check here. Zip is intentionally optional.
-      const required = { first: "שם פרטי", last: "שם משפחה", address: "כתובת", city: "עיר" };
+      const required: Record<string, string> = isPickup
+        ? { first: "שם פרטי", last: "שם משפחה" }
+        : { first: "שם פרטי", last: "שם משפחה", address: "כתובת", city: "עיר" };
       for (const [key, label] of Object.entries(required)) {
         if (!(shipping_address as any)[key]) return json({ error: `שדה חובה חסר: ${label}` });
       }
@@ -106,7 +114,10 @@ Deno.serve(async (req) => {
     const subtotal = verified.reduce((a: number, it: any) => a + it.price * it.qty, 0);
     const freeShipFrom = Number(cfg.freeShipFrom || 500);
     const shipFee = Number(cfg.shipFee || 39);
-    const shipping = isTest ? 0 : (subtotal >= freeShipFrom ? 0 : shipFee);
+    const shipping = isTest || isPickup ? 0 : (subtotal >= freeShipFrom ? 0 : shipFee);
+    // Snapshot of the pickup address at order time (the admin can change the
+    // setting later without rewriting where past orders were collected).
+    const pickupAddress = isPickup ? (cleanString(cfg.pickupAddress, 200) || DEFAULT_PICKUP_ADDRESS) : null;
 
     // Coupon discount is validated and computed here, server-side, never
     // trusted from the client. An invalid/redeemed/expired code is silently
@@ -142,6 +153,8 @@ Deno.serve(async (req) => {
         discount,
         coupon_code: appliedCouponCode,
         shipping_address,
+        delivery_method: isPickup ? "pickup" : "delivery",
+        pickup_address: pickupAddress,
         payment_status: "pending",
         payment_method: "takbull",
         is_test: isTest,
@@ -162,15 +175,16 @@ Deno.serve(async (req) => {
       PostProcessMethod: 0,
       CustomerFullName: fullName,
       CustomerPhoneNumber: shipping_address?.phone || "",
-      City: shipping_address?.city || "",
+      // Pickup orders: the pickup location stands in for the (absent) customer address.
+      City: shipping_address?.city || pickupAddress || "",
       Country: "Israel",
       Customer: {
         CustomerFullName: fullName,
         Email: shipping_address?.email || "",
         PhoneNumber: shipping_address?.phone || "",
         Address: {
-          Address1: shipping_address?.address || "",
-          City: shipping_address?.city || "",
+          Address1: shipping_address?.address || pickupAddress || "",
+          City: shipping_address?.city || pickupAddress || "",
           Country: "Israel",
           Zip: shipping_address?.zip || "",
         },
@@ -223,7 +237,7 @@ Deno.serve(async (req) => {
 
     return json({
       url: takbullData.url || `https://api.takbull.co.il/PaymentGateway?orderUniqId=${takbullData.uniqId}`,
-      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address },
+      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address, delivery_method: order.delivery_method, pickup_address: order.pickup_address },
     });
   } catch (e) {
     console.error(e);

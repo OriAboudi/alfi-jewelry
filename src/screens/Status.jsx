@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
+import { isPickup, deliveryLine } from "../lib/delivery.js";
 import { fmt, fmtDateTime } from "../lib/format.js";
 import { OrderProgress } from "../components/OrderProgress.jsx";
 import { useStore } from "../context/StoreContext.jsx";
@@ -60,7 +61,7 @@ export function Status() {
               <div><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>אימייל</div><div>{addr.email || "—"}</div></div>
               <div><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>טלפון</div><div>{addr.phone || "—"}</div></div>
               <div><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>תשלום</div><div>{lo.payment_status === "paid" ? "שולם" : "ממתין לאישור"}</div></div>
-              <div className="r-field-span2" style={css("grid-column:1/3;")}><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>כתובת למשלוח</div><div>{[addr.address, addr.city, addr.zip].filter(Boolean).join(", ") || "—"}</div></div>
+              <div className="r-field-span2" style={css("grid-column:1/3;")}><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>{isPickup(lo) ? "איסוף עצמי מ־" : "כתובת למשלוח"}</div><div>{isPickup(lo) ? (lo.pickup_address || "—") : deliveryLine(lo)}</div></div>
             </div>
           </div>
 
@@ -73,7 +74,7 @@ export function Status() {
               </div>
             ))}
             <div style={css("height:1px;background:var(--c-line);margin:14px 0;")} />
-            <div style={css("display:flex;justify-content:space-between;font-size:14px;color:var(--c-ink-mute);margin-bottom:6px;")}><span>משלוח</span><span>{lo.shipping ? fmt(lo.shipping) : "חינם"}</span></div>
+            <div style={css("display:flex;justify-content:space-between;font-size:14px;color:var(--c-ink-mute);margin-bottom:6px;")}><span>{isPickup(lo) ? "איסוף עצמי" : "משלוח"}</span><span>{lo.shipping ? fmt(lo.shipping) : "חינם"}</span></div>
             {Number(lo.discount) > 0 && (
               <div style={css("display:flex;justify-content:space-between;font-size:14px;color:var(--c-success);margin-bottom:6px;")}><span>הנחת קופון{lo.coupon_code ? ` (${lo.coupon_code})` : ""}</span><span>-{fmt(lo.discount)}</span></div>
             )}

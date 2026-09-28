@@ -37,7 +37,7 @@ Deno.serve(async (req) => {
 
     const { data: order, error: fetchErr } = await supabase
       .from("orders")
-      .select("id, number, items, subtotal, shipping, discount, coupon_code, total, payment_status, shipping_address")
+      .select("id, number, items, subtotal, shipping, discount, coupon_code, total, payment_status, shipping_address, delivery_method, pickup_address")
       .eq("id", id)
       .single();
     if (fetchErr || !order) return json({ error: "הזמנה לא נמצאה" });

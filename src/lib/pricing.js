@@ -13,12 +13,13 @@ export function saleInfo(p) {
 // computed server-side in supabase/functions/create-takbull-payment — this
 // just keeps the three client-side previews from drifting out of sync with
 // each other. Lines are { price, qty, regular? } where regular is the
-// pre-sale price (same as price when not on sale).
-export function computeTotals(lines, content, couponPercent = 0) {
+// pre-sale price (same as price when not on sale). deliveryMethod
+// "pickup" (self pickup) is always free — same rule as the server.
+export function computeTotals(lines, content, couponPercent = 0, deliveryMethod = "delivery") {
   const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
   const regularSubtotal = lines.reduce((a, l) => a + Math.max(l.regular || 0, l.price) * l.qty, 0);
   const saleSavings = regularSubtotal - subtotal;
-  const shipping = subtotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39);
+  const shipping = deliveryMethod === "pickup" ? 0 : (subtotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
   const discount = couponPercent > 0 ? Math.round(subtotal * couponPercent) / 100 : 0;
   const total = Math.max(0, subtotal + shipping - discount);
   return { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved: saleSavings + discount };

@@ -1,5 +1,6 @@
 import React from "react";
 import { css } from "../../lib/css.js";
+import { isPickup, deliveryLine } from "../../lib/delivery.js";
 import { fmt, fmtDate, fmtDateTime } from "../../lib/format.js";
 import { useStore } from "../../context/StoreContext.jsx";
 import { store } from "../../lib/store.js";
@@ -250,7 +251,7 @@ export function OrdersTab() {
                   <div><div style={css("color:var(--c-ink-mute);font-size:12px;")}>אימייל</div><div>{addr.email || "—"}</div></div>
                   <div><div style={css("color:var(--c-ink-mute);font-size:12px;")}>טלפון</div><div>{addr.phone || "—"}</div></div>
                   <div><div style={css("color:var(--c-ink-mute);font-size:12px;")}>תשלום</div><div>{o.payment_status === "paid" ? "שולם" : "טרם שולם"}</div></div>
-                  <div style={css("grid-column:1/3;")}><div style={css("color:var(--c-ink-mute);font-size:12px;")}>כתובת</div><div>{[addr.address, addr.city, addr.zip].filter(Boolean).join(", ") || "—"}</div></div>
+                  <div style={css("grid-column:1/3;")}><div style={css("color:var(--c-ink-mute);font-size:12px;")}>{isPickup(o) ? "אופן קבלה" : "כתובת"}</div><div style={css(isPickup(o) ? "font-weight:600;" : "")}>{deliveryLine(o)}</div></div>
                 </div>
               </div>
               <div style={css("background:#fff;border:1px solid var(--c-line);border-radius:14px;padding:18px;")}>
@@ -262,7 +263,7 @@ export function OrdersTab() {
                   </div>
                 ))}
                 <div style={css("height:1px;background:var(--c-line);margin:10px 0;")} />
-                <div style={css("display:flex;justify-content:space-between;font-size:13.5px;color:var(--c-ink-mute);margin-bottom:4px;")}><span>משלוח</span><span>{o.shipping ? fmt(o.shipping) : "חינם"}</span></div>
+                <div style={css("display:flex;justify-content:space-between;font-size:13.5px;color:var(--c-ink-mute);margin-bottom:4px;")}><span>{isPickup(o) ? "איסוף עצמי" : "משלוח"}</span><span>{o.shipping ? fmt(o.shipping) : "חינם"}</span></div>
                 <div style={css("display:flex;justify-content:space-between;font-size:16px;font-weight:700;")}><span>סה״כ</span><span>{fmt(o.total)}</span></div>
               </div>
               {history.length > 0 && (

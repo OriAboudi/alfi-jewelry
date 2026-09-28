@@ -141,15 +141,10 @@
 .rd-snap { scroll-snap-align: start; }
 .rd-rail-gutter { padding-right: 16px; padding-left: 16px; scroll-padding-inline: 16px; }
 .rd-progress-gutter { margin: 0 16px; }
-/* Width cap on the slider sections specifically (not header/footer/other
-   sections, which stay full-bleed) — without this, on very wide monitors
-   the rail just keeps showing more and more cards instead of staying a
-   normal size. */
-/* No auto-centering margin — starts flush at the page's own start edge
-   (right, in RTL), same as the header/hero/other full-bleed sections above
-   and below it, instead of floating independently centered with its own
-   uneven-looking margins. */
-.rd-slider-max { max-width: 1400px; margin-right: 0; margin-left: auto; }
+/* Slider sections use the full available width on every screen size (no
+   max-width cap): on wide monitors the rail simply shows more cards. The
+   class stays as the hook for slider-section-specific rules. */
+.rd-slider-max { width: 100%; }
 @media (min-width: 768px) {
   .rd-rail { gap: 24px; }
 }

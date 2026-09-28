@@ -86,6 +86,7 @@ export const SEED_CONTENT = {
   processText: "כל קולקציה מתחילה בסקיצה, עוברת ליצירת אב‑טיפוס, ומגיעה אליכם רק אחרי בדיקה אישית. זה לוקח זמן — וזה בדיוק העניין.",
   freeShipFrom: 500,
   shipFee: 39,
+  pickupAddress: "Dan 13, Nahalal",
   lowStockThreshold: 5,
   stockFineThreshold: 10,
   signupCouponPercent: 5,
@@ -307,7 +308,7 @@ const local = {
   },
   checkout: {
     // No payment gateway in local mode — place the order directly, no redirect.
-    async createSession({ items, shipping_address, paymentMethod = "takbull", couponCode }) {
+    async createSession({ items, shipping_address, deliveryMethod = "delivery", paymentMethod = "takbull", couponCode }) {
       const products = read(LS.products, []);
       const content = { ...SEED_CONTENT, ...read(LS.content, {}) };
       const verified = items.map((it) => {
@@ -317,7 +318,8 @@ const local = {
         return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: it.size || "" };
       });
       const subtotal = verified.reduce((a, it) => a + it.price * it.qty, 0);
-      const shipping = subtotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39);
+      const pickup = deliveryMethod === "pickup";
+      const shipping = pickup ? 0 : (subtotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
 
       let discount = 0;
       let appliedCouponCode = null;
@@ -333,7 +335,9 @@ const local = {
 
       const order = await local.orders.create({
         items: verified, subtotal, shipping, discount, coupon_code: appliedCouponCode, total,
-        shipping_address: { city: "תל אביב", ...shipping_address },
+        shipping_address: pickup ? { ...shipping_address } : { city: "תל אביב", ...shipping_address },
+        delivery_method: pickup ? "pickup" : "delivery",
+        pickup_address: pickup ? (String(content.pickupAddress || "").trim() || "Dan 13, Nahalal") : null,
         payment_status: "paid", payment_method: paymentMethod, user_id: null,
       });
 
@@ -563,9 +567,9 @@ function makeSupabase() {
       },
     },
     checkout: {
-      async createSession({ items, shipping_address, testAmount, couponCode }) {
+      async createSession({ items, shipping_address, deliveryMethod, testAmount, couponCode }) {
         const { data, error } = await sb.functions.invoke("create-takbull-payment", {
-          body: { items, shipping_address, testAmount, couponCode },
+          body: { items, shipping_address, deliveryMethod, testAmount, couponCode },
         });
         if (error) throw new Error(error.message || "יצירת ההזמנה נכשלה");
         if (data?.error) {

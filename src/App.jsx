@@ -93,9 +93,8 @@ export default function App() {
           though those use z-index:-2/-1, silently hiding them. Giving the
           real content its own explicit stacking level sidesteps that
           negative-z-index/paint-order gotcha instead of relying on it.
-          (The 1440px width cap lives on the slider itself, not here — see
-          .rd-rail-max in redesign.css — header/footer/other sections stay
-          full-bleed.) */}
+          (The home sliders are full-width too — .rd-slider-max in
+          redesign.css has no width cap.) */}
       <div style={css("position:relative;z-index:1;")}>
         {showChrome && <Header />}
         <main id="main-content" tabIndex={-1} style={css("outline:none;")}>

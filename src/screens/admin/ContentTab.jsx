@@ -105,6 +105,7 @@ export function ContentTab() {
           <Field label="משלוח חינם מעל (₪)" value={cd.freeShipFrom} onChange={(v) => setCdraft("freeShipFrom", v)} type="number" />
           <Field label="דמי משלוח (₪)" value={cd.shipFee} onChange={(v) => setCdraft("shipFee", v)} type="number" />
         </div>
+        <Field label="כתובת לאיסוף עצמי (מוצגת ללקוח בקופה)" value={cd.pickupAddress} onChange={(v) => setCdraft("pickupAddress", v)} placeholder="Dan 13, Nahalal" />
         <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
           <div>
             <Field label="סף מלאי אדום (יחידות)" value={cd.lowStockThreshold} onChange={(v) => setCdraft("lowStockThreshold", v)} type="number" />

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
+import { isPickup, deliveryLine } from "../lib/delivery.js";
 import { fmt } from "../lib/format.js";
 import { FlowerMark } from "../components/Ornaments.jsx";
 import { OrderProgress } from "../components/OrderProgress.jsx";
@@ -79,7 +80,7 @@ export function Confirm() {
           <div><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>אימייל</div><div>{addr.email || "—"}</div></div>
           <div><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>טלפון</div><div>{addr.phone || "—"}</div></div>
           <div><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>תשלום</div><div>{lo?.payment_status === "paid" ? "שולם" : "ממתין לאישור"} · Takbull</div></div>
-          <div className="r-field-span2" style={css("grid-column:1/3;")}><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>כתובת למשלוח</div><div>{[addr.address, addr.city, addr.zip].filter(Boolean).join(", ") || "—"}</div></div>
+          <div className="r-field-span2" style={css("grid-column:1/3;")}><div style={css("color:var(--c-ink-mute);font-size:12.5px;margin-bottom:2px;")}>{isPickup(lo) ? "איסוף עצמי מ־" : "כתובת למשלוח"}</div><div>{isPickup(lo) ? (lo.pickup_address || "—") : deliveryLine(lo)}</div></div>
         </div>
       </div>
 
@@ -88,7 +89,7 @@ export function Confirm() {
           <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;color:var(--c-success);")}><span>הנחת קופון{lo.coupon_code ? ` (${lo.coupon_code})` : ""}</span><span>-{fmt(lo.discount)}</span></div>
         )}
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>סה״כ לתשלום</span><span style={css("font-weight:700;")}>{total}</span></div>
-        <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>משלוח אל</span><span>{addr.city || "תל אביב, ישראל"}</span></div>
+        <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;")}><span style={css("color:var(--c-ink-mute);")}>{isPickup(lo) ? "איסוף עצמי" : "משלוח אל"}</span><span>{isPickup(lo) ? (lo.pickup_address || "—") : (addr.city || "תל אביב, ישראל")}</span></div>
         <div style={css("display:flex;justify-content:space-between;font-size:14.5px;")}><span style={css("color:var(--c-ink-mute);")}>הגעה משוערת</span><span>עד 14 ימי עסקים</span></div>
       </div>
       <div style={css("display:flex;gap:14px;justify-content:center;flex-wrap:wrap;")}>

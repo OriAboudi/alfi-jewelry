@@ -592,13 +592,13 @@ export function StoreProvider({ children }) {
   // server, which looks up real prices and creates the order there. For the
   // Supabase backend this opens a Takbull payment page (card data never
   // touches this app); the local dev backend places the order directly.
-  const startCheckout = useCallback(async (addr) => {
+  const startCheckout = useCallback(async (addr, deliveryMethod = "delivery") => {
     if (ref.current.checkoutBusy) return;
     setState({ checkoutBusy: true });
     const s = ref.current;
     const items = s.cart.map((c) => ({ id: c.id, qty: c.qty, size: c.size }));
     try {
-      const { url, order } = await store.checkout.createSession({ items, shipping_address: addr, couponCode: s.couponCode || undefined });
+      const { url, order } = await store.checkout.createSession({ items, shipping_address: addr, deliveryMethod, couponCode: s.couponCode || undefined });
       addMyOrder(order);
       if (url) {
         try { localStorage.setItem("alfi:pendingOrder", JSON.stringify(order)); } catch { /* ignore */ }
