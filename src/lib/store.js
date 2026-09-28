@@ -86,7 +86,7 @@ export const SEED_CONTENT = {
   processText: "כל קולקציה מתחילה בסקיצה, עוברת ליצירת אב‑טיפוס, ומגיעה אליכם רק אחרי בדיקה אישית. זה לוקח זמן — וזה בדיוק העניין.",
   freeShipFrom: 500,
   shipFee: 39,
-  pickupAddress: "Dan 13, Nahalal",
+  pickupAddress: "דן 13, נהלל",
   lowStockThreshold: 5,
   stockFineThreshold: 10,
   signupCouponPercent: 5,
@@ -337,7 +337,7 @@ const local = {
         items: verified, subtotal, shipping, discount, coupon_code: appliedCouponCode, total,
         shipping_address: pickup ? { ...shipping_address } : { city: "תל אביב", ...shipping_address },
         delivery_method: pickup ? "pickup" : "delivery",
-        pickup_address: pickup ? (String(content.pickupAddress || "").trim() || "Dan 13, Nahalal") : null,
+        pickup_address: pickup ? (String(content.pickupAddress || "").trim() || "דן 13, נהלל") : null,
         payment_status: "paid", payment_method: paymentMethod, user_id: null,
       });
 

@@ -27,7 +27,7 @@ const supabase = createClient(
 
 // Self pickup: free, collected at the admin-configured address
 // (content.pickupAddress). Keep the default in sync with src/lib/delivery.js.
-const DEFAULT_PICKUP_ADDRESS = "Dan 13, Nahalal";
+const DEFAULT_PICKUP_ADDRESS = "דן 13, נהלל";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });

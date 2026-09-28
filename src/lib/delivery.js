@@ -3,7 +3,7 @@
 // Admin → תוכן האתר); this default only applies until an admin sets one.
 // Keep in sync with DEFAULT_PICKUP_ADDRESS in
 // supabase/functions/create-takbull-payment/index.ts.
-export const DEFAULT_PICKUP_ADDRESS = "Dan 13, Nahalal";
+export const DEFAULT_PICKUP_ADDRESS = "דן 13, נהלל";
 
 export const pickupAddressOf = (content) => String(content?.pickupAddress || "").trim() || DEFAULT_PICKUP_ADDRESS;
 

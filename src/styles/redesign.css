@@ -459,18 +459,41 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 }
 /* Mini-shop only where the text half has room for it beside a square photo;
    there the admin badge line becomes its heading instead of a loose line. */
+/* Mini-shop pieces (shared): heading row, product tiles. */
+.rd-hero-shop-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; letter-spacing: .12em; color: var(--text-body); }
+.rd-hero-shop-head a { font-size: 13px; letter-spacing: .04em; color: var(--ink); text-decoration: underline; text-decoration-color: rgba(58, 45, 61, .3); text-underline-offset: 4px; }
+.rd-hero-shop-head a:hover { text-decoration-color: currentColor; }
+.rd-hero-shop-list { list-style: none; margin: 14px 0 0; padding: 0; }
+.rd-hero-shop-item { display: flex; flex-direction: column; gap: 6px; color: var(--ink); cursor: pointer; }
+.rd-hero-shop-thumb { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; background: #fff; overflow: hidden; }
+.rd-hero-shop-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.16, 1, .3, 1); }
+.rd-hero-shop-item:hover .rd-hero-shop-thumb img { transform: scale(1.05); }
+.rd-hero-shop-name { font-size: 14px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Phones/tablets: the same pieces as a swipeable slider under the CTA, with
+   the live sale line; the badge text becomes the slider's heading. */
+@media (max-width: 899px) {
+  .rd-hero-sale { display: inline-flex; }
+  .rd-hero-note--shop { display: none; }
+  .rd-hero-shop { display: block; width: 100%; margin-top: 8px; padding-top: 18px; border-top: 1px solid rgba(58, 45, 61, .14); }
+  .rd-hero-shop-list {
+    display: flex; gap: 12px; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scrollbar-width: none;
+    margin-left: -24px; margin-right: -24px; padding: 0 24px 4px; scroll-padding-inline: 24px;
+  }
+  .rd-hero-shop-list::-webkit-scrollbar { display: none; }
+  .rd-hero-shop-list > li { flex: none; width: 132px; scroll-snap-align: start; }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  .rd-hero-shop-list { margin-left: -48px; margin-right: -48px; padding: 0 48px 4px; scroll-padding-inline: 48px; }
+  .rd-hero-shop-list > li { width: 150px; }
+}
+
+/* Desktop: four pieces as a grid beside the square photo. */
 @media (min-width: 1200px) {
   .rd-hero-note--shop { display: none; }
   .rd-hero-shop { display: block; width: 100%; margin-top: auto; padding-top: 20px; border-top: 1px solid rgba(58, 45, 61, .14); }
-  .rd-hero-shop-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 13px; letter-spacing: .12em; color: var(--text-body); }
-  .rd-hero-shop-head a { font-size: 13px; letter-spacing: .04em; color: var(--ink); text-decoration: underline; text-decoration-color: rgba(58, 45, 61, .3); text-underline-offset: 4px; }
-  .rd-hero-shop-head a:hover { text-decoration-color: currentColor; }
-  .rd-hero-shop-list { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 520px; }
-  .rd-hero-shop-item { display: flex; flex-direction: column; gap: 6px; color: var(--ink); cursor: pointer; }
-  .rd-hero-shop-thumb { display: flex; align-items: center; justify-content: center; aspect-ratio: 1 / 1; background: #fff; overflow: hidden; }
-  .rd-hero-shop-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform .45s cubic-bezier(.16, 1, .3, 1); }
-  .rd-hero-shop-item:hover .rd-hero-shop-thumb img { transform: scale(1.05); }
-  .rd-hero-shop-name { font-size: 14px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rd-hero-shop-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; max-width: 520px; }
 }
 
 /* ---------- product/section header strip (glass) ---------- */
