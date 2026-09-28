@@ -29,6 +29,20 @@ const supabase = createClient(
 // (content.pickupAddress). Keep the default in sync with src/lib/delivery.js.
 const DEFAULT_PICKUP_ADDRESS = "דן 13, נהלל";
 
+// "N for ₪X" bundle deal — mirrors bundleDiscount() in src/lib/pricing.js
+// exactly (units grouped most-expensive-first; a set never costs more than
+// its own total). Keep the two in sync.
+function bundleDiscount(unitPrices: number[], size: number, price: number) {
+  const units = unitPrices.map(Number).sort((a, b) => b - a);
+  const sets = Math.floor(units.length / size);
+  let discount = 0;
+  for (let i = 0; i < sets; i++) {
+    const sum = units.slice(i * size, (i + 1) * size).reduce((a, v) => a + v, 0);
+    discount += Math.max(0, sum - price);
+  }
+  return Math.round(discount * 100) / 100;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -90,7 +104,7 @@ Deno.serve(async (req) => {
 
       const { data: products, error: prodErr } = await supabase
         .from("products")
-        .select("id, name, price, image, stock")
+        .select("id, name, price, image, stock, in_bundle")
         .in("id", [...new Set(ids)]);
       if (prodErr) throw prodErr;
 
@@ -105,7 +119,7 @@ Deno.serve(async (req) => {
         const total = (qtyByProduct.get(String(p.id)) || 0) + qty;
         qtyByProduct.set(String(p.id), total);
         if (Number(p.stock) < total) throw new PublicError(`אזל במלאי: ${p.name}`);
-        return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: cleanString(it.size, 40) };
+        return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: cleanString(it.size, 40), bundle: !!p.in_bundle };
       });
     }
 
@@ -114,7 +128,12 @@ Deno.serve(async (req) => {
     const subtotal = verified.reduce((a: number, it: any) => a + it.price * it.qty, 0);
     const freeShipFrom = Number(cfg.freeShipFrom || 500);
     const shipFee = Number(cfg.shipFee || 39);
-    const shipping = isTest || isPickup ? 0 : (subtotal >= freeShipFrom ? 0 : shipFee);
+    const bundleSize = Math.max(2, Math.floor(Number(cfg.bundleSize)) || 3);
+    const bundlePrice = Math.max(0, Number(cfg.bundlePrice) || 200);
+    const bundle_discount = isTest ? 0 : bundleDiscount(verified.flatMap((it: any) => (it.bundle ? Array(it.qty).fill(it.price) : [])), bundleSize, bundlePrice);
+    // Free-shipping threshold and coupon apply to what the items cost after the deal.
+    const itemsTotal = subtotal - bundle_discount;
+    const shipping = isTest || isPickup ? 0 : (itemsTotal >= freeShipFrom ? 0 : shipFee);
     // Snapshot of the pickup address at order time (the admin can change the
     // setting later without rewriting where past orders were collected).
     const pickupAddress = isPickup ? (cleanString(cfg.pickupAddress, 200) || DEFAULT_PICKUP_ADDRESS) : null;
@@ -132,11 +151,11 @@ Deno.serve(async (req) => {
         .eq("code", cleanString(couponCode, 32).toUpperCase())
         .maybeSingle();
       if (coupon && coupon.status === "active" && (!coupon.expires_at || new Date(coupon.expires_at) > new Date())) {
-        discount = Math.round(subtotal * (Number(coupon.percent) || 0)) / 100;
+        discount = Math.round(itemsTotal * (Number(coupon.percent) || 0)) / 100;
         appliedCouponCode = coupon.code;
       }
     }
-    const total = Math.max(0, subtotal + shipping - discount);
+    const total = Math.max(0, itemsTotal + shipping - discount);
 
     const number = (isTest ? "#TEST-" : "#ALF‑") + (2400 + secureRandomInt(9000));
     const fullName = [shipping_address.first, shipping_address.last].filter(Boolean).join(" ");
@@ -151,6 +170,7 @@ Deno.serve(async (req) => {
         shipping,
         total,
         discount,
+        bundle_discount,
         coupon_code: appliedCouponCode,
         shipping_address,
         delivery_method: isPickup ? "pickup" : "delivery",
@@ -237,7 +257,7 @@ Deno.serve(async (req) => {
 
     return json({
       url: takbullData.url || `https://api.takbull.co.il/PaymentGateway?orderUniqId=${takbullData.uniqId}`,
-      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address, delivery_method: order.delivery_method, pickup_address: order.pickup_address },
+      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, bundle_discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address, delivery_method: order.delivery_method, pickup_address: order.pickup_address },
     });
   } catch (e) {
     console.error(e);

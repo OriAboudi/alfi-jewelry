@@ -85,6 +85,9 @@ export function Confirm() {
       </div>
 
       <div className="card" style={css("padding:26px;text-align:right;margin-bottom:28px;")}>
+{Number(lo?.bundle_discount) > 0 && (
+          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;color:var(--c-accent);")}><span>מבצע מארז</span><span>-{fmt(lo.bundle_discount)}</span></div>
+        )}
         {Number(lo?.discount) > 0 && (
           <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:14px;color:var(--c-success);")}><span>הנחת קופון{lo.coupon_code ? ` (${lo.coupon_code})` : ""}</span><span>-{fmt(lo.discount)}</span></div>
         )}

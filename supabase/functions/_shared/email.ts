@@ -258,6 +258,7 @@ function orderSummaryHtml(order: any) {
           ${order.delivery_method === "pickup"
             ? line("איסוף עצמי", "חינם") + `<tr><td colspan="2" class="em-soft-ink" style="padding:0 0 6px;text-align:right;color:${C.inkSoft};font-size:13.5px;">כתובת לאיסוף: ${escapeHtml(order.pickup_address || "")}</td></tr>`
             : line("משלוח", Number(order.shipping) ? money(order.shipping) : "חינם")}
+          ${Number(order.bundle_discount) > 0 ? line("מבצע מארז", `-${money(order.bundle_discount)}`, `color:${C.accentDark};`, "em-accent") : ""}
           ${Number(order.discount) > 0 ? line(`הנחת קופון${order.coupon_code ? ` (${ltr(order.coupon_code)})` : ""}`, `-${money(order.discount)}`, `color:${C.success};`, "em-success") : ""}
           <tr>
             <td class="em-ink" style="padding:12px 0 0;border-top:1px solid ${C.line};text-align:right;font-weight:bold;font-size:16px;color:${C.ink};">

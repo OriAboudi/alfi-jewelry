@@ -46,7 +46,7 @@ export function Checkout() {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0, deliveryMethod);
+  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved, bundleDiscount, bundleSize, bundlePrice } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty, bundle: !!l.p.in_bundle })), C, couponCode ? couponPercent : 0, deliveryMethod);
   // What home delivery would cost for this cart — shown on its option.
   const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
 
@@ -145,7 +145,10 @@ export function Checkout() {
               {saleSavings > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
               )}
-          <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>{isPickup ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
+          {bundleDiscount > 0 && (
+                <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>מבצע {bundleSize} ב־{fmt(bundlePrice)}</span><span>-{fmt(bundleDiscount)}</span></div>
+              )}
+              <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>{isPickup ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
           {couponCode && discount > 0 && (
             <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-success);")}><span>הנחת קופון ({couponPercent}%)</span><span>-{fmt(discount)}</span></div>
           )}

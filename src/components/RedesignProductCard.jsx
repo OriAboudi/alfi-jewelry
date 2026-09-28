@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { saleInfo } from "../lib/pricing.js";
+import { saleInfo, bundleConfig } from "../lib/pricing.js";
 import { PriceTag } from "./PriceTag.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { slugify } from "../lib/routes.js";
@@ -11,7 +11,8 @@ import { slugify } from "../lib/routes.js";
 // everything else just rotates through the same 3 decorative labels the
 // mockup uses.
 const FALLBACK_TAGS = ["חדש", "מומלץ", "אחרונים"];
-function tagFor(p, i) {
+function tagFor(p, i, content) {
+  if (p.in_bundle) { const b = bundleConfig(content); return `${b.size} ב־₪${b.price}`; }
   const sale = saleInfo(p);
   if (sale.onSale) return `${sale.percent}% הנחה`;
   if (p.featured) return "חדש";
@@ -24,9 +25,9 @@ function tagFor(p, i) {
  * related products, Favorites).
  */
 export function RedesignProductCard({ product: p, index = 0 }) {
-  const { openProduct, addToCart, favorites, toggleFavorite } = useStore();
+  const { openProduct, addToCart, favorites, toggleFavorite, content } = useStore();
   const outOfStock = Number(p.stock) <= 0;
-  const tag = tagFor(p, index);
+  const tag = tagFor(p, index, content);
   const isFav = favorites.includes(p.id);
 
   const quickAdd = (e) => {

@@ -4,6 +4,7 @@ import { fmt, productDetailsText } from "../../lib/format.js";
 import { thumb, GRAD_CARD } from "../../lib/ui.js";
 import { Disc } from "../../components/Ornaments.jsx";
 import { PriceTag } from "../../components/PriceTag.jsx";
+import { bundleConfig } from "../../lib/pricing.js";
 import { ImageLightbox } from "../../components/ImageLightbox.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
@@ -16,6 +17,7 @@ export function ProductsTab() {
   const {
     content, draft, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
   } = useStore();
+  const { size: bundleSize, price: bundlePrice } = bundleConfig(content);
   const low = Number(content.lowStockThreshold ?? 5);
   const fine = Number(content.stockFineThreshold ?? 10);
 
@@ -114,6 +116,7 @@ export function ProductsTab() {
               )}
             </div>
             {p.featured && <span style={css("font-size:12px;background:var(--c-accent-soft);color:var(--c-accent);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>מוצג בעמוד הבית</span>}
+            {p.in_bundle && <span style={css("font-size:12px;background:var(--c-success-bg);color:var(--c-success);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>במבצע {bundleSize} ב־{fmt(bundlePrice)}</span>}
             {tier !== "ok" && <span style={css(`font-size:12px;background:${tc.bg};color:${tc.fg};padding:4px 10px;border-radius:100px;white-space:nowrap;`)}>{TIER_LABEL[tier]}</span>}
             <button onClick={() => openDraft(editProduct, p)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
             <button onClick={() => onDelete(p.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid var(--c-line-strong);border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
@@ -160,6 +163,9 @@ export function ProductsTab() {
             <Area label="פרטי המוצר (ריק = טקסט ברירת המחדל)" value={draft.details} onChange={(v) => setDraft("details", v)} placeholder={productDetailsText({ material: draft.material })} />
             <label style={css("display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;")}>
               <input type="checkbox" checked={!!draft.featured} onChange={(e) => setDraft("featured", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />הצגה בעמוד הבית (נבחרים)
+            </label>
+            <label style={css("display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;")}>
+              <input type="checkbox" checked={!!draft.in_bundle} onChange={(e) => setDraft("in_bundle", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />משתתף במבצע {bundleSize} ב־{fmt(bundlePrice)}
             </label>
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
               <button onClick={submitDraft} style={css("flex:1;padding:14px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>

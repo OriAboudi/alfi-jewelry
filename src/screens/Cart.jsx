@@ -6,18 +6,19 @@ import { computeTotals, saleInfo } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { DeliveryMethodPicker } from "../components/DeliveryMethodPicker.jsx";
+import { BundleNudge } from "../components/BundleNudge.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 
 export function Cart() {
-  const { cart, products, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, deliveryMethod, setDeliveryMethod } = useStore();
+  const { cart, products, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, deliveryMethod, setDeliveryMethod , addToCart, openProduct } = useStore();
   useSeoTags({ noindex: true });
 
   const lines = cart.map((c) => {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", category: "", material: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty })), C, couponCode ? couponPercent : 0, deliveryMethod);
+  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved, bundleDiscount, bundleSets, bundleEligible, bundleMissing, bundleSize, bundlePrice } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty, bundle: !!l.p.in_bundle })), C, couponCode ? couponPercent : 0, deliveryMethod);
   // What home delivery costs for this cart — shown on its option.
   const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
   const hasStockIssue = lines.some((l) => l.qty > Number(l.p.stock));
@@ -29,7 +30,7 @@ export function Cart() {
       {lines.length > 0 ? (
         <>
           <div className="r-cart-grid" style={css("display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start;")}>
-            <div className="glass-card" style={css("padding:40px var(--sp-5) 36px;")}>
+            <div className="glass-card" style={css("padding:40px var(--sp-5) 36px;min-width:0;")}>
               <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>עגלת הקניות</h1>
               {lines.map((l) => (
                 <div key={l.id + l.size} style={css("display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--c-line);")}>
@@ -60,6 +61,12 @@ export function Cart() {
                   </div>
                 </div>
               ))}
+              <BundleNudge
+                eligible={bundleEligible} missing={bundleMissing} sets={bundleSets} discount={bundleDiscount} size={bundleSize} price={bundlePrice}
+                products={products} cartIds={new Set(cart.map((c) => String(c.id)))}
+                onAdd={(p) => addToCart(p.id, 1, (p.sizes && p.sizes[0]) || "יחיד")}
+                onOpen={openProduct}
+              />
             </div>
             <div className="r-sticky" style={css("background:rgba(251,248,245,.42);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.6);border-radius:var(--r-lg);padding:28px;position:sticky;top:100px;")}>
               <h3 style={css("font-family:var(--font-serif);font-size:21px;margin-bottom:20px;")}>סיכום הזמנה</h3>
@@ -67,6 +74,9 @@ export function Cart() {
               <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>סכום ביניים</span><span>{fmt(regularSubtotal)}</span></div>
               {saleSavings > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
+              )}
+{bundleDiscount > 0 && (
+                <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-accent);")}><span>מבצע {bundleSize} ב־{fmt(bundlePrice)}</span><span>-{fmt(bundleDiscount)}</span></div>
               )}
               <div style={css("display:flex;justify-content:space-between;font-size:15px;margin-bottom:12px;color:var(--c-ink-soft);")}><span>{deliveryMethod === "pickup" ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
               {couponCode && discount > 0 && (

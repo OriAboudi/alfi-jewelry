@@ -15,6 +15,7 @@
  * ========================================================================== */
 import { createClient } from "@supabase/supabase-js";
 import { compressImage } from "./imageCompress.js";
+import { bundleConfig, bundleDiscount } from "./pricing.js";
 
 const SB_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -87,6 +88,8 @@ export const SEED_CONTENT = {
   freeShipFrom: 500,
   shipFee: 39,
   pickupAddress: "דן 13, נהלל",
+  bundleSize: 3,
+  bundlePrice: 200,
   lowStockThreshold: 5,
   stockFineThreshold: 10,
   signupCouponPercent: 5,
@@ -315,11 +318,14 @@ const local = {
         const p = products.find((x) => String(x.id) === String(it.id));
         if (!p) throw new Error("מוצר לא נמצא: " + it.id);
         const qty = Math.max(1, Math.min(50, Number(it.qty) || 1));
-        return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: it.size || "" };
+        return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: it.size || "", bundle: !!p.in_bundle };
       });
       const subtotal = verified.reduce((a, it) => a + it.price * it.qty, 0);
       const pickup = deliveryMethod === "pickup";
-      const shipping = pickup ? 0 : (subtotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
+      const bcfg = bundleConfig(content);
+      const bundle_discount = bundleDiscount(verified.flatMap((it) => (it.bundle ? Array(it.qty).fill(it.price) : [])), bcfg.size, bcfg.price).discount;
+      const itemsTotal = subtotal - bundle_discount;
+      const shipping = pickup ? 0 : (itemsTotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
 
       let discount = 0;
       let appliedCouponCode = null;
@@ -327,14 +333,14 @@ const local = {
         const coupons = read(LS.coupons, []);
         const coupon = coupons.find((c) => c.code === String(couponCode).trim().toUpperCase());
         if (coupon && coupon.status === "active") {
-          discount = Math.round(subtotal * (Number(coupon.percent) || 0)) / 100;
+          discount = Math.round(itemsTotal * (Number(coupon.percent) || 0)) / 100;
           appliedCouponCode = coupon.code;
         }
       }
-      const total = Math.max(0, subtotal + shipping - discount);
+      const total = Math.max(0, itemsTotal + shipping - discount);
 
       const order = await local.orders.create({
-        items: verified, subtotal, shipping, discount, coupon_code: appliedCouponCode, total,
+        items: verified, subtotal, shipping, discount, bundle_discount, coupon_code: appliedCouponCode, total,
         shipping_address: pickup ? { ...shipping_address } : { city: "תל אביב", ...shipping_address },
         delivery_method: pickup ? "pickup" : "delivery",
         pickup_address: pickup ? (String(content.pickupAddress || "").trim() || "דן 13, נהלל") : null,

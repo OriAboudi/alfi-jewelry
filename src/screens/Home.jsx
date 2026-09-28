@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { saleInfo } from "../lib/pricing.js";
+import { saleInfo, bundleConfig } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { GRAD_CARD } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
@@ -88,6 +88,9 @@ export function Home() {
   // Live sale hook: only rendered when a product is actually on sale.
   const maxSalePct = products.filter(inStock).reduce((m, p) => Math.max(m, saleInfo(p).percent), 0);
   const slider1 = (featuredList.length ? featuredList : products).slice(0, 8);
+  // "N for ₪X" deal pieces, shown in a slider right after the promo banner.
+  const bundle = bundleConfig(C);
+  const bundleProducts = products.filter((p) => p.in_bundle && Number(p.stock) > 0);
   const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
   const usedIds = new Set(slider1.map((p) => p.id));
   const leftover2 = slider2raw.filter((p) => !usedIds.has(p.id));
@@ -234,6 +237,9 @@ export function Home() {
           </div>
         </div>
       </Reveal>
+
+      {/* DEAL SLIDER — products the admin marked for the "N for ₪X" deal */}
+      <ProductSlider title={`מבצע ${bundle.size} ב־₪${bundle.price}`} mobileTitle={`${bundle.size} ב־₪${bundle.price}`} ctaLabel="לכל התכשיטים" onCta={goCatalog} products={bundleProducts} />
 
       {/* SECOND SLIDER — best sellers */}
       <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} />

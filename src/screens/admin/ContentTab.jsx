@@ -75,6 +75,11 @@ export function ContentTab() {
         <Field label="כותרת" value={cd.banner3Title} onChange={(v) => setCdraft("banner3Title", v)} />
         <Area label="טקסט משנה" value={cd.banner3Subtitle} onChange={(v) => setCdraft("banner3Subtitle", v)} rows={2} />
         <Field label="טקסט כפתור" value={cd.banner3CtaLabel} onChange={(v) => setCdraft("banner3CtaLabel", v)} />
+        <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
+          <Field label="מבצע: מספר תכשיטים" value={cd.bundleSize ?? 3} onChange={(v) => setCdraft("bundleSize", v)} type="number" />
+          <Field label="מבצע: מחיר לסט (₪)" value={cd.bundlePrice ?? 200} onChange={(v) => setCdraft("bundlePrice", v)} type="number" />
+        </div>
+        <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:-8px;")}>סמנו מוצרים כ״משתתף במבצע״ בעריכת מוצר. המחיר מחושב אוטומטית בעגלה ובתשלום.</div>
         <div style={css("font-size:12px;color:var(--c-ink-faint);")}>שימו לב: זהו באנר שיווקי בלבד — המחיר/המבצע לא נאכף אוטומטית בקופה.</div>
 
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />

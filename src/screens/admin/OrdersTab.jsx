@@ -264,6 +264,7 @@ export function OrdersTab() {
                 ))}
                 <div style={css("height:1px;background:var(--c-line);margin:10px 0;")} />
                 <div style={css("display:flex;justify-content:space-between;font-size:13.5px;color:var(--c-ink-mute);margin-bottom:4px;")}><span>{isPickup(o) ? "איסוף עצמי" : "משלוח"}</span><span>{o.shipping ? fmt(o.shipping) : "חינם"}</span></div>
+                {Number(o.bundle_discount) > 0 && <div style={css("display:flex;justify-content:space-between;font-size:13.5px;color:var(--c-accent);margin-bottom:4px;")}><span>מבצע מארז</span><span>-{fmt(o.bundle_discount)}</span></div>}
                 <div style={css("display:flex;justify-content:space-between;font-size:16px;font-weight:700;")}><span>סה״כ</span><span>{fmt(o.total)}</span></div>
               </div>
               {history.length > 0 && (
