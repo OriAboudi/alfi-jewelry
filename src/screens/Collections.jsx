@@ -5,9 +5,10 @@ import { Disc } from "../components/Ornaments.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { pathFor } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { SkeletonText, SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
 
 export function Collections() {
-  const { collections, go, setCatFilter } = useStore();
+  const { collections, go, loaded } = useStore();
 
   useSeoTags({
     title: "קולקציות · ALFI",
@@ -26,12 +27,23 @@ export function Collections() {
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);margin-bottom:14px;")}>העולמות של ALFI</h1>
         <p style={css("font-size:16.5px;color:var(--c-ink-soft);max-width:560px;margin:0 auto;")}>כל קולקציה היא סיפור — אוסף תכשיטים שנולדו מאותה השראה.</p>
       </div>
+      {!loaded && (
+        <div className="grid-3">
+          <LoadingLabel />
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="card" aria-hidden="true" style={css("overflow:hidden;background:#fff;border:none;box-shadow:var(--shadow-md);")}>
+              <SkeletonBlock style="aspect-ratio:4/3;" />
+              <div style={css("padding:22px;")}><SkeletonText lines={3} width={["50%", "100%", "80%"]} height={14} /></div>
+            </div>
+          ))}
+        </div>
+      )}
       <div className="grid-3">
         {collections.map((col) => (
           <a key={col.id} href={pathFor("catalog", { catFilter: col.category_filter || "הכל" })} onClick={openCollection(col)} className="card hover-lift" style={css("display:block;cursor:pointer;overflow:hidden;background:#fff;border:none;box-shadow:var(--shadow-md);")}>
             <div style={thumb(col.image, GRAD_COVER, "aspect-ratio:4/3;position:relative;")}>
               {!col.image && <Disc style="width:40%;aspect-ratio:1;" />}
-              <span style={css("position:absolute;bottom:14px;right:16px;background:rgba(255,255,255,.92);font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);color:var(--c-accent);")}>{col.subtitle}</span>
+              {col.subtitle && <span style={css("position:absolute;bottom:14px;right:16px;background:rgba(255,255,255,.92);font-size:12px;font-weight:600;padding:5px 12px;border-radius:var(--r-pill);color:var(--c-accent);")}>{col.subtitle}</span>}
             </div>
             <div style={css("padding:22px 22px 26px;")}>
               <h2 style={css("font-family:var(--font-serif);font-size:22px;margin-bottom:8px;")}>{col.title}</h2>

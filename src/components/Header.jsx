@@ -14,7 +14,7 @@ const iconBtnMobile = "width:48px;height:48px;border:0;background:transparent;cu
 const cartBadge = "position:absolute;top:-8px;left:-8px;min-width:16px;height:16px;border-radius:50%;background:var(--ink-fill);color:var(--cream);font-size:10px;line-height:16px;text-align:center;padding:0 3px;box-sizing:border-box;";
 
 export function Header() {
-  const { go, screen, catFilter, cartCount, favoritesCount, customerName, openPhoneLogin, customerLogout, content } = useStore();
+  const { go, screen, catFilter, cartCount, favoritesCount, customer, authReady, openAuth, customerLogout, content } = useStore();
   const deal = bundleConfig(content);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -88,13 +88,15 @@ export function Header() {
     onKeyDown: (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handler(e); } },
   });
 
-  // Account/login isn't in the design mockup at all (this site has no
-  // account UI concept there — see HANDOFF.md), but the existing phone-
-  // login/greeting/logout behavior has to keep working exactly as before,
-  // so it's folded in as one more icon button next to cart/favorites/
-  // search rather than dropped.
-  const accountLabel = customerName ? `שלום, ${customerName.split(" ")[0]} — ההזמנות שלי` : "כניסה / הרשמה";
-  const accountAction = customerName ? () => navigate("my-orders") : openPhoneLogin;
+  // Customer account (Supabase Auth): signed in → the account page (orders,
+  // details, logout); signed out → the login/register dialog. Nothing
+  // account-specific renders until the session check finished (authReady),
+  // so a signed-in shopper never sees "התחברות" flash first.
+  const firstName = customer ? String(customer.name || customer.email || "").split(/[s@]/)[0] : "";
+  const accountLabel = customer ? `החשבון שלי, ${firstName}` : "התחברות / הרשמה";
+  const accountAction = customer ? () => navigate("my-orders") : () => { setMenuOpen(false); openAuth("login"); };
+  // Back/forward (or any screen change) closes the open mobile menu.
+  useEffect(() => { setMenuOpen(false); }, [screen, catFilter]);
 
   const CartIcon = ({ size = 22 }) => (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3"><path d="M5 8h14l-1 12H6L5 8z" /><path d="M9 8V6a3 3 0 0 1 6 0v2" /></svg>
@@ -157,7 +159,7 @@ export function Header() {
               {/* Visible, not just the aria-label — the mockup has no
                   account UI at all, but a logged-in customer's name has to
                   actually show, not just be announced to screen readers. */}
-              {customerName && <span style={css("font-size:14px;white-space:nowrap;")}>שלום, {customerName.split(" ")[0]}</span>}
+              {authReady && customer && <span style={css("font-size:14px;white-space:nowrap;")}>שלום, {firstName}</span>}
             </span>
           </div>
         </div>
@@ -176,6 +178,10 @@ export function Header() {
           </div>
           <span {...asButton(() => navigate("home"))} className="serif" style={css("justify-self:center;cursor:pointer;font-size:26px;letter-spacing:.36em;padding-right:.36em;color:var(--ink);")}>ALFI</span>
           <div style={css("display:flex;justify-content:flex-end;")}>
+            <span {...asButton(accountAction)} className="tap-target" aria-label={accountLabel} style={css(`position:relative;${iconBtnMobile}`)}>
+              <PersonIcon size={21} />
+              {authReady && customer && <span aria-hidden="true" style={css("position:absolute;top:11px;left:11px;width:8px;height:8px;border-radius:50%;background:var(--c-accent);box-shadow:0 0 0 2px var(--c-bg);")} />}
+            </span>
             <span {...asButton(() => navigate("cart"))} className={`tap-target${cartBump ? " cart-bump" : ""}`} aria-label={`סל קניות, ${cartCount} פריטים`} style={css(`position:relative;${iconBtnMobile}`)}>
               <CartIcon />
               {cartCount > 0 && <span style={css(cartBadge)}>{cartCount}</span>}
@@ -204,10 +210,21 @@ export function Header() {
               מועדפים
               {favoritesCount > 0 && <span style={css("font-size:13px;color:var(--text-muted);")}>{favoritesCount}</span>}
             </span>
-            <span {...asButton(accountAction)} className="tap-target" style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{accountLabel}</span>
-            {customerName && (
-              <span {...asButton(customerLogout)} className="tap-target" style={css("padding:15px 2px;cursor:pointer;color:var(--text-muted);font-size:14px;min-height:var(--tap);display:flex;align-items:center;")}>יציאה</span>
-            )}
+            <a href={pathFor("contact")} {...asButton((e) => { e.preventDefault(); navigate("contact"); })} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>צור קשר</a>
+
+            {/* Account — its own block at the end of the menu. */}
+            {authReady && (customer ? (
+              <div style={css("margin-top:14px;padding:14px;border-radius:var(--r-md);background:rgba(255,255,255,.55);display:flex;flex-direction:column;gap:4px;")}>
+                <div style={css("font-size:13px;color:var(--text-muted);")}>מחוברת בתור {customer.email}</div>
+                <a href={pathFor("my-orders")} {...asButton((e) => { e.preventDefault(); navigate("my-orders"); })} style={css("cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>החשבון וההזמנות שלי</a>
+                <button type="button" onClick={() => { setMenuOpen(false); customerLogout(); }} style={css("align-self:flex-start;background:none;border:0;padding:0;font:inherit;cursor:pointer;color:var(--c-accent-dark);font-size:15px;min-height:var(--tap);")}>התנתקות</button>
+              </div>
+            ) : (
+              <div style={css("margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;")}>
+                <button type="button" onClick={() => { setMenuOpen(false); openAuth("login"); }} className="btn btn-primary" style={css("min-height:48px;font-size:15px;")}>התחברות</button>
+                <button type="button" onClick={() => { setMenuOpen(false); openAuth("register"); }} className="btn" style={css("min-height:48px;font-size:15px;border:1px solid var(--ink);background:transparent;color:var(--ink);")}>הרשמה</button>
+              </div>
+            ))}
           </nav>
         )}
       </header>

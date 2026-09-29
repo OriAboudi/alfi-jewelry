@@ -12,8 +12,34 @@ const errMsgStyle = "color:var(--c-danger);font-size:12px;margin-top:5px;";
 
 const REQUIRED = ["name", "email", "phone"];
 
+// The panel is painted with two images (the floral background and the ALFI
+// band). Opening before they are decoded showed the panel first and then
+// the pictures popping in one after the other; wait for both (briefly — a
+// slow network still gets the popup after 2.5s).
+const POPUP_IMAGES = ["/floral-bg.jpg", "/signup-bg.jpg"];
+let popupImagesReady = null;
+function preloadPopupImages() {
+  if (!popupImagesReady) {
+    popupImagesReady = Promise.race([
+      Promise.all(POPUP_IMAGES.map((src) => { const img = new Image(); img.src = src; return img.decode().catch(() => {}); })),
+      new Promise((r) => setTimeout(r, 2500)),
+    ]);
+  }
+  return popupImagesReady;
+}
+
 export function SignupCouponPopup() {
-  const { signupPopupOpen, signupPopupPendingCheckout, signupPopupPrefillPhone, content: C, couponCode, submitSignup, closeSignupPopup } = useStore();
+  const { signupPopupOpen, signupPopupPendingCheckout, signupPopupPrefillPhone, content: C, loaded, couponCode, submitSignup, closeSignupPopup } = useStore();
+  const [imagesReady, setImagesReady] = useState(false);
+  useEffect(() => {
+    if (!signupPopupOpen || imagesReady) return undefined;
+    let alive = true;
+    preloadPopupImages().then(() => { if (alive) setImagesReady(true); });
+    return () => { alive = false; };
+  }, [signupPopupOpen, imagesReady]);
+  // Shown only once complete: images decoded AND the server settings (the
+  // coupon %) loaded, so nothing in it changes after it appears.
+  const visible = signupPopupOpen && imagesReady && loaded;
 
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
   const [touched, setTouched] = useState({});
@@ -33,9 +59,9 @@ export function SignupCouponPopup() {
     }
   }, [signupPopupOpen, signupPopupPrefillPhone]);
 
-  const panelRef = useDialog(signupPopupOpen, closeSignupPopup);
+  const panelRef = useDialog(visible, closeSignupPopup);
 
-  if (!signupPopupOpen) return null;
+  if (!visible) return null;
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const setPhone = (e) => setForm((f) => ({ ...f, phone: formatIsraeliPhone(e.target.value) }));

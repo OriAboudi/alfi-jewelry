@@ -7,6 +7,8 @@ import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
 import { pathFor, DEAL_FILTER } from "../lib/routes.js";
 import { bundleConfig } from "../lib/pricing.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { useEntryState } from "../lib/navMemory.js";
+import { SkeletonCard, LoadingLabel } from "../components/Skeleton.jsx";
 const BASE_MATERIALS = ["כסף 925", "כסף + זירקון", "כסף מוזהב"];
 const SORTS = [
   ["featured", "מומלצים"],
@@ -16,18 +18,20 @@ const SORTS = [
 ];
 
 export function Catalog() {
-  const { products, catFilter, setCatFilter, go, content } = useStore();
+  const { products, loaded, catFilter, setCatFilter, go, content } = useStore();
   const isDeal = catFilter === DEAL_FILTER;
   const deal = bundleConfig(content);
   const dealTitle = `מבצע ${deal.size} ב־₪${deal.price}`;
-  const [matFilter, setMatFilter] = React.useState("הכל");
-  const [sortBy, setSortBy] = React.useState("featured");
+  // Filters/sort belong to this history entry: open a product, go Back, and
+  // the list is exactly as it was (scroll position included, see navMemory).
+  const [matFilter, setMatFilter] = useEntryState("cat.material", "הכל");
+  const [sortBy, setSortBy] = useEntryState("cat.sort", "featured");
   const [sortOpen, setSortOpen] = React.useState(false);
-  const [priceMax, setPriceMax] = React.useState(null);
-  const [inStockOnly, setInStockOnly] = React.useState(false);
+  const [priceMax, setPriceMax] = useEntryState("cat.priceMax", null);
+  const [inStockOnly, setInStockOnly] = useEntryState("cat.inStock", false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = React.useState(false);
 
-  const cats = BASE_CATS.filter((c) => products.some((p) => p.category === c)).length
+  const cats = !loaded || BASE_CATS.filter((c) => products.some((p) => p.category === c)).length
     ? BASE_CATS
     : Array.from(new Set(products.map((p) => p.category)));
   const materials = BASE_MATERIALS.filter((m) => products.some((p) => p.material === m)).length
@@ -82,6 +86,16 @@ export function Catalog() {
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);")}>{catFilter === "הכל" ? "כל התכשיטים" : isDeal ? dealTitle : catFilter}</h1>
         {isDeal && <p style={css("margin:10px auto 0;font-size:16px;color:var(--c-ink-soft);")}>בוחרים {deal.size} תכשיטים מהמבצע ומשלמים ₪{deal.price} בלבד. המחיר מתעדכן אוטומטית בעגלה.</p>}
       </div>
+      {/* Mobile: every category one swipe away, without opening the filter
+          panel. A plain horizontal scroller — no custom gesture, so it never
+          fights the system back-swipe. */}
+      <div className="cat-chips" role="group" aria-label="קטגוריות">
+        {["הכל", ...cats, ...(products.some((p) => p.in_bundle) ? [DEAL_FILTER] : [])].map((c) => (
+          <button key={c} type="button" className="cat-chip" aria-pressed={catFilter === c} onClick={() => setCatFilter(c)}>
+            {c === "הכל" ? "הכל" : c === DEAL_FILTER ? dealTitle : c}
+          </button>
+        ))}
+      </div>
       <div className="r-sidebar-grid" style={css("display:grid;grid-template-columns:230px 1fr;gap:46px;align-items:start;")}>
         <aside className="r-sticky" style={css("position:sticky;top:100px;")}>
           <button
@@ -124,7 +138,7 @@ export function Catalog() {
         </aside>
         <div>
           <div style={css("display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--sp-5);padding-bottom:16px;border-bottom:1px solid var(--c-line);position:relative;")}>
-            <span style={css("font-size:14.5px;color:var(--c-ink-mute);")}>{list.length} מוצרים</span>
+            <span style={css("font-size:14.5px;color:var(--c-ink-mute);")}>{loaded ? `${list.length} מוצרים` : "טוען…"}</span>
             <div style={css("position:relative;")}>
               <button type="button" aria-expanded={sortOpen} aria-haspopup="true" onClick={() => setSortOpen((v) => !v)} onKeyDown={(e) => { if (e.key === "Escape") setSortOpen(false); }} className="tap-target" style={css("background:none;border:0;padding:0;font:inherit;text-align:right;font-size:14.5px;color:var(--c-ink-soft);cursor:pointer;display:flex;align-items:center;gap:4px;")}>מיון: {sortLabel} <span aria-hidden="true">▾</span></button>
               {sortOpen && (
@@ -136,7 +150,12 @@ export function Catalog() {
               )}
             </div>
           </div>
-          {list.length === 0 ? (
+          {!loaded ? (
+            <div className="grid-3">
+              <LoadingLabel text="טוען תכשיטים…" />
+              {[0, 1, 2, 3, 4, 5].map((i) => <SkeletonCard key={i} />)}
+            </div>
+          ) : list.length === 0 ? (
             <div className="card" style={css("padding:60px 20px;text-align:center;color:var(--c-ink-mute);")}>לא נמצאו מוצרים בסינון הזה.</div>
           ) : (
             <div className="grid-3">

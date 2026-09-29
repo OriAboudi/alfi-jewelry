@@ -1,7 +1,10 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
-import store, { SEED_PRODUCTS, SEED_CONTENT, SEED_COLLECTIONS, BACKEND } from "../lib/store.js";
+import store, { CONFIG_DEFAULTS, BACKEND } from "../lib/store.js";
 import { ADMIN_PATH } from "../lib/adminPath.js";
 import { pathFor, parsePath } from "../lib/routes.js";
+import { initNavMemory, rememberScroll, pushEntry, onPopEntry, restoreScroll } from "../lib/navMemory.js";
+
+initNavMemory();
 
 const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
@@ -18,8 +21,9 @@ const saveCart = (cart) => {
   try { localStorage.setItem("alfi:cart", JSON.stringify(cart)); } catch { /* ignore */ }
 };
 
-// "Liked" products — local only, same guest-only model as the cart (no
-// accounts/backend field for this; see customerLogout's own note on why).
+// "Liked" products. Kept locally for guests; for a signed-in customer they
+// are also saved on the account (auth user metadata) and merged on sign-in,
+// so they follow the customer to every device.
 const loadFavorites = () => {
   try { return JSON.parse(localStorage.getItem("alfi:favorites") || "[]"); } catch { return []; }
 };
@@ -31,9 +35,19 @@ const draftPrices = (p) => {
   const onSale = Number(p.compare_at_price) > Number(p.price);
   return { regularPrice: onSale ? p.compare_at_price : p.price, salePrice: onSale ? p.price : "" };
 };
-const scrollTop = () => { if (typeof window !== "undefined") window.scrollTo(0, 0); };
+// In-app navigation: remember where the page being left was scrolled to
+// (so Back returns there — see navMemory.js), then open the new screen at
+// the top.
+const scrollTop = () => {
+  if (typeof window === "undefined") return;
+  rememberScroll();
+  window.scrollTo(0, 0);
+};
 
 const isAdminPath = () => typeof window !== "undefined" && window.location.pathname === ADMIN_PATH;
+const currentPath = () => {
+  try { return decodeURIComponent(window.location.pathname); } catch { return window.location.pathname; }
+};
 
 // Returning from a Takbull redirect (?paid=) or an emailed tracking link
 // (?order=) needs an async fetch before the real screen (confirm/status) is
@@ -65,29 +79,11 @@ const saveCoupon = (code, percent) => {
 const clearCouponStorage = () => {
   try { localStorage.removeItem("alfi:couponCode"); localStorage.removeItem("alfi:couponPercent"); } catch { /* ignore */ }
 };
-const loadCustomer = () => {
-  try {
-    return {
-      customerName: localStorage.getItem("alfi:customerName") || "",
-      customerEmail: localStorage.getItem("alfi:customerEmail") || "",
-    };
-  } catch {
-    return { customerName: "", customerEmail: "" };
-  }
-};
-const saveCustomer = (name, email) => {
-  try {
-    if (name) localStorage.setItem("alfi:customerName", name);
-    if (email) localStorage.setItem("alfi:customerEmail", email);
-  } catch { /* ignore */ }
-};
-
 // Every order this browser has legitimately placed (or opened via its own
-// tracking link) is remembered locally so "ההזמנות שלי" can list them — no
-// new server capability is added for this: it's the same trust model the
-// existing single-order "?order=<uuid>" tracking link already relies on
-// (this app deliberately has no customer accounts/login), just remembered
-// across visits instead of requiring the emailed link each time.
+// tracking link) is remembered locally, so a guest can still find them in
+// "החשבון שלי". Once the shopper signs in, these ids are linked to the
+// account (store.account.claimOrders) and from then on the list comes from
+// the server — the same on every device.
 const loadMyOrders = () => {
   try { return JSON.parse(localStorage.getItem("alfi:myOrders") || "[]"); } catch { return []; }
 };
@@ -110,16 +106,29 @@ export function StoreProvider({ children }) {
     const routed = (typeof window !== "undefined" && !isAdminPath() && !pending)
       ? parsePath(window.location.pathname)
       : null;
+    // Nothing server-managed is rendered from code: products, collections
+    // and content start EMPTY (plus business-setting defaults only) and
+    // `loaded` stays false until Supabase answers — screens show skeletons
+    // meanwhile, so the shopper sees "loading → real content", never
+    // "demo content → real content".
     return {
       loaded: false,
+      loadError: false,
       screen: isAdminPath() ? "admin-login" : (pending || routed?.screen || "home"),
-      pid: routed?.pid ?? SEED_PRODUCTS[0].id,
+      pid: routed?.pid ?? null,
+      orderId: routed?.orderId ?? null,
       qty: 1,
       size: "",
-      products: SEED_PRODUCTS,
-      content: SEED_CONTENT,
-      collections: SEED_COLLECTIONS,
+      products: [],
+      content: { ...CONFIG_DEFAULTS },
+      collections: [],
+      // Signed-in account (customer or admin); authReady once the session
+      // check finished, so account UI never flashes "logged out" first.
       user: null,
+      authReady: false,
+      authDialog: null, // null | "login" | "register" | "forgot" | "reset"
+      accountOrders: null, // server order list for the signed-in customer
+      accountOrdersError: false,
       users: [],
       cart: loadCart(),
       deliveryMethod: loadDeliveryMethod(),
@@ -143,10 +152,6 @@ export function StoreProvider({ children }) {
       signupPopupOpen: false,
       signupPopupPendingCheckout: false,
       signupPopupPrefillPhone: "",
-      phoneLoginOpen: false,
-      phoneLoginBusy: false,
-      phoneLoginError: "",
-      ...loadCustomer(),
       myOrders: loadMyOrders(),
     };
   });
@@ -160,35 +165,78 @@ export function StoreProvider({ children }) {
   }, []);
 
   /* ---------- initial load ---------- */
+  // Site data (products/content/collections) is what the page renders, so it
+  // is fetched on its own — never held up by the auth session check below.
+  const loadSiteData = useCallback(async () => {
+    try {
+      const [products, content, collections] = await Promise.all([
+        store.products.list(),
+        store.content.get(),
+        store.collections.list(),
+      ]);
+      setState((s) => ({
+        loaded: true,
+        loadError: false,
+        products: products || [],
+        content: { ...s.content, ...content },
+        collections: collections || [],
+      }));
+    } catch (e) {
+      console.warn("ALFI load failed", e);
+      setState({ loaded: true, loadError: true });
+    }
+  }, [setState]);
+
+  useEffect(() => { loadSiteData(); }, [loadSiteData]);
+
+  /* ---------- customer account ---------- */
+  // After any sign-in (or a restored session): link this browser's guest
+  // orders to the account, load the account's orders, and merge favorites
+  // saved here with the ones saved on the account.
+  const syncAccount = useCallback(async (user) => {
+    if (!user || user.role === "admin") return;
+    try { await store.account.claimOrders(loadMyOrders().map((o) => o.id)); } catch (e) { console.warn("claim orders failed", e); }
+    try {
+      const orders = await store.account.orders();
+      setState({ accountOrders: orders, accountOrdersError: false });
+    } catch (e) {
+      console.warn("account orders failed", e);
+      setState({ accountOrders: null, accountOrdersError: true });
+    }
+    const local = loadFavorites();
+    const remote = user.favorites || [];
+    const merged = [...new Set([...remote, ...local].map(String))].map((id) => (/^\d+$/.test(id) ? Number(id) : id));
+    saveFavorites(merged);
+    setState({ favorites: merged });
+    if (merged.length !== remote.length) store.auth.updateMeta({ favorites: merged }).catch(() => {});
+  }, [setState]);
+
+  const refreshAccountOrders = useCallback(async () => {
+    if (!ref.current.user || ref.current.user.role === "admin") return;
+    try { setState({ accountOrders: await store.account.orders(), accountOrdersError: false }); }
+    catch { if (ref.current.accountOrders === null) setState({ accountOrdersError: true }); }
+  }, [setState]);
+
   useEffect(() => {
     let alive = true;
     (async () => {
-      try {
-        const [products, content, user, collections] = await Promise.all([
-          store.products.list(),
-          store.content.get(),
-          store.auth.current(),
-          store.collections.list(),
-        ]);
-        if (!alive) return;
-        const admin = user && user.role === "admin" ? user : null;
-        // Anyone signed in but not an admin (shouldn't normally happen, since
-        // the site never offers customer signup) is dropped silently.
-        if (user && !admin) store.auth.logout().catch(() => {});
-        setState((s) => ({
-          loaded: true,
-          products: products && products.length ? products : s.products,
-          content: { ...s.content, ...content },
-          collections: collections && collections.length ? collections : s.collections,
-          user: admin,
-        }));
-        if (isAdminPath() && admin) goAdmin();
-      } catch (e) {
-        console.warn("ALFI load failed", e);
-        if (alive) setState({ loaded: true });
-      }
+      let user = null;
+      try { user = await store.auth.current(); } catch { /* signed out */ }
+      if (!alive) return;
+      setState({ user, authReady: true });
+      if (user?.role === "admin") { if (isAdminPath()) goAdmin(); }
+      else if (user) syncAccount(user);
     })();
-    return () => { alive = false; };
+    // Sign-in/out in another tab, and the password-reset link landing here.
+    const off = store.auth.onChange(async (event) => {
+      if (event === "PASSWORD_RECOVERY") { setState({ authDialog: "reset" }); return; }
+      if (event === "SIGNED_OUT") { setState({ user: null, accountOrders: null }); return; }
+      if (event === "SIGNED_IN" && !ref.current.user) {
+        const user = await store.auth.current().catch(() => null);
+        if (user) { setState({ user }); if (user.role !== "admin") syncAccount(user); }
+      }
+    });
+    return () => { alive = false; off(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setState]);
 
@@ -197,10 +245,22 @@ export function StoreProvider({ children }) {
   // jewellery, go("catalog", "טבעות" | DEAL_FILTER …) = that view. A filter
   // left over from an earlier visit (e.g. the deal page) never leaks into
   // later "all jewellery" buttons.
-  const go = useCallback((screen, catFilter) => {
-    setState(screen === "catalog" ? { screen, catFilter: catFilter || "הכל", contentSaved: false } : { screen, contentSaved: false });
+  // Every in-app navigation pushes its history entry right here, BEFORE the
+  // new screen renders (see navMemory.js — a screen reads its entry's saved
+  // UI state while mounting).
+  const pushFor = useCallback((patch, opts) => {
+    if (typeof window === "undefined" || isAdminPath()) return;
+    const s = { ...ref.current, ...patch };
+    const path = pathFor(s.screen, { catFilter: s.catFilter, pid: s.pid, orderId: s.orderId, products: s.products });
+    if (path && path !== currentPath()) pushEntry(path, opts);
+  }, []);
+
+  const go = useCallback((screen, catFilter, extra) => {
+    const patch = { ...(screen === "catalog" ? { screen, catFilter: catFilter || "הכל" } : { screen }), ...extra, contentSaved: false };
     scrollTop();
-  }, [setState]);
+    pushFor(patch);
+    setState(patch);
+  }, [setState, pushFor]);
 
   // Returning from Takbull: ?paid=<orderId> is used for both success and
   // failure (the actual result is only known from &statusCode=0/nonzero),
@@ -220,9 +280,9 @@ export function StoreProvider({ children }) {
       setState({ paymentError: statusDescription || "" });
       go("payment-failed");
       try { localStorage.removeItem("alfi:pendingOrder"); } catch { /* ignore */ }
-      window.history.replaceState({}, "", window.location.pathname);
+      window.history.replaceState(window.history.state, "", window.location.pathname);
     } else if (paidId) {
-      window.history.replaceState({}, "", window.location.pathname);
+      window.history.replaceState(window.history.state, "", window.location.pathname);
       (async () => {
         // Fetch the real order rather than trusting only the localStorage
         // snapshot — that snapshot can be missing (different browser/device,
@@ -242,13 +302,13 @@ export function StoreProvider({ children }) {
         }
       })();
     } else if (viewId) {
-      window.history.replaceState({}, "", window.location.pathname);
+      window.history.replaceState(window.history.state, "", window.location.pathname);
       (async () => {
         try {
           const order = await store.orders.getPublic(viewId);
           addMyOrder(order);
-          setState({ lastOrder: order, myOrders: loadMyOrders() });
-          go("status");
+          setState({ myOrders: loadMyOrders() });
+          go("status", undefined, { lastOrder: order, orderId: order.id });
         } catch {
           alert("ההזמנה לא נמצאה");
         }
@@ -257,43 +317,59 @@ export function StoreProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // A product set's own page (/סט/<name>) — the set's name rides in pid.
-  const openSet = useCallback((name) => {
-    setState({ screen: "set", pid: name });
-    scrollTop();
-  }, [setState]);
-
   const openProduct = useCallback((id) => {
     const p = ref.current.products.find((x) => String(x.id) === String(id));
-    setState({ screen: "product", pid: id, qty: 1, size: (p && p.sizes && p.sizes[0]) || "" });
+    const patch = { screen: "product", pid: id, qty: 1, size: (p && p.sizes && p.sizes[0]) || "" };
     scrollTop();
-  }, [setState]);
+    pushFor(patch);
+    setState(patch);
+  }, [setState, pushFor]);
 
-  // ---------- URL sync (real routing) ----------
-  // Keeps the address bar in step with {screen, catFilter, pid} for every
-  // content screen (see routes.js's pathFor — it returns null for cart/
-  // checkout/confirm/etc., which this effect then simply leaves alone, so it
-  // can never fight the Takbull payment-redirect flow above). Only pushes
-  // when the derived path actually differs from the current one, which is
-  // also what stops this from re-pushing right after a popstate-driven
-  // update below (that update already leaves location.pathname matching).
+  // A product set's own page (/סט/<name>) — the set's name rides in pid.
+  const openSet = useCallback((name) => {
+    const patch = { screen: "set", pid: name };
+    scrollTop();
+    pushFor(patch);
+    setState(patch);
+  }, [setState, pushFor]);
+
+  // ---------- URL normalisation ----------
+  // Pushing happens in go/openProduct/setCatFilter above. This only corrects
+  // the CURRENT entry in place (replaceState, never a new entry) — e.g. a
+  // direct visit to /מוצר/12 gains its name slug once products load. It
+  // compares DECODED paths: location.pathname is percent-encoded, so the old
+  // raw comparison never matched a Hebrew path and pushed a duplicate entry
+  // after every change — including right after Back, which trapped Back on
+  // the same page.
   useEffect(() => {
     if (typeof window === "undefined" || isAdminPath()) return;
-    const path = pathFor(state.screen, { catFilter: state.catFilter, pid: state.pid, products: state.products });
-    if (path && path !== window.location.pathname) {
-      window.history.pushState({}, "", path);
+    const path = pathFor(state.screen, { catFilter: state.catFilter, pid: state.pid, orderId: state.orderId, products: state.products });
+    if (path && path !== currentPath()) {
+      window.history.replaceState(window.history.state, "", path);
     }
-  }, [state.screen, state.catFilter, state.pid, state.products]);
+  }, [state.screen, state.catFilter, state.pid, state.orderId, state.products]);
 
-  // Browser back/forward: re-derive {screen, catFilter, pid} from whatever
-  // URL the user landed back on.
+  // Browser back/forward (incl. Android back and the iOS edge swipe):
+  // re-derive the screen from the URL, then return to the scroll offset
+  // that entry was left at.
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const onPopState = () => {
       if (isAdminPath()) return;
+      const y = onPopEntry();
       const parsed = parsePath(window.location.pathname);
-      if (parsed) setState((s) => ({ ...s, ...parsed, contentSaved: false }));
-      scrollTop();
+      if (parsed) {
+        setState((s) => {
+          const next = { ...parsed, contentSaved: false };
+          if (parsed.screen === "product" && String(parsed.pid) !== String(s.pid)) {
+            const p = s.products.find((x) => String(x.id) === String(parsed.pid));
+            Object.assign(next, { qty: 1, size: (p && p.sizes && p.sizes[0]) || "" });
+          }
+          if (parsed.screen === "status" && s.lastOrder?.id !== parsed.orderId) next.lastOrder = null;
+          return next;
+        });
+      }
+      restoreScroll(y);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -346,45 +422,47 @@ export function StoreProvider({ children }) {
     setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefillPhone: "" });
   }, [setState]);
 
-  /* ---------- phone "login" (no accounts/passwords — see customerLogout) ----------
-     The header's user icon, when nobody's identified yet, offers phone-number
-     entry instead of a text "הרשמה" button. If that phone already has a
-     coupons-table row (i.e. signed up before, on any device), we just load
-     their name/email/coupon back — otherwise we hand off to the exact same
-     sign-up popup/component the footer's button uses, prefilled with the
-     phone already typed, so there's only ever one registration flow. */
-  const openPhoneLogin = useCallback(() => {
-    setState({ phoneLoginOpen: true, phoneLoginError: "" });
-  }, [setState]);
+  /* ---------- customer account (Supabase Auth, email + password) ----------
+     One account = the same orders and favorites on every device. The dialog
+     (AuthDialog.jsx) is opened from the header / account page; these
+     actions do the real work and throw Hebrew messages the dialog shows. */
+  const openAuth = useCallback((mode = "login") => setState({ authDialog: mode }), [setState]);
+  const closeAuth = useCallback(() => setState({ authDialog: null }), [setState]);
 
-  const closePhoneLogin = useCallback(() => {
-    setState({ phoneLoginOpen: false, phoneLoginError: "" });
-  }, [setState]);
+  const afterSignIn = useCallback(async (user) => {
+    setState({ user, authDialog: null });
+    if (user && user.role !== "admin") await syncAccount(user);
+  }, [setState, syncAccount]);
 
-  const loginByPhone = useCallback(async (phone) => {
-    setState({ phoneLoginBusy: true, phoneLoginError: "" });
-    try {
-      const result = await store.signup.loginByPhone(phone);
-      if (result.found) {
-        // Phone login is unverified, so the server only returns a first name
-        // (never the email), and never a coupon — the sign-up coupon is a
-        // one-time offer shown only at registration. See login-by-phone.
-        saveCustomer(result.name);
-        setState({
-          customerName: result.name,
-          phoneLoginOpen: false,
-          phoneLoginBusy: false,
-        });
-      } else {
-        setState({ phoneLoginOpen: false, phoneLoginBusy: false });
-        openSignupPopup(false, phone);
-      }
-      return result;
-    } catch (e) {
-      setState({ phoneLoginBusy: false, phoneLoginError: e.message || "ההתחברות נכשלה" });
-      throw e;
-    }
-  }, [setState, openSignupPopup]);
+  const signIn = useCallback(async ({ email, password }) => {
+    const user = await store.auth.login({ email, password });
+    await afterSignIn(user);
+    return user;
+  }, [afterSignIn]);
+
+  const signUp = useCallback(async ({ name, email, password, phone }) => {
+    const { user, needsConfirmation } = await store.auth.signUp({ name, email, password, phone });
+    if (user) await afterSignIn(user);
+    return { needsConfirmation };
+  }, [afterSignIn]);
+
+  const requestPasswordReset = useCallback((email) => store.auth.requestPasswordReset(email), []);
+
+  const setNewPassword = useCallback(async (password) => {
+    const user = await store.auth.updatePassword(password);
+    await afterSignIn(user);
+  }, [afterSignIn]);
+
+  // Ends the session on this device. Favorites and the guest order list
+  // kept in this browser are cleared too — they're safe on the account, and
+  // the next person using a shared device shouldn't see them.
+  const customerLogout = useCallback(async () => {
+    try { await store.auth.logout(); } catch { /* ignore */ }
+    saveFavorites([]);
+    try { localStorage.removeItem("alfi:myOrders"); } catch { /* ignore */ }
+    setState({ user: null, accountOrders: null, favorites: [], myOrders: [] });
+    go("home");
+  }, [setState, go]);
 
   const goCheckout = useCallback(() => go("checkout"), [go]);
 
@@ -402,32 +480,17 @@ export function StoreProvider({ children }) {
   const submitSignup = useCallback(async ({ name, email, phone }) => {
     const { code, percent } = await store.signup.subscribe({ name, email, phone });
     saveCoupon(code, percent);
-    saveCustomer(name, email);
     try { localStorage.setItem("alfi:signupCouponClaimed", "1"); } catch { /* ignore */ }
-    setState({ couponCode: code, couponPercent: percent, couponError: "", customerName: name, customerEmail: email });
+    setState({ couponCode: code, couponPercent: percent, couponError: "" });
     return { code, percent };
   }, [setState]);
 
-  // Clears only the locally-remembered display name/email (the "שלום, X"
-  // greeting) — there's no real account/session to end, since this site is
-  // guest-checkout-only. The coupon already claimed and the local order
-  // history stay put; this just lets someone stop being greeted by name on
-  // a shared/public device.
-  const customerLogout = useCallback(() => {
-    try { localStorage.removeItem("alfi:customerName"); localStorage.removeItem("alfi:customerEmail"); } catch { /* ignore */ }
-    setState({ customerName: "", customerEmail: "" });
-  }, [setState]);
-
-  /* ---------- order history (local, no accounts — see loadMyOrders above) ---------- */
-  const viewOrder = useCallback(async (id) => {
-    try {
-      const order = await store.orders.getPublic(id);
-      setState({ lastOrder: order });
-      go("status");
-    } catch {
-      alert("ההזמנה לא נמצאה");
-    }
-  }, [setState, go]);
+  /* ---------- order history ---------- */
+  // Opens the order's own page (/הזמנה/<id>) right away; Status.jsx fetches
+  // the live order and shows its loading state meanwhile.
+  const viewOrder = useCallback((id) => {
+    go("status", undefined, { orderId: id, lastOrder: null });
+  }, [go]);
 
   const applyCoupon = useCallback(async (code) => {
     setState({ couponBusy: true, couponError: "" });
@@ -478,12 +541,13 @@ export function StoreProvider({ children }) {
 
   /* ---------- favorites (local only, no accounts — see loadFavorites) ---------- */
   const toggleFavorite = useCallback((id) => {
-    setState((s) => {
-      const has = s.favorites.includes(id);
-      const favorites = has ? s.favorites.filter((x) => x !== id) : [...s.favorites, id];
-      saveFavorites(favorites);
-      return { favorites };
-    });
+    const cur = ref.current.favorites;
+    const favorites = cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id];
+    saveFavorites(favorites);
+    setState({ favorites });
+    // Signed in: the account copy is what other devices see.
+    const u = ref.current.user;
+    if (u && u.role !== "admin") store.auth.updateMeta({ favorites }).catch((e) => console.warn("favorites sync failed", e));
   }, [setState]);
 
   /* ---------- admin login (hidden route only) ---------- */
@@ -515,7 +579,12 @@ export function StoreProvider({ children }) {
   /* ---------- product page ---------- */
   const setQty = useCallback((qty) => setState({ qty: Math.max(1, qty) }), [setState]);
   const setSize = useCallback((size) => setState({ size }), [setState]);
-  const setCatFilter = useCallback((catFilter) => setState({ catFilter }), [setState]);
+  // A category switch inside the catalog is its own history entry (Back
+  // returns to the previous category) and keeps the sort/material filters.
+  const setCatFilter = useCallback((catFilter) => {
+    pushFor({ catFilter }, { carryUi: true });
+    setState({ catFilter });
+  }, [setState, pushFor]);
 
   const addCurrent = useCallback(() => {
     const s = ref.current;
@@ -632,6 +701,11 @@ export function StoreProvider({ children }) {
     try {
       const { url, order } = await store.checkout.createSession({ items, shipping_address: addr, deliveryMethod, couponCode: s.couponCode || undefined });
       addMyOrder(order);
+      // Signed in: attach the new order to the account before leaving for
+      // the payment page, so it shows up on every device.
+      if (s.user && s.user.role !== "admin") {
+        try { await store.account.claimOrders([order.id]); } catch (e) { console.warn("claim order failed", e); }
+      }
       if (url) {
         try { localStorage.setItem("alfi:pendingOrder", JSON.stringify(order)); } catch { /* ignore */ }
         window.location.href = url;
@@ -650,7 +724,7 @@ export function StoreProvider({ children }) {
   /* ---------- order confirmation: fetch the real, live order state ---------- */
   const refreshOrder = useCallback(async (id) => {
     const order = await store.orders.getPublic(id);
-    setState((s) => ({ lastOrder: { ...s.lastOrder, ...order } }));
+    setState((s) => ({ lastOrder: String(s.lastOrder?.id) === String(order.id) ? { ...s.lastOrder, ...order } : order }));
     return order;
   }, [setState]);
 
@@ -674,6 +748,8 @@ export function StoreProvider({ children }) {
     ...state,
     BACKEND,
     isAdmin: !!(state.user && state.user.role === "admin"),
+    // The signed-in shopper (never the admin session).
+    customer: state.user && state.user.role !== "admin" ? state.user : null,
     cartCount: state.cart.reduce((a, c) => a + c.qty, 0),
     favoritesCount: state.favorites.length,
     // actions
@@ -685,7 +761,7 @@ export function StoreProvider({ children }) {
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
     setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
     openSignupPopup, closeSignupPopup, maybeOfferSignupPopup, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
-    openPhoneLogin, closePhoneLogin, loginByPhone,
+    openAuth, closeAuth, signIn, signUp, requestPasswordReset, setNewPassword, refreshAccountOrders, loadSiteData,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

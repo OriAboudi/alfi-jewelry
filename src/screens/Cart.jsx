@@ -9,9 +9,10 @@ import { DeliveryMethodPicker } from "../components/DeliveryMethodPicker.jsx";
 import { BundleNudge } from "../components/BundleNudge.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { SkeletonText, SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
 
 export function Cart() {
-  const { cart, products, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, deliveryMethod, setDeliveryMethod , addToCart, openProduct } = useStore();
+  const { cart, products, loaded, content: C, changeQty, removeItem, go, goCheckout, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, deliveryMethod, setDeliveryMethod , addToCart, openProduct } = useStore();
   useSeoTags({ noindex: true });
 
   const lines = cart.map((c) => {
@@ -23,6 +24,23 @@ export function Cart() {
   // What home delivery costs for this cart — shown on its option.
   const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
   const hasStockIssue = lines.some((l) => l.qty > Number(l.p.stock));
+
+  // Cart lines need the live catalog (names, prices, stock): until it
+  // arrives, show the page's shape — never lines with no name and ₪0.
+  if (!loaded && cart.length > 0) {
+    return (
+      <div className="r-container glass-card" style={css("max-width:1100px;margin:30px auto 64px;padding:40px var(--sp-5) 36px;")}>
+        <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>עגלת הקניות</h1>
+        <LoadingLabel />
+        {cart.slice(0, 3).map((c) => (
+          <div key={c.id + c.size} style={css("display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--c-line);")}>
+            <SkeletonBlock style="width:96px;height:114px;flex:none;border-radius:var(--r-md);" />
+            <div style={css("flex:1;")}><SkeletonText lines={3} width={["60%", "30%", "20%"]} height={14} /></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     // Same layout as Checkout: only the items column sits on the cream glass

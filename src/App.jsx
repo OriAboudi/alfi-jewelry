@@ -4,7 +4,7 @@ import { useStore } from "./context/StoreContext.jsx";
 import { Header } from "./components/Header.jsx";
 import { Footer } from "./components/Footer.jsx";
 import { SignupCouponPopup } from "./components/SignupCouponPopup.jsx";
-import { PhoneLoginPopup } from "./components/PhoneLoginPopup.jsx";
+import { AuthDialog } from "./components/AuthDialog.jsx";
 import { Home } from "./screens/Home.jsx";
 import { Catalog } from "./screens/Catalog.jsx";
 import { Product } from "./screens/Product.jsx";
@@ -68,7 +68,7 @@ const PAGE_BG =
   "min-height:100vh;font-weight:400;line-height:1.65;-webkit-font-smoothing:antialiased;";
 
 export default function App() {
-  const { screen, go } = useStore();
+  const { screen, go, loadError, loadSiteData } = useStore();
 
   // The admin login gate is a full-bleed page with its own layout (no
   // header/footer) and keeps the old plain background — admin is an
@@ -101,6 +101,14 @@ export default function App() {
           redesign.css has no width cap.) */}
       <div style={css("position:relative;z-index:1;")}>
         {showChrome && <Header />}
+        {/* The site data couldn't be fetched: say so plainly (and offer a
+            retry) instead of rendering an empty-looking shop. */}
+        {showChrome && loadError && (
+          <div role="alert" className="glass" style={css("margin:16px auto 0;max-width:720px;padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:14.5px;color:var(--c-ink);")}>
+            <span>לא הצלחנו לטעון את האתר. כדאי לבדוק את החיבור לאינטרנט.</span>
+            <button type="button" onClick={loadSiteData} className="btn btn-primary" style={css("padding:8px 16px;font-size:14px;flex:none;")}>לנסות שוב</button>
+          </div>
+        )}
         <main id="main-content" tabIndex={-1} style={css("outline:none;")}>
           <Suspense fallback={null}>
             <Screen />
@@ -108,7 +116,7 @@ export default function App() {
         </main>
         {showChrome && <Footer />}
         {showChrome && <SignupCouponPopup />}
-        {showChrome && <PhoneLoginPopup />}
+        {showChrome && <AuthDialog />}
         {showChrome && <AccessibilityMenu go={go} />}
       </div>
     </div>

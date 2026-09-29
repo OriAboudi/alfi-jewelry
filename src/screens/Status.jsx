@@ -7,20 +7,29 @@ import { OrderProgress } from "../components/OrderProgress.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 
+// /הזמנה/<id>: the order's own page. Always fetches the live order by the id
+// in the URL (a direct visit, Back/Forward, or a tap in "החשבון שלי"), so it
+// never depends on something left in memory from an earlier screen.
 export function Status() {
-  const { lastOrder: lo, go, refreshOrder } = useStore();
+  const { lastOrder, orderId, go, refreshOrder } = useStore();
   useSeoTags({ noindex: true });
-  const [loading, setLoading] = useState(!!lo?.id);
+  const id = orderId || lastOrder?.id || null;
+  const lo = lastOrder && String(lastOrder.id) === String(id) ? lastOrder : null;
+  const [loading, setLoading] = useState(!!id);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
-    if (!lo?.id) { setLoading(false); return; }
+    if (!id) { setLoading(false); return undefined; }
     let cancelled = false;
-    refreshOrder(lo.id).catch(() => {}).finally(() => { if (!cancelled) setLoading(false); });
+    setLoading(true); setNotFound(false);
+    refreshOrder(id)
+      .catch(() => { if (!cancelled) setNotFound(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lo?.id]);
+  }, [id]);
 
-  const number = lo ? lo.number : "#ALF‑2418";
+  const number = lo ? lo.number : "";
   const addr = lo?.shipping_address || {};
   const fullName = [addr.first, addr.last].filter(Boolean).join(" ") || "—";
   const items = Array.isArray(lo?.items) ? lo.items : [];
@@ -30,13 +39,13 @@ export function Status() {
       <OrderBrandBanner />
       <div style={css("display:flex;justify-content:space-between;align-items:flex-end;margin:28px 0 8px;flex-wrap:wrap;gap:8px;")}>
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);")}>מעקב הזמנה</h1>
-        <span style={css("font-size:15px;color:var(--c-ink-mute);")}>הזמנה {number}</span>
+        {number && <span style={css("font-size:15px;color:var(--c-ink-mute);")}>הזמנה {number}</span>}
       </div>
       <p style={css("font-size:16px;color:var(--c-ink-soft);margin-bottom:var(--sp-6);")}>הנה היכן ההזמנה שלך נמצאת כרגע.</p>
 
-      {loading ? (
-        <div style={css("text-align:center;padding:40px;color:var(--c-ink-mute);")}>טוען…</div>
-      ) : !lo ? (
+      {loading && !lo ? (
+        <div role="status" style={css("text-align:center;padding:40px;color:var(--c-ink-mute);")}>טוען את ההזמנה…</div>
+      ) : !lo || notFound ? (
         <div style={css("text-align:center;padding:40px;color:var(--c-ink-mute);")}>ההזמנה לא נמצאה.</div>
       ) : (
         <>

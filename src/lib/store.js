@@ -43,7 +43,29 @@ export const SEED_COLLECTIONS = [
   { id: 3, title: "מתנות", subtitle: "לרגעים קטנים", image: "", description: "תכשיט שאומר הכל, גם בלי מילים. ארוז ומוכן למסירה." },
 ];
 
+// Business settings the storefront and the Edge Functions both need a value
+// for even before the admin ever saves them (shipping fee, deal size, …).
+// These are the ONLY content defaults the live site uses: marketing text and
+// images (hero, banners, story…) have exactly one source of truth — the
+// `content` row in Supabase — and screens show a loading skeleton until it
+// arrives instead of rendering a hardcoded version first.
+export const CONFIG_DEFAULTS = {
+  freeShipFrom: 500,
+  shipFee: 39,
+  pickupAddress: "דן 13, נהלל",
+  bundleSize: 3,
+  bundlePrice: 200,
+  lowStockThreshold: 5,
+  stockFineThreshold: 10,
+  signupCouponPercent: 5,
+  signupCouponEnabled: true,
+  signupPopupDelaySeconds: 10,
+};
+
+// Demo copy for the LOCAL (dev-only) backend's first run — never shown on
+// the live site (see CONFIG_DEFAULTS above).
 export const SEED_CONTENT = {
+  ...CONFIG_DEFAULTS,
   heroBadge: "❀ קולקציה חדשה",
   heroImage: "",
   heroImages: [],
@@ -85,16 +107,6 @@ export const SEED_CONTENT = {
   value3Text: "איכות אמיתית במחיר שאפשר לאהוב, בלי פשרות.",
   processTitle: "מהשרטוט למוצר המוגמר",
   processText: "כל קולקציה מתחילה בסקיצה, עוברת ליצירת אב‑טיפוס, ומגיעה אליכם רק אחרי בדיקה אישית. זה לוקח זמן — וזה בדיוק העניין.",
-  freeShipFrom: 500,
-  shipFee: 39,
-  pickupAddress: "דן 13, נהלל",
-  bundleSize: 3,
-  bundlePrice: 200,
-  lowStockThreshold: 5,
-  stockFineThreshold: 10,
-  signupCouponPercent: 5,
-  signupCouponEnabled: true,
-  signupPopupDelaySeconds: 10,
 };
 
 // Default admin (LOCAL/dev backend only — never used in production, see BACKEND above).
@@ -104,6 +116,19 @@ const SEED_ADMIN = { name: "מנהל ALFI", email: "admin@alfi.co.il", role: "ad
 
 /* ---------- helpers ---------- */
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+// Supabase Auth errors arrive in English — show the shopper Hebrew.
+function authMessage(error, fallback) {
+  const m = String(error?.message || "").toLowerCase();
+  if (m.includes("invalid login")) return "אימייל או סיסמה שגויים";
+  if (m.includes("already registered") || m.includes("already been registered")) return "כבר קיים חשבון עם האימייל הזה, אפשר להתחבר";
+  if (m.includes("password should be") || m.includes("weak password")) return "הסיסמה צריכה להכיל לפחות 6 תווים";
+  if (m.includes("email not confirmed")) return "צריך לאשר את האימייל לפני ההתחברות, בדקי את תיבת הדואר";
+  if (m.includes("valid email") || m.includes("invalid email")) return "כתובת אימייל לא תקינה";
+  if (m.includes("rate limit") || m.includes("too many") || m.includes("security purposes")) return "יותר מדי ניסיונות, נסי שוב בעוד כמה דקות";
+  if (m.includes("same password") || m.includes("different from the old")) return "הסיסמה החדשה זהה לישנה";
+  return fallback;
+}
 const COUPON_CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 function generateCouponCode() {
   let s = "";
@@ -156,6 +181,19 @@ function seedLocal() {
   }
 }
 
+const localPub = (u) => ({ id: u.id, name: u.name, email: u.email, role: u.role, phone: u.phone || "", favorites: u.favorites || [] });
+const localAuthListeners = new Set();
+const localAuthEmit = (event) => localAuthListeners.forEach((cb) => setTimeout(() => cb(event), 0));
+function localUpdateUser(patch) {
+  const s = read(LS.session, null);
+  const users = read(LS.users, []);
+  const i = s ? users.findIndex((x) => x.id === s.id) : -1;
+  if (i < 0) throw new Error("לא מחוברת");
+  users[i] = { ...users[i], ...patch };
+  write(LS.users, users);
+  return localPub(users[i]);
+}
+
 const local = {
   auth: {
     async login({ email, password }) {
@@ -163,11 +201,49 @@ const local = {
       email = (email || "").trim().toLowerCase();
       const u = users.find((x) => x.email === email);
       if (!u || u.pass !== weakHash(password)) throw new Error("אימייל או סיסמה שגויים");
-      const pub = { id: u.id, name: u.name, email: u.email, role: u.role };
-      write(LS.session, pub); return pub;
+      const pub = localPub(u);
+      write(LS.session, pub); localAuthEmit("SIGNED_IN"); return pub;
     },
-    async logout() { localStorage.removeItem(LS.session); },
-    async current() { return read(LS.session, null); },
+    async signUp({ name, email, password, phone }) {
+      const users = read(LS.users, []);
+      email = (email || "").trim().toLowerCase();
+      if (users.some((x) => x.email === email)) throw new Error("כבר קיים חשבון עם האימייל הזה, אפשר להתחבר");
+      if (String(password || "").length < 6) throw new Error("הסיסמה צריכה להכיל לפחות 6 תווים");
+      const u = { id: uid(), name: String(name || "").trim(), email, phone: String(phone || "").trim(), pass: weakHash(password), role: "customer", favorites: [], created_at: new Date().toISOString() };
+      users.push(u); write(LS.users, users);
+      const pub = localPub(u);
+      write(LS.session, pub); localAuthEmit("SIGNED_IN");
+      return { user: pub, needsConfirmation: false };
+    },
+    async logout() { localStorage.removeItem(LS.session); localAuthEmit("SIGNED_OUT"); },
+    async current() {
+      const s = read(LS.session, null);
+      const u = s && read(LS.users, []).find((x) => x.id === s.id);
+      return u ? localPub(u) : null;
+    },
+    async requestPasswordReset() {
+      console.info("ALFI (local): password reset emails are not sent in local mode");
+    },
+    async updatePassword(password) { return localUpdateUser({ pass: weakHash(password) }); },
+    async updateMeta(patch) { return localUpdateUser(patch); },
+    onChange(cb) { localAuthListeners.add(cb); return () => localAuthListeners.delete(cb); },
+  },
+  account: {
+    async orders() {
+      const s = read(LS.session, null);
+      if (!s) return [];
+      return read(LS.orders, []).filter((o) => o.user_id === s.id && !o.is_test)
+        .map((o) => ({ id: o.id, number: o.number, created_at: o.created_at, status: o.status, payment_status: o.payment_status, total: o.total }));
+    },
+    async claimOrders(ids) {
+      const s = read(LS.session, null);
+      if (!s) return 0;
+      const want = new Set((ids || []).map(String));
+      let n = 0;
+      const orders = read(LS.orders, []).map((o) => (want.has(String(o.id)) && !o.user_id ? (n++, { ...o, user_id: s.id }) : o));
+      write(LS.orders, orders);
+      return n;
+    },
   },
   products: {
     // No params → full array (storefront usage). With params → paginated
@@ -348,7 +424,7 @@ const local = {
         shipping_address: pickup ? { ...shipping_address } : { city: "תל אביב", ...shipping_address },
         delivery_method: pickup ? "pickup" : "delivery",
         pickup_address: pickup ? (String(content.pickupAddress || "").trim() || "דן 13, נהלל") : null,
-        payment_status: "paid", payment_method: paymentMethod, user_id: null,
+        payment_status: "paid", payment_method: paymentMethod, user_id: read(LS.session, null)?.id || null,
       });
 
       // Local orders are "paid" immediately (no separate IPN step), so redeem
@@ -434,20 +510,78 @@ function makeSupabase() {
       const { data } = await sb.from("profiles").select("name, role").eq("id", user.id).single();
       if (data) { role = data.role || role; name = data.name || name; }
     } catch { /* profile row may not exist yet */ }
-    return { id: user.id, name, email: user.email, role };
+    const meta = user.user_metadata || {};
+    return { id: user.id, name, email: user.email, role, phone: meta.phone || "", favorites: Array.isArray(meta.favorites) ? meta.favorites : [] };
   }
 
   return {
     auth: {
       async login({ email, password }) {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) throw new Error(error.message || "אימייל או סיסמה שגויים");
+        const { data, error } = await sb.auth.signInWithPassword({ email: String(email || "").trim(), password });
+        if (error) throw new Error(authMessage(error, "אימייל או סיסמה שגויים"));
         return profileFor(data.user);
+      },
+      // Customer registration (Supabase Auth, email + password). The
+      // handle_new_user trigger creates the profiles row, always as
+      // role 'customer' (see production-hardening.sql).
+      async signUp({ name, email, password, phone }) {
+        const { data, error } = await sb.auth.signUp({
+          email: String(email || "").trim(),
+          password,
+          options: { data: { name: String(name || "").trim(), phone: String(phone || "").trim() } },
+        });
+        if (error) throw new Error(authMessage(error, "ההרשמה נכשלה"));
+        // Email confirmation on: the account exists but has no session yet.
+        if (!data.session) return { user: null, needsConfirmation: true };
+        return { user: await profileFor(data.user), needsConfirmation: false };
       },
       async logout() { await sb.auth.signOut(); },
       async current() {
         const { data } = await sb.auth.getUser();
         return profileFor(data?.user);
+      },
+      async requestPasswordReset(email) {
+        const redirectTo = typeof window !== "undefined" ? window.location.origin + "/" : undefined;
+        const { error } = await sb.auth.resetPasswordForEmail(String(email || "").trim(), { redirectTo });
+        if (error) throw new Error(authMessage(error, "שליחת הקישור נכשלה"));
+      },
+      async updatePassword(password) {
+        const { data, error } = await sb.auth.updateUser({ password });
+        if (error) throw new Error(authMessage(error, "עדכון הסיסמה נכשל"));
+        return profileFor(data.user);
+      },
+      // Small per-account data (favorites, phone) lives in the auth user's
+      // own metadata — the user can already edit it, so no table/policy is
+      // needed, and it follows the account to every device.
+      async updateMeta(patch) {
+        const { data, error } = await sb.auth.updateUser({ data: patch });
+        if (error) throw new Error(authMessage(error, "השמירה נכשלה"));
+        return profileFor(data.user);
+      },
+      // "SIGNED_IN" | "SIGNED_OUT" | "PASSWORD_RECOVERY" | … (other tabs too).
+      onChange(cb) {
+        const { data } = sb.auth.onAuthStateChange((event) => { setTimeout(() => cb(event), 0); });
+        return () => data.subscription.unsubscribe();
+      },
+    },
+    // Orders of the signed-in customer, from any device. Both are
+    // security-definer RPCs (supabase/add-customer-accounts.sql) that only
+    // ever act on auth.uid()'s own rows and return display-safe columns.
+    account: {
+      async orders() {
+        const { data, error } = await sb.rpc("my_orders");
+        if (error) throw error;
+        return data || [];
+      },
+      // Links orders this browser placed as a guest (their UUIDs — the same
+      // bearer capability the emailed tracking link already is) to the
+      // account. Never touches an order that already belongs to someone.
+      async claimOrders(ids) {
+        const clean = (ids || []).filter((id) => UUID_RE.test(String(id))).slice(0, 50);
+        if (!clean.length) return 0;
+        const { data, error } = await sb.rpc("claim_orders", { p_ids: clean });
+        if (error) throw error;
+        return data || 0;
       },
     },
     products: {
@@ -482,13 +616,16 @@ function makeSupabase() {
       async remove(id) { const { error } = await sb.from("collections").delete().eq("id", id); if (error) throw error; },
     },
     content: {
+      // Only business settings get a code default (CONFIG_DEFAULTS); every
+      // text/image field is exactly what the admin saved, or absent.
       async get() {
-        const { data } = await sb.from("content").select("data").eq("id", 1).single();
-        return { ...SEED_CONTENT, ...(data?.data || {}) };
+        const { data, error } = await sb.from("content").select("data").eq("id", 1).single();
+        if (error) throw error;
+        return { ...CONFIG_DEFAULTS, ...(data?.data || {}) };
       },
       async update(patch) {
         const { data: cur } = await sb.from("content").select("data").eq("id", 1).single();
-        const next = { ...SEED_CONTENT, ...(cur?.data || {}), ...patch };
+        const next = { ...CONFIG_DEFAULTS, ...(cur?.data || {}), ...patch };
         const { error } = await sb.from("content").upsert({ id: 1, data: next });
         if (error) throw error;
         return next;

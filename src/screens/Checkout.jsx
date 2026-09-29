@@ -8,6 +8,7 @@ import { CouponInput } from "../components/CouponInput.jsx";
 import { PrivacyConsent } from "../components/PrivacyConsent.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
+import { SkeletonText, SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
 import { pickupAddressOf } from "../lib/delivery.js";
 
 const fieldStyle = "width:100%;padding:12px 13px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);font-size:14.5px;background:#fff;";
@@ -20,7 +21,7 @@ const CONTACT_FIELDS = ["first", "last", "email", "phone"];
 const ADDRESS_FIELDS = ["address", "city"];
 
 export function Checkout() {
-  const { cart, products, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup, deliveryMethod } = useStore();
+  const { cart, products, loaded, customer, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup, deliveryMethod } = useStore();
   useSeoTags({ noindex: true });
 
   // "Before a purchase": offer the sign-up coupon while the shopper is
@@ -31,6 +32,19 @@ export function Checkout() {
   const [form, setForm] = useState({
     first: "", last: "", email: "", address: "", city: "", zip: "", phone: "",
   });
+  // Signed-in customer: start from the account details (only fills fields
+  // that are still empty, never overwrites what was typed).
+  useEffect(() => {
+    if (!customer) return;
+    const [first = "", ...rest] = String(customer.name || "").trim().split(/s+/);
+    setForm((f) => ({
+      ...f,
+      first: f.first || first,
+      last: f.last || rest.join(" "),
+      email: f.email || customer.email || "",
+      phone: f.phone || customer.phone || "",
+    }));
+  }, [customer?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const [touched, setTouched] = useState({});
   // Chosen in the cart (store.deliveryMethod); shown here, changed in the cart.
   const isPickup = deliveryMethod === "pickup";
@@ -92,6 +106,23 @@ export function Checkout() {
   );
 
   const disabled = checkoutBusy || lines.length === 0;
+
+  // Cart lines need the live catalog (names, prices, stock): until it
+  // arrives, show the page's shape — never lines with no name and ₪0.
+  if (!loaded && cart.length > 0) {
+    return (
+      <div className="r-container glass-card" style={css("max-width:1100px;margin:30px auto 64px;padding:40px var(--sp-5) 36px;")}>
+        <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>פרטי ההזמנה</h1>
+        <LoadingLabel />
+        {cart.slice(0, 3).map((c) => (
+          <div key={c.id + c.size} style={css("display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--c-line);")}>
+            <SkeletonBlock style="width:96px;height:114px;flex:none;border-radius:var(--r-md);" />
+            <div style={css("flex:1;")}><SkeletonText lines={3} width={["60%", "30%", "20%"]} height={14} /></div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     // Only the form column sits on the cream glass panel; the order summary

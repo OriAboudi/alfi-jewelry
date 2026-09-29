@@ -4,10 +4,11 @@ import { buildSets } from "../lib/pricing.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { SetCard } from "../components/SetCard.jsx";
+import { SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
 
 // /סטים — every product set as a stacked card; each opens its own page.
 export function Sets() {
-  const { products, content: C, go } = useStore();
+  const { products, content: C, go, loaded } = useStore();
   const sets = Object.values(buildSets(products, C));
 
   useSeoTags({
@@ -24,7 +25,9 @@ export function Sets() {
           תכשיטים שנבחרו להיענד יחד. כשכל פריטי הסט בעגלה, מחיר הסט מחושב אוטומטית.
         </p>
       </div>
-      {sets.length === 0 ? (
+      {!loaded ? (
+        <div><LoadingLabel /><SkeletonBlock style="height:320px;border-radius:var(--r-lg);" /></div>
+      ) : sets.length === 0 ? (
         <div style={css("text-align:center;padding:40px 0;color:var(--c-ink-mute);")}>
           עדיין אין סטים זמינים.{" "}
           <button type="button" onClick={() => go("catalog")} style={css("background:none;border:0;padding:0;font:inherit;color:var(--c-accent-dark);text-decoration:underline;cursor:pointer;")}>לכל התכשיטים</button>

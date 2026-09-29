@@ -13,15 +13,17 @@ export function slugify(str) {
     .replace(/["'/?#%\\]/g, "");
 }
 
-// Screens with a real, indexable URL. Everything else (cart, checkout,
-// confirm, payment-failed, status, my-orders, favorites, loading, admin,
-// admin-login) intentionally has no entry here — pathFor returns null for
-// them, which callers treat as "leave the current URL alone."
+// Screens with a real URL. Cart, favorites, account ("my-orders") and order
+// status have one too (noindex, not in the sitemap) so Back/Forward move
+// between them naturally. Checkout, confirm, payment-failed, loading, admin
+// and admin-login intentionally have none — pathFor returns null for them,
+// which callers treat as "leave the current URL alone" (so it can never
+// interfere with the Takbull payment-redirect flow).
 // Catalog filter value for "only the products in the bundle deal".
 export const DEAL_FILTER = "מבצע";
 
 export function pathFor(screen, ctx = {}) {
-  const { catFilter, pid, products } = ctx;
+  const { catFilter, pid, products, orderId } = ctx;
   switch (screen) {
     case "home":
       return "/";
@@ -53,6 +55,14 @@ export function pathFor(screen, ctx = {}) {
       return "/תנאי-שימוש";
     case "accessibility":
       return "/הצהרת-נגישות";
+    case "cart":
+      return "/עגלה";
+    case "favorites":
+      return "/מועדפים";
+    case "my-orders":
+      return "/החשבון-שלי";
+    case "status":
+      return orderId ? `/הזמנה/${orderId}` : null;
     default:
       return null;
   }
@@ -70,6 +80,9 @@ const STATIC_ROUTES = {
   "/מדיניות-פרטיות": { screen: "privacy" },
   "/תנאי-שימוש": { screen: "terms" },
   "/הצהרת-נגישות": { screen: "accessibility" },
+  "/עגלה": { screen: "cart" },
+  "/מועדפים": { screen: "favorites" },
+  "/החשבון-שלי": { screen: "my-orders" },
 };
 
 // pathname only — never location.search. Keeping this pure and search-blind
@@ -84,6 +97,9 @@ export function parsePath(pathname) {
 
   const setMatch = /^\/סט\/(.+?)\/?$/.exec(path);
   if (setMatch) return { screen: "set", pid: setMatch[1] };
+
+  const orderMatch = /^\/הזמנה\/([0-9a-f-]{36})$/i.exec(path);
+  if (orderMatch) return { screen: "status", orderId: orderMatch[1] };
 
   const segment = path.replace(/^\/+|\/+$/g, "");
   if (CAT_NAMES.includes(segment)) return { screen: "catalog", catFilter: segment };

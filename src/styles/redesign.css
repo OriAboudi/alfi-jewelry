@@ -199,7 +199,9 @@
 .rd-card-name { font-size: 17px; }
 .rd-card-meta { font-size: 12px; }
 .rd-card-price { font-size: 15px; }
-.rd-fav-btn { display: none; }
+/* Favorites heart: on every screen size (it used to be desktop-only, which
+   left phones with no way to add a favorite at all). */
+.rd-fav-btn { display: flex; }
 
 .rd-add-btn {
   height: 46px;
@@ -224,7 +226,6 @@
   .rd-card-name { font-size: 19px; }
   .rd-card-meta { font-size: 13px; }
   .rd-card-price { font-size: 16px; }
-  .rd-fav-btn { display: flex; }
   .rd-add-btn {
     height: 50px;
     font-size: 15px;
@@ -655,11 +656,6 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 
 /* The deal's products directly under the promo banner (same section). */
 .rd-promo-deal { margin-top: 18px; display: flex; flex-direction: column; }
-.rd-promo-deal-all {
-  align-self: center; display: inline-flex; align-items: center; gap: 10px;
-  margin-top: 4px; padding: 10px 0 4px; font-size: 15px; letter-spacing: .06em; color: var(--ink);
-  border-bottom: 1px solid var(--ink);
-}
 @media (min-width: 1024px) {
   .rd-promo-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; height: 540px; padding: 14px; box-sizing: border-box; }
   .rd-promo .rd-promo-img { height: auto; position: absolute; inset: 0; }

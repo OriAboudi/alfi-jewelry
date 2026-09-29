@@ -14,6 +14,7 @@ import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
 import { pathFor, DEAL_FILTER } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { Reveal } from "../components/Reveal.jsx";
+import { SkeletonText, SkeletonBlock, SkeletonCard, LoadingLabel } from "../components/Skeleton.jsx";
 // Fixed order for the homepage's 2x2 collections grid, per reference site.
 const HOME_TILE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים"];
 
@@ -25,14 +26,28 @@ const GoArrowIcon = () => (
 // "second"), with a glass section-header strip (title + "לכל התכשיטים"
 // link) above the rail. Desktop prev/next arrows are floating buttons on
 // the rail's own left/right edges (CardSlider itself), not in this header.
-function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products }) {
+function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products, loading }) {
+  // Until the catalog arrives: the slider's own frame with card skeletons,
+  // so the section doesn't pop into existence and push the page down.
+  if (loading) {
+    return (
+      <section className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
+        <div className="glass rd-slider-head" style={css("display:flex;align-items:center;")}>
+          <SkeletonText width="180px" height={26} />
+        </div>
+        <CardSlider>
+          {[0, 1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        </CardSlider>
+      </section>
+    );
+  }
   if (!products.length) return null;
   return (
     <Reveal as="section" className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
       <div className="glass rd-slider-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
         <div style={css("display:flex;align-items:baseline;gap:20px;")}>
           <h2 className="serif rd-slider-title" style={css("margin:0;font-weight:300;")}>
-            <span className="rd-only-desktop">{title}</span>
+            {title && <span className="rd-only-desktop">{title}</span>}
             <span className="rd-only-mobile">{mobileTitle}</span>
           </h2>
           <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); onCta(); }} style={css("cursor:pointer;font-size:15px;letter-spacing:.06em;border-bottom:1px solid var(--ink);padding:8px 0 2px;")}>לכל התכשיטים</a>
@@ -46,7 +61,7 @@ function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products }) {
 }
 
 export function Home() {
-  const { content: C, products, go, setCatFilter, openSignupPopup, openProduct } = useStore();
+  const { content: C, products, loaded, go, setCatFilter, openSignupPopup, openProduct } = useStore();
   const [bestSellers, setBestSellers] = React.useState([]);
 
   useSeoTags({
@@ -73,7 +88,10 @@ export function Home() {
   const cats = BASE_CATS.filter((c) => products.some((p) => p.category === c)).length
     ? BASE_CATS
     : Array.from(new Set(products.map((p) => p.category)));
-  const tileCats = HOME_TILE_CATS.filter((c) => cats.includes(c)).length ? HOME_TILE_CATS.filter((c) => cats.includes(c)) : cats.slice(0, 4);
+  const tileCatsLive = HOME_TILE_CATS.filter((c) => cats.includes(c)).length ? HOME_TILE_CATS.filter((c) => cats.includes(c)) : cats.slice(0, 4);
+  // Before products load the 4 fixed tiles still render (their names are
+  // site structure, not content) with skeleton photos.
+  const tileCats = loaded ? tileCatsLive : HOME_TILE_CATS;
 
   const featuredList = products.filter((p) => p.featured);
 
@@ -121,12 +139,28 @@ export function Home() {
       <section className="rd-hero" style={css("position:relative;")}>
         <HeroSlider images={heroImages} imagesMobile={heroImagesMobile}>
           <div className="rd-hero-panel" style={css("display:flex;flex-direction:column;align-items:flex-start;")}>
-            <h1 className="serif rd-hero-h1" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.authHeadline}</h1>
-            {C.authTagline && <p className="rd-hero-p" style={css("margin:0;color:var(--text-body);")}>{C.authTagline}</p>}
+            {/* Headline/tagline/CTA are admin content (Supabase): skeleton
+                until it arrives — never a hardcoded headline swapped out. */}
+            {!loaded ? (
+              <>
+                <LoadingLabel />
+                <h1 className="serif rd-hero-h1" style={css("margin:0;font-weight:300;width:100%;")}><SkeletonText lines={2} width={["92%", "64%"]} height={34} gap={14} /></h1>
+                <SkeletonText lines={2} width={["100%", "80%"]} height={15} />
+              </>
+            ) : (
+              <>
+                {C.authHeadline && <h1 className="serif rd-hero-h1" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.authHeadline}</h1>}
+                {C.authTagline && <p className="rd-hero-p" style={css("margin:0;color:var(--text-body);")}>{C.authTagline}</p>}
+              </>
+            )}
             <div className="rd-hero-actions" style={css("display:flex;flex-wrap:wrap;align-items:center;gap:12px 22px;width:100%;")}>
-              <button onClick={goCatalog} className="rd-btn rd-btn-outline" style={css("height:52px;padding:0 28px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:15px;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;")}>
-                {C.heroCtaLabel || "לצפייה בקולקציה"}<GoArrowIcon />
-              </button>
+              {!loaded ? (
+                <SkeletonBlock style="height:52px;width:210px;" />
+              ) : C.heroCtaLabel ? (
+                <button onClick={goCatalog} className="rd-btn rd-btn-outline" style={css("height:52px;padding:0 28px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:15px;letter-spacing:.06em;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;")}>
+                  {C.heroCtaLabel}<GoArrowIcon />
+                </button>
+              ) : null}
               {maxSalePct > 0 && (
                 <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); goCatalog(); }} className="rd-hero-sale">
                   <span className="rd-hero-sale-chip">מבצע</span>
@@ -144,7 +178,7 @@ export function Home() {
             {heroShop.length >= 3 && (
               <div className="rd-hero-shop">
                 <div className="rd-hero-shop-head">
-                  <span>{heroShopIsBest ? "הנמכרים ביותר" : (C.heroBadge || "נבחרות מהקולקציה")}</span>
+                  <span>{heroShopIsBest ? "הנמכרים ביותר" : "נבחרות מהקולקציה"}</span>
                   <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); goCatalog(); }}>לכל התכשיטים</a>
                 </div>
                 <ul className="rd-hero-shop-list">
@@ -167,7 +201,7 @@ export function Home() {
       </section>
 
       {/* FEATURED SLIDER */}
-      <ProductSlider title={C.featuredTitle || "נבחרים מהסדנה"} mobileTitle="נבחרים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider1} />
+      <ProductSlider title={C.featuredTitle} mobileTitle="נבחרים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider1} loading={!loaded} />
 
       {/* COLLECTIONS 2x2 */}
       <Reveal as="section" className="rd-section-pad" style={css("display:flex;flex-direction:column;gap:32px;")}>
@@ -182,7 +216,9 @@ export function Home() {
               <a key={c} href={pathFor("catalog", { catFilter: c })} onClick={(e) => { e.preventDefault(); goCat(c); }} onKeyDown={(e) => { if (e.key === " ") { e.preventDefault(); goCat(c); } }} tabIndex={0} className="rd-cat rd-cat-desktop glass-strong tap-target">
                 <div style={css("overflow:hidden;")}>
                   <div className="rd-img" style={css(`border-radius:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background-color:${GRAD_CARD};width:100%;height:100%;`)}>
-                    {img ? (
+                    {!loaded ? (
+                      <SkeletonBlock style="position:absolute;inset:0;" />
+                    ) : img ? (
                       <img src={img} alt={`${c} כסף 925`} loading="lazy" decoding="async" style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
                     ) : (
                       <Disc style="width:36%;aspect-ratio:1;" />
@@ -205,7 +241,9 @@ export function Home() {
             return (
               <a key={c} href={pathFor("catalog", { catFilter: c })} onClick={(e) => { e.preventDefault(); goCat(c); }} onKeyDown={(e) => { if (e.key === " ") { e.preventDefault(); goCat(c); } }} tabIndex={0} className="rd-cat-mobile glass-strong tap-target">
                 <div className="rd-tile" style={css(`border-radius:0;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background-color:${GRAD_CARD};`)}>
-                  {img ? (
+                  {!loaded ? (
+                    <SkeletonBlock style="position:absolute;inset:0;" />
+                  ) : img ? (
                     <img src={img} alt={`${c} כסף 925`} loading="lazy" decoding="async" style={css("width:100%;height:100%;object-fit:cover;object-position:center;")} />
                   ) : (
                     <Disc style="width:62%;aspect-ratio:1;" />
@@ -226,17 +264,29 @@ export function Home() {
           screen width, unlike the other sections. */}
       <Reveal as="section" className="rd-promo-section">
         <div className="rd-promo glass-strong rd-promo-box">
+          {/* Admin-managed photo only: skeleton while loading, a plain
+              neutral surface if none is set — never a stand-in painting. */}
           <div style={css("position:relative;overflow:hidden;")}>
-            <div
+            {!loaded ? <SkeletonBlock style="position:absolute;inset:0;" /> : <div
               className="rd-promo-img"
-              style={css(`position:absolute;inset:0;background-image:url("${C.banner3Image || "floral-bg.jpg"}");background-size:${C.banner3Image ? "cover" : "150%"};background-position:${C.banner3Image ? "center" : "70% 55%"};`)}
-            />
+              style={css(C.banner3Image ? `position:absolute;inset:0;background-image:url("${C.banner3Image}");background-size:cover;background-position:center;` : `position:absolute;inset:0;background-color:${GRAD_CARD};`)}
+            />}
           </div>
           <div className="rd-promo-text" style={css("display:flex;flex-direction:column;justify-content:center;")}>
             <span style={css("align-self:flex-start;height:34px;padding:0 16px;display:flex;align-items:center;background:var(--ink-fill);color:var(--cream);font-size:13px;letter-spacing:.2em;")}>מבצע</span>
-            <h2 className="serif rd-promo-h2" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.banner3Title || "3 תכשיטים ב־220 ₪"}</h2>
-            <p className="rd-promo-p" style={css("margin:0;color:var(--text-body);")}>{C.banner3Subtitle || "בוחרים כל שלושה תכשיטים ומשלמים 220 ₪ בלבד. [תנאי המבצע — אילו פריטים משתתפים ועד מתי]"}</p>
-            <button onClick={bundleProducts.length ? goDeal : goCatalog} className="rd-btn rd-btn-outline rd-promo-cta" style={css("align-self:flex-start;display:flex;align-items:center;gap:14px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:16px;letter-spacing:.08em;cursor:pointer;")}>{C.banner3CtaLabel || "לבחירת התכשיטים"}<GoArrowIcon /></button>
+            {!loaded ? (
+              <>
+                <SkeletonText width="80%" height={30} />
+                <SkeletonText lines={2} height={15} />
+                <SkeletonBlock style="height:50px;width:200px;" />
+              </>
+            ) : (
+              <>
+                {C.banner3Title && <h2 className="serif rd-promo-h2" style={css("margin:0;font-weight:300;color:var(--ink-deep);")}>{C.banner3Title}</h2>}
+                {C.banner3Subtitle && <p className="rd-promo-p" style={css("margin:0;color:var(--text-body);")}>{C.banner3Subtitle}</p>}
+                {C.banner3CtaLabel && <button onClick={bundleProducts.length ? goDeal : goCatalog} className="rd-btn rd-btn-outline rd-promo-cta" style={css("align-self:flex-start;display:flex;align-items:center;gap:14px;background:transparent;color:var(--ink);border:1px solid var(--ink);font:inherit;font-size:16px;letter-spacing:.08em;cursor:pointer;")}>{C.banner3CtaLabel}<GoArrowIcon /></button>}
+              </>
+            )}
           </div>
         </div>
         {/* The deal's products belong to the banner itself: one section, no
@@ -246,9 +296,6 @@ export function Home() {
             <CardSlider>
               {bundleProducts.map((p, i) => <RedesignProductCard key={p.id} product={p} index={i} />)}
             </CardSlider>
-            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} onClick={(e) => { e.preventDefault(); goDeal(); }} className="rd-promo-deal-all">
-              לכל התכשיטים במבצע ({bundleProducts.length})<GoArrowIcon />
-            </a>
           </div>
         )}
       </Reveal>
@@ -267,7 +314,7 @@ export function Home() {
       )}
 
       {/* SECOND SLIDER — best sellers */}
-      <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} />
+      <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} loading={!loaded} />
 
       {/* BRAND STORY PANEL */}
       <Reveal as="section" className="rd-section-pad-b">
@@ -277,7 +324,7 @@ export function Home() {
             <a href={pathFor("story")} onClick={(e) => { e.preventDefault(); go("story"); }} style={css("align-self:flex-start;cursor:pointer;font-size:15px;border-bottom:1px solid var(--ink);padding:10px 0 4px;")}>לסיפור המלא</a>
           </div>
           <div style={css("display:flex;flex-direction:column;gap:28px;")}>
-            <p className="rd-story-p" style={css("margin:0;color:var(--text-body);")}>{C.aboutText}</p>
+            {!loaded ? <SkeletonText lines={3} height={15} /> : C.aboutText && <p className="rd-story-p" style={css("margin:0;color:var(--text-body);")}>{C.aboutText}</p>}
             <div style={css("font-size:15px;color:var(--ink);border-top:1px solid #D9CACD;padding-top:28px;")}>כסף סטרלינג 925 · עיצוב מוקפד · מחיר הוגן</div>
           </div>
         </div>

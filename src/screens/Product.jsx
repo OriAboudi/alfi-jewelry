@@ -10,14 +10,20 @@ import { CardSlider } from "../components/CardSlider.jsx";
 import { pathFor } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { Reveal } from "../components/Reveal.jsx";
+import { SkeletonText, SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
+import { hasInAppBack } from "../lib/navMemory.js";
 
 export function Product() {
-  const { products, content: C, pid, qty, size, setQty, setSize, addCurrent, go, setCatFilter, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
+  const { products, loaded, favorites, toggleFavorite, content: C, pid, qty, size, setQty, setSize, addCurrent, go, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
   const [showCouponField, setShowCouponField] = useState(false);
   const [couponInput, setCouponInput] = useState("");
 
-  const sel = products.find((p) => String(p.id) === String(pid)) || products[0] || {};
-  const related = products.filter((p) => p.id !== sel.id).slice(0, 4);
+  // Exactly the product in the URL — never "the first product" as a
+  // stand-in while loading or when the id doesn't exist.
+  const found = products.find((p) => String(p.id) === String(pid)) || null;
+  const sel = found || {};
+  // Same category first, so "אולי יתאים גם" stays on topic.
+  const related = [...products.filter((p) => p.id !== sel.id && p.category === sel.category), ...products.filter((p) => p.id !== sel.id && p.category !== sel.category)].slice(0, 4);
   const moreProducts = products.filter((p) => p.id !== sel.id && !related.some((r) => r.id === p.id)).slice(0, 8);
   const sizes = sel.sizes || [];
   const images = sel.images && sel.images.length ? sel.images : (sel.image ? [sel.image] : []);
@@ -73,11 +79,63 @@ export function Product() {
 
   const addToCartLabel = outOfStock ? "אזל במלאי" : "הוספה לעגלה";
 
+  // Came here from inside the site (category, search, home…): a real Back
+  // that returns to the same list at the same scroll position.
+  const canBack = hasInAppBack();
+  const backBar = (
+    <nav aria-label="ניווט" style={css("display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:var(--sp-4);")}>
+      {canBack && (
+        <button type="button" onClick={() => window.history.back()} className="back-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+          חזרה
+        </button>
+      )}
+      {found && (
+        <div style={css("font-size:13px;color:var(--c-ink-faint);display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:var(--tap);")}>
+          <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }} style={css("cursor:pointer;")}>בית</a>
+          <span aria-hidden="true">/</span>
+          <a href={pathFor("catalog", { catFilter: sel.category })} onClick={(e) => { e.preventDefault(); go("catalog", sel.category); }} style={css("cursor:pointer;")}>{sel.category}</a>
+          <span aria-hidden="true" className="rd-only-desktop">/</span>
+          <span className="rd-only-desktop" aria-current="page">{sel.name}</span>
+        </div>
+      )}
+    </nav>
+  );
+
+  if (!loaded || !found) {
+    return (
+      <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:26px var(--sp-5) 64px;")}>
+        {backBar}
+        {!loaded ? (
+          <div className="r-product-grid" style={css("display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:start;")}>
+            <LoadingLabel text="טוען את המוצר…" />
+            <SkeletonBlock style="aspect-ratio:1;" />
+            <div>
+              <SkeletonText width="70%" height={32} />
+              <div style={css("height:14px;")} />
+              <SkeletonText width="35%" height={14} />
+              <div style={css("height:22px;")} />
+              <SkeletonText width="25%" height={24} />
+              <div style={css("height:22px;")} />
+              <SkeletonText lines={3} height={14} />
+              <div style={css("height:26px;")} />
+              <SkeletonBlock style="height:52px;border-radius:var(--r-md);" />
+            </div>
+          </div>
+        ) : (
+          <div style={css("text-align:center;padding:60px 0;")}>
+            <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:12px;")}>המוצר לא נמצא</h1>
+            <p style={css("color:var(--c-ink-mute);margin-bottom:24px;")}>ייתכן שהוא כבר לא זמין באתר.</p>
+            <button type="button" onClick={() => go("catalog")} className="btn btn-primary">לכל התכשיטים</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:26px var(--sp-5) 64px;")}>
-      <div style={css("font-size:13px;color:var(--c-ink-faint);margin-bottom:var(--sp-4);")}>
-        <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); go("catalog"); }} style={css("cursor:pointer;")}>קטלוג</a> &nbsp;/&nbsp; <a href={pathFor("catalog", { catFilter: sel.category })} onClick={(e) => { e.preventDefault(); go("catalog", sel.category); }} style={css("cursor:pointer;")}>{sel.category}</a> &nbsp;/&nbsp; {sel.name}
-      </div>
+      {backBar}
       <div className="r-product-grid" style={css("display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:start;")}>
         <div>
           <div className="r-product-photo" style={css("position:relative;aspect-ratio:1;margin-bottom:10px;overflow:hidden;")}>
@@ -183,6 +241,16 @@ export function Product() {
               <button onClick={() => setQty(Math.min(qty + 1, Number(sel.stock) || 0))} disabled={qty >= Number(sel.stock)} className="tap-target" style={css(`width:46px;border:none;background:#fff;font-size:20px;cursor:pointer;color:var(--c-ink-mute);opacity:${qty >= Number(sel.stock) ? .4 : 1};`)}>+</button>
             </div>
             <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css(`flex:1;font-size:16px;${outOfStock ? "background:var(--c-danger-bg);color:var(--c-danger);" : ""}`)}>{addToCartLabel}</button>
+            <button
+              type="button"
+              onClick={() => toggleFavorite(sel.id)}
+              aria-pressed={favorites.includes(sel.id)}
+              aria-label={favorites.includes(sel.id) ? "הסרה מהמועדפים" : "הוספה למועדפים"}
+              className="tap-target"
+              style={css(`flex:none;width:52px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;color:${favorites.includes(sel.id) ? "var(--c-danger)" : "var(--c-ink)"};`)}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill={favorites.includes(sel.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z" /></svg>
+            </button>
           </div>
 
           <div style={css("display:flex;flex-wrap:wrap;gap:6px 16px;")}>
