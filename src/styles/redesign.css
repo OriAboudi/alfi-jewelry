@@ -636,8 +636,6 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 .rd-setpage-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 0; border: 0; background: none; font: inherit; text-align: right; cursor: pointer; min-height: var(--tap); }
 .rd-setpage-row-img { flex: none; width: 52px; height: 52px; background: #fff; overflow: hidden; display: block; }
 .rd-setpage-row-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.rd-setpage-size { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--c-ink-mute); flex: none; }
-.rd-setpage-size select { font: inherit; font-size: 14px; min-height: 40px; padding: 4px 8px; border: 1px solid var(--c-line-strong); background: #fff; color: var(--ink); }
 .rd-setpage-piece { padding: 16px 18px; background: rgba(255, 255, 255, .55); animation: rd-piece-in .35s ease both; }
 @keyframes rd-piece-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .rd-setpage-other { display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; color: var(--ink); text-decoration: none; font-size: 15px; line-height: 1.4; }

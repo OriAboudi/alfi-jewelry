@@ -74,8 +74,7 @@ function SetDeck({ members, active, onSelect, setName }) {
 /**
  * /סט/<name> — a product set on its own page, laid out like a product page:
  * the pieces as a card deck + thumbnails on one side; on the other the set
- * name, the set price vs. buying separately, every piece with its size
- * picker, the selected piece's own description, and one "add the set"
+ * name, the set price vs. buying separately, every piece, the selected piece's own description, and one "add the set"
  * button.
  */
 export function SetPage() {
@@ -86,12 +85,12 @@ export function SetPage() {
   const members = set ? set.members : [];
 
   const [active, setActive] = useState(0);
-  const [sizes, setSizes] = useState({});
   const [added, setAdded] = useState(false);
   useEffect(() => { setActive(0); setAdded(false); }, [set?.name]);
 
   const piece = members[active] || members[0] || null;
-  const sizeOf = (m) => sizes[m.id] || (m.sizes && m.sizes[0]) || "יחיד";
+  // No size choice on the set page: each piece goes in with its default size.
+  const sizeOf = (m) => (m.sizes && m.sizes[0]) || "יחיד";
   const inStock = members.length > 0 && members.every((m) => Number(m.stock) > 0);
   const save = set ? set.regular - set.price : 0;
   const pct = set && set.regular > 0 ? Math.round((save / set.regular) * 100) : 0;
@@ -130,7 +129,7 @@ export function SetPage() {
 
   const [openInfo, setOpenInfo] = useState(null);
   const INFO = [
-    { key: "how", title: "איך עובד מחיר הסט", body: `כשכל ${members.length} פריטי הסט בעגלה, מחיר הסט מחושב אוטומטית בעגלה ובתשלום. אפשר לבחור מידה לכל פריט.` },
+    { key: "how", title: "איך עובד מחיר הסט", body: `כשכל ${members.length} פריטי הסט בעגלה, מחיר הסט מחושב אוטומטית בעגלה ובתשלום.` },
     { key: "shipping", title: "משלוח והחזרות", body: `משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)} (אחרת ${fmt(shipFee)}). ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית.` },
     { key: "care", title: "טיפוח התכשיט", body: "יש להימנע ממגע עם מים, בשמים וכימיקלים. לאחסן בנפרד, בשקית סגורה, הרחק מאור שמש ישיר." },
   ];
@@ -204,7 +203,6 @@ export function SetPage() {
           <ul className="rd-setpage-list">
             {members.map((m, i) => {
               const out = Number(m.stock) <= 0;
-              const hasSizes = (m.sizes || []).length > 1;
               return (
                 <li key={m.id} className={i === active ? "is-on" : undefined}>
                   <button type="button" onClick={() => setActive(i)} className="rd-setpage-row" aria-pressed={i === active}>
@@ -214,14 +212,6 @@ export function SetPage() {
                       <span style={css(`font-size:12.5px;color:${out ? "var(--c-danger)" : "var(--c-ink-mute)"};`)}>{out ? "אזל במלאי" : `בנפרד ${fmt(m.price)}`}</span>
                     </span>
                   </button>
-                  {hasSizes && (
-                    <label className="rd-setpage-size">
-                      <span>מידה</span>
-                      <select value={sizeOf(m)} onChange={(e) => setSizes((s) => ({ ...s, [m.id]: e.target.value }))}>
-                        {m.sizes.map((z) => <option key={z} value={z}>{z}</option>)}
-                      </select>
-                    </label>
-                  )}
                 </li>
               );
             })}
