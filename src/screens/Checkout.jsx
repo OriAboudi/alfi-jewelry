@@ -21,13 +21,8 @@ const CONTACT_FIELDS = ["first", "last", "email", "phone"];
 const ADDRESS_FIELDS = ["address", "city"];
 
 export function Checkout() {
-  const { cart, products, loaded, customer, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, maybeOfferSignupPopup, deliveryMethod } = useStore();
+  const { cart, products, loaded, customer, content: C, go, startCheckout, checkoutBusy, BACKEND, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon, offerSignupBeforePayment, deliveryMethod } = useStore();
   useSeoTags({ noindex: true });
-
-  // "Before a purchase": offer the sign-up coupon while the shopper is
-  // filling in their order details (name/address/email), not by blocking
-  // navigation from the cart button.
-  useEffect(() => { maybeOfferSignupPopup(true); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [form, setForm] = useState({
     first: "", last: "", email: "", address: "", city: "", zip: "", phone: "",
@@ -81,7 +76,11 @@ export function Checkout() {
     if (!agreed) return;
     // Pickup orders carry no delivery address; the server records the
     // pickup address from the admin setting itself.
-    startCheckout(isPickup ? { ...form, address: "", city: "", zip: "" } : { ...form });
+    const pay = () => startCheckout(isPickup ? { ...form, address: "", city: "", zip: "" } : { ...form });
+    // A guest who can still get the sign-up coupon is offered it here, right
+    // before leaving for the payment page (pre-filled from this form);
+    // payment then continues from the pop-up. Everyone else pays now.
+    if (!offerSignupBeforePayment(pay, { name: `${form.first} ${form.last}`, email: form.email, phone: form.phone })) pay();
   };
 
   const field = (k, label, opts = {}) => (

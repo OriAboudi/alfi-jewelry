@@ -16,7 +16,7 @@ const REQUIRED = ["name", "email", "phone"];
  * around payment or to someone who already ordered).
  */
 export function SignupCouponPopup() {
-  const { signupPopupOpen, signupPopupPendingCheckout, signupPopupPrefillPhone, content: C, loaded, submitSignup, closeSignupPopup, switchToSignIn } = useStore();
+  const { signupPopupOpen, signupPopupPendingCheckout: atCheckout, signupPopupPrefill, content: C, loaded, submitSignup, closeSignupPopup, continueFromSignupPopup, switchToSignIn } = useStore();
   const [imagesReady, setImagesReady] = useState(false);
   useEffect(() => {
     if (!signupPopupOpen || imagesReady) return undefined;
@@ -39,11 +39,17 @@ export function SignupCouponPopup() {
   const [agreed, setAgreed] = useState(false);
   const [agreeError, setAgreeError] = useState("");
 
+  // At checkout the details are already typed in the order form: carry them
+  // over (only into empty fields), so taking the offer is one tap.
   useEffect(() => {
-    if (signupPopupOpen && signupPopupPrefillPhone) {
-      setForm((f) => ({ ...f, phone: formatIsraeliPhone(signupPopupPrefillPhone) }));
-    }
-  }, [signupPopupOpen, signupPopupPrefillPhone]);
+    if (!signupPopupOpen || !signupPopupPrefill) return;
+    const p = signupPopupPrefill;
+    setForm((f) => ({
+      name: f.name || String(p.name || "").trim(),
+      email: f.email || String(p.email || "").trim(),
+      phone: f.phone || (p.phone ? formatIsraeliPhone(p.phone) : ""),
+    }));
+  }, [signupPopupOpen, signupPopupPrefill]);
 
   const panelRef = useDialog(visible, closeSignupPopup);
 
@@ -122,14 +128,14 @@ export function SignupCouponPopup() {
           <button type="button" onClick={copyCode} className="tap-target" style={css("width:100%;padding:10px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:transparent;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:10px;color:var(--c-ink);")}>
             {copied ? "✓ הועתק" : "העתקת הקוד"}
           </button>
-          <button type="button" onClick={closeSignupPopup} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;")}>
-            {signupPopupPendingCheckout ? "המשך לתשלום" : "המשך בקניות"}
+          <button type="button" onClick={atCheckout ? continueFromSignupPopup : closeSignupPopup} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;")}>
+            {atCheckout ? "המשך לתשלום עם ההנחה" : "המשך בקניות"}
           </button>
         </>
       ) : (
         <form onSubmit={submit} noValidate>
-          <h2 id="signup-title" style={css(brandTitle)}>{percent}% הנחה על ההזמנה הראשונה</h2>
-          <p style={css(brandLead)}>הצטרפי ל‑ALFI וקבלי קוד הנחה מיד, גם למייל.</p>
+          <h2 id="signup-title" style={css(brandTitle)}>{atCheckout ? `רגע לפני התשלום: ${percent}% הנחה` : `${percent}% הנחה על ההזמנה הראשונה`}</h2>
+          <p style={css(brandLead)}>{atCheckout ? "הצטרפי ל‑ALFI וההנחה תחול על ההזמנה הזו, מיד." : "הצטרפי ל‑ALFI וקבלי קוד הנחה מיד, גם למייל."}</p>
           <div style={css("display:flex;flex-direction:column;gap:10px;margin-bottom:12px;")}>
             {field("name", "שם מלא", { autoComplete: "name" })}
             {field("email", "אימייל", { type: "email", inputMode: "email", placeholder: "example@mail.com", autoComplete: "email", ltr: true })}
@@ -140,10 +146,10 @@ export function SignupCouponPopup() {
           </div>
           {error && <div role="alert" style={css("color:var(--c-danger);font-size:13px;margin-bottom:10px;")}>{error}</div>}
           <button type="submit" disabled={busy} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;margin-bottom:4px;")}>
-            {busy ? "רגע…" : "קבלת קוד ההנחה"}
+            {busy ? "רגע…" : atCheckout ? "קבלת ההנחה" : "קבלת קוד ההנחה"}
           </button>
-          <button type="button" onClick={closeSignupPopup} style={css(brandQuiet)}>
-            {signupPopupPendingCheckout ? "להמשיך בלי קופון" : "אולי מאוחר יותר"}
+          <button type="button" onClick={atCheckout ? continueFromSignupPopup : closeSignupPopup} style={css(brandQuiet)}>
+            {atCheckout ? "להמשיך לתשלום בלי הנחה" : "אולי מאוחר יותר"}
           </button>
         </form>
       )}

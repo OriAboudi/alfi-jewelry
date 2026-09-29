@@ -170,7 +170,7 @@ export function StoreProvider({ children }) {
       couponBusy: false,
       signupPopupOpen: false,
       signupPopupPendingCheckout: false,
-      signupPopupPrefillPhone: "",
+      signupPopupPrefill: null, // { name, email, phone } from the checkout form
       myOrders: loadMyOrders(),
     };
   });
@@ -413,33 +413,62 @@ export function StoreProvider({ children }) {
   }, [setState, go]);
 
   /* ---------- signup pop-up + coupon ---------- */
-  // When the pop-up may open by itself: never before the session check
-  // finished, never over the sign-in dialog, and not on the pages around
-  // payment and the account (NO_SIGNUP_POPUP_SCREENS). The checkout page
-  // offers it itself (atCheckout), once, while the details are filled in.
-  // Who may get it at all: signupCouponEligible (module level).
+  // It opens by itself at exactly two moments, only for a visitor who may
+  // get the coupon at all (signupCouponEligible, module level):
+  //  1. 10s into the visit (content.signupPopupDelaySeconds) — unless the
+  //     visitor already opened sign-in during this visit, and never on the
+  //     pages around payment and the account (NO_SIGNUP_POPUP_SCREENS);
+  //  2. on the checkout's pay button, right before leaving for the payment
+  //     page (offerSignupBeforePayment) — once per visit.
+  // Never before the session check finished or over the sign-in dialog.
+  const authOpenedRef = useRef(false);
+  const checkoutOfferedRef = useRef(false);
+  const payAfterSignupRef = useRef(null);
+
   const shouldOfferSignupPopup = useCallback((atCheckout = false) => {
     const s = ref.current;
     if (typeof window === "undefined" || isAdminPath()) return false;
     if (!s.authReady || s.authDialog || s.signupPopupOpen) return false;
-    if (!atCheckout && NO_SIGNUP_POPUP_SCREENS.has(s.screen)) return false;
+    if (!atCheckout && (authOpenedRef.current || NO_SIGNUP_POPUP_SCREENS.has(s.screen))) return false;
     return signupCouponEligible(s);
   }, []);
 
   // Explicit "הרשמה" clicks: open unless the visitor is signed in.
-  const openSignupPopup = useCallback((pendingCheckout = false, prefillPhone = "") => {
+  // prefill: { name, email, phone } already typed elsewhere (checkout form).
+  const openSignupPopup = useCallback((pendingCheckout = false, prefill = null) => {
     if (ref.current.user) return;
-    setState({ signupPopupOpen: true, authDialog: null, signupPopupPendingCheckout: pendingCheckout, signupPopupPrefillPhone: prefillPhone });
+    setState({ signupPopupOpen: true, authDialog: null, signupPopupPendingCheckout: pendingCheckout, signupPopupPrefill: prefill });
   }, [setState]);
 
-  // The 10s-browsing timer and the checkout page's own trigger both funnel
-  // through here.
-  const maybeOfferSignupPopup = useCallback((pendingCheckout = false) => {
-    if (shouldOfferSignupPopup(pendingCheckout)) openSignupPopup(pendingCheckout);
+  // The 10s-browsing timer.
+  const maybeOfferSignupPopup = useCallback(() => {
+    if (shouldOfferSignupPopup()) openSignupPopup(false);
   }, [shouldOfferSignupPopup, openSignupPopup]);
 
+  // The pay button: returns true when the offer is shown — payment then
+  // continues from the pop-up (continueFromSignupPopup), with the new
+  // coupon applied if the shopper took it. Returns false to pay right away.
+  const offerSignupBeforePayment = useCallback((proceed, prefill) => {
+    if (checkoutOfferedRef.current || !shouldOfferSignupPopup(true)) return false;
+    checkoutOfferedRef.current = true;
+    payAfterSignupRef.current = proceed;
+    openSignupPopup(true, prefill);
+    return true;
+  }, [shouldOfferSignupPopup, openSignupPopup]);
+
+  // ×, Escape, backdrop: just close (at checkout: back to the form, no
+  // surprise redirect — the pay button then goes straight to payment).
   const closeSignupPopup = useCallback(() => {
-    setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefillPhone: "" });
+    payAfterSignupRef.current = null;
+    setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefill: null });
+  }, [setState]);
+
+  // "המשך לתשלום" / "להמשיך בלי קופון": close and carry on to payment.
+  const continueFromSignupPopup = useCallback(() => {
+    const proceed = payAfterSignupRef.current;
+    payAfterSignupRef.current = null;
+    setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefill: null });
+    if (proceed) proceed();
   }, [setState]);
 
   /* ---------- customer account (Supabase Auth, emailed one-time code) -----
@@ -448,9 +477,18 @@ export function StoreProvider({ children }) {
      actions do the real work and throw Hebrew messages the dialog shows. */
   // Only one of the two pop-ups is ever open: opening sign-in closes the
   // coupon pop-up, and each links to the other.
-  const openAuth = useCallback(() => setState({ authDialog: "login", signupPopupOpen: false }), [setState]);
+  // Opening sign-in also means the 10s coupon pop-up won't open this visit.
+  const openAuth = useCallback(() => {
+    authOpenedRef.current = true;
+    payAfterSignupRef.current = null;
+    setState({ authDialog: "login", signupPopupOpen: false });
+  }, [setState]);
   const closeAuth = useCallback(() => setState({ authDialog: null }), [setState]);
-  const switchToSignIn = useCallback(() => setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, authDialog: "login" }), [setState]);
+  const switchToSignIn = useCallback(() => {
+    authOpenedRef.current = true;
+    payAfterSignupRef.current = null;
+    setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, authDialog: "login" });
+  }, [setState]);
   const switchToSignup = useCallback(() => setState({ authDialog: null, signupPopupOpen: true, signupPopupPendingCheckout: false }), [setState]);
 
   const afterSignIn = useCallback(async (user) => {
@@ -493,13 +531,13 @@ export function StoreProvider({ children }) {
 
   const goCheckout = useCallback(() => go("checkout"), [go]);
 
-  // Offer the pop-up after content.signupPopupDelaySeconds of browsing, once
-  // per the dismissal-cooldown/claimed rules above. The other trigger point
-  // (landing on the checkout/order-details page) is in Checkout.jsx itself.
+  // Trigger 1: content.signupPopupDelaySeconds (10s) into the visit, under
+  // the rules above. Trigger 2 is the checkout's pay button
+  // (offerSignupBeforePayment, called from Checkout.jsx).
   useEffect(() => {
     if (typeof window === "undefined" || isAdminPath()) return undefined;
     const delay = Number(ref.current.content?.signupPopupDelaySeconds || 10) * 1000;
-    const t = setTimeout(maybeOfferSignupPopup, delay);
+    const t = setTimeout(() => maybeOfferSignupPopup(), delay);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -790,7 +828,7 @@ export function StoreProvider({ children }) {
     setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
     setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
-    openSignupPopup, closeSignupPopup, maybeOfferSignupPopup, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
+    openSignupPopup, closeSignupPopup, continueFromSignupPopup, offerSignupBeforePayment, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
     openAuth, closeAuth, switchToSignIn, switchToSignup, requestLoginCode, verifyLoginCode, refreshAccountOrders, loadSiteData,
   };
 

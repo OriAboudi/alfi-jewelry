@@ -128,25 +128,41 @@ export async function sendSignupCouponEmail({ name, email, code, percent }: { na
 
 // The one-time sign-in code (login-code function). Returns the send result
 // so the caller can tell the shopper when the email couldn't go out.
+//
+// iPhone "From Mail" AutoFill (iOS 17+, Apple Mail + Safari): iOS offers the
+// code above the keyboard without opening the email. Its detection is
+// heuristic, so the code is stated the way it recognises most reliably —
+// "verification code" + the digits — in the subject, a hidden preheader
+// (first text in the HTML) and a plain-text part. The site's field has
+// autocomplete="one-time-code" and signs in as soon as 6 digits land.
 export async function sendLoginCodeEmail({ email, code, minutes }: { email: string; code: string; minutes: number }) {
   if (!RESEND_API_KEY) return { ok: false, error: "RESEND_API_KEY not set" };
+  const safe = escapeHtml(code);
+  const preheader = `<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:transparent;">Your ALFI verification code is ${safe} · קוד הכניסה שלך: ${safe}</div>`;
+  const text = [
+    `Your ALFI verification code is ${code}`,
+    `קוד הכניסה שלך ל-ALFI: ${code}`,
+    "",
+    `הקוד תקף ל-${Number(minutes)} דקות ולשימוש אחד. אם לא ביקשת להיכנס, אפשר להתעלם מהמייל.`,
+  ].join("\n");
   const html = emailShell(`
+    ${preheader}
     ${headingHtml("קוד הכניסה שלך")}
     ${paragraphHtml("כדי להיכנס לחשבון שלך ב‑ALFI, הזיני את הקוד הזה באתר:")}
     <div class="em-code" dir="ltr" style="background-color:${C.card};border:1.5px solid ${C.line};border-radius:12px;padding:18px;text-align:center;font-size:30px;font-weight:bold;letter-spacing:.35em;color:${C.ink};margin:20px 0;">${escapeHtml(code)}</div>
     ${paragraphHtml(`הקוד תקף ל‑${Number(minutes)} דקות ולשימוש אחד. אם לא ביקשת להיכנס, אפשר פשוט להתעלם מהמייל.`, `font-size:13px;color:${C.inkMute};`)}
   `);
-  return sendViaResend(email, `קוד הכניסה שלך ל‑ALFI: ${code}`, html);
+  return sendViaResend(email, `Your verification code: ${code} · קוד הכניסה שלך`, html, text);
 }
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<{ ok: boolean; error?: string }> {
+async function sendViaResend(to: string, subject: string, html: string, text?: string): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${RESEND_API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from: FROM_ADDRESS, to, subject: `ALFI · ${subject}`, html }),
+    body: JSON.stringify({ from: FROM_ADDRESS, to, subject: `ALFI · ${subject}`, html, ...(text ? { text } : {}) }),
   });
   if (!res.ok) {
     console.error("Resend send failed", res.status, await res.text());
