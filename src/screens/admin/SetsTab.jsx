@@ -24,6 +24,9 @@ export function SetsTab() {
   const [newName, setNewName] = React.useState("");
   const [newPick, setNewPick] = React.useState([]);
   const [newPrice, setNewPrice] = React.useState("");
+  const [query, setQuery] = React.useState("");       // filters the sets list
+  const [pickQuery, setPickQuery] = React.useState(""); // filters "סט חדש" pieces
+  const [addDraft, setAddDraft] = React.useState({});  // per-set "add a piece" field
 
   const sets = Object.values(products.reduce((acc, p) => {
     const n = String(p.set_name || "").trim();
@@ -31,6 +34,22 @@ export function SetsTab() {
     return acc;
   }, {})).sort((a, b) => a.name.localeCompare(b.name, "he"));
   const free = products.filter((p) => !String(p.set_name || "").trim());
+
+  // Search: a set matches by its own name or any piece's name; the new-set
+  // picker matches a piece by name, category or collection.
+  const norm = (s) => String(s || "").toLowerCase().replace(/["״׳']/g, "").trim();
+  const q = norm(query);
+  const shownSets = q ? sets.filter((s) => norm(s.name).includes(q) || s.members.some((m) => norm(m.name).includes(q))) : sets;
+  const pq = norm(pickQuery);
+  const shownFree = pq ? free.filter((p) => [p.name, p.category, p.collection].some((v) => norm(v).includes(pq))) : free;
+  // The "add a piece" field is a native searchable list (datalist): typing
+  // filters it; choosing an entry adds that piece.
+  const optionLabel = (p) => `${p.name} · ${fmt(p.price)}`;
+  const onAddInput = (name, value) => {
+    const hit = free.find((p) => optionLabel(p) === value);
+    if (hit) { setAddDraft((d) => ({ ...d, [name]: "" })); addMember(name, hit.id); }
+    else setAddDraft((d) => ({ ...d, [name]: value }));
+  };
 
   const flash = (t) => { setMsg(t); setTimeout(() => setMsg(""), 2500); };
   const run = async (key, fn, done) => {
@@ -77,7 +96,22 @@ export function SetsTab() {
         סט מוצג באתר (בעמוד הבית ובעמוד ״סטים״) כשיש בו לפחות 2 פריטים ומחיר. כשלקוח מכניס לעגלה את כל פריטי הסט, מחיר הסט מחושב אוטומטית בעגלה ובתשלום.
       </p>
 
-      {sets.map((s) => {
+      {sets.length > 0 && (
+        <div style={css("position:relative;max-width:420px;margin-bottom:18px;")}>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="חיפוש סט או פריט…"
+            aria-label="חיפוש סטים לפי שם הסט או שם פריט"
+            style={css(inp + "padding-left:38px;")}
+          />
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={css("position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--c-ink-mute);pointer-events:none;")}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          {q && <div role="status" style={css("font-size:12.5px;color:var(--c-ink-mute);margin-top:6px;")}>{shownSets.length ? `${shownSets.length} מתוך ${sets.length} סטים` : "לא נמצא סט מתאים"}</div>}
+        </div>
+      )}
+
+      {shownSets.map((s) => {
         const regular = s.members.reduce((a, m) => a + (Number(m.price) || 0), 0);
         const price = Number(prices[s.name]) || 0;
         const live = s.members.length >= 2 && price > 0;
@@ -103,10 +137,15 @@ export function SetsTab() {
                   <button type="button" onClick={() => removeMember(s.name, m.id)} disabled={!!busy} aria-label={`הסרת ${m.name} מהסט`} title="הסרה מהסט" style={css("width:30px;height:30px;border:none;border-radius:8px;background:var(--c-line-soft);cursor:pointer;color:var(--c-danger);")}>✕</button>
                 </div>
               ))}
-              <select value="" onChange={(e) => addMember(s.name, e.target.value)} disabled={!!busy || !free.length} aria-label="הוספת פריט לסט" style={css(inp + "width:auto;min-width:200px;cursor:pointer;")}>
-                <option value="">+ הוספת פריט…</option>
-                {free.map((p) => <option key={p.id} value={p.id}>{p.name} · {fmt(p.price)}</option>)}
-              </select>
+              <input
+                list="sets-free-products"
+                value={addDraft[s.name] || ""}
+                onChange={(e) => onAddInput(s.name, e.target.value)}
+                disabled={!!busy || !free.length}
+                placeholder={free.length ? "+ הוספת פריט (הקלידי לחיפוש)" : "אין פריטים פנויים"}
+                aria-label={`הוספת פריט לסט ${s.name}, הקלידי לחיפוש`}
+                style={css(inp + "width:auto;min-width:240px;")}
+              />
             </div>
 
             <div style={css("display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;")}>
@@ -126,6 +165,10 @@ export function SetsTab() {
         );
       })}
 
+      <datalist id="sets-free-products">
+        {free.map((p) => <option key={p.id} value={optionLabel(p)} />)}
+      </datalist>
+
       <div style={css("background:var(--c-line-soft);border-radius:14px;padding:18px;margin-top:22px;")}>
         <div style={css("font-size:16px;font-weight:700;margin-bottom:12px;")}>סט חדש</div>
         <div style={css("display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;")}>
@@ -133,8 +176,18 @@ export function SetsTab() {
           <div><label style={css(lbl)}>מחיר הסט (₪)</label><input type="number" min="0" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={css(inp)} /></div>
         </div>
         <label style={css(lbl)}>פריטים ({newPick.length} נבחרו · בנפרד {fmt(newPick.reduce((a, id) => a + (Number(products.find((p) => String(p.id) === String(id))?.price) || 0), 0))})</label>
+        <input
+          type="search"
+          value={pickQuery}
+          onChange={(e) => setPickQuery(e.target.value)}
+          placeholder="חיפוש פריט לפי שם, קטגוריה או קולקציה…"
+          aria-label="חיפוש פריטים לסט החדש"
+          style={css(inp + "max-width:420px;margin-bottom:10px;")}
+        />
         <div style={css("display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;max-height:220px;overflow:auto;")}>
-          {free.map((p) => {
+          {pq && shownFree.length === 0 && <span style={css("font-size:13px;color:var(--c-ink-mute);")}>לא נמצא פריט מתאים</span>}
+          {/* Picked pieces stay visible even when the search hides them. */}
+          {[...free.filter((p) => newPick.includes(p.id) && !shownFree.includes(p)), ...shownFree].map((p) => {
             const on = newPick.includes(p.id);
             return (
               <button key={p.id} type="button" aria-pressed={on} onClick={() => setNewPick((l) => (on ? l.filter((x) => x !== p.id) : [...l, p.id]))} style={css(`display:flex;align-items:center;gap:8px;padding:6px 12px 6px 8px;border-radius:100px;cursor:pointer;font-size:13.5px;border:1.5px solid ${on ? "var(--c-accent)" : "var(--c-line-strong)"};background:${on ? "#fff" : "transparent"};`)}>
