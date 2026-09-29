@@ -126,7 +126,7 @@ export function StoreProvider({ children }) {
       // check finished, so account UI never flashes "logged out" first.
       user: null,
       authReady: false,
-      authDialog: null, // null | "login" | "register" | "forgot" | "reset"
+      authDialog: null, // null | "login" (the emailed-code sign-in dialog)
       accountOrders: null, // server order list for the signed-in customer
       accountOrdersError: false,
       users: [],
@@ -227,9 +227,8 @@ export function StoreProvider({ children }) {
       if (user?.role === "admin") { if (isAdminPath()) goAdmin(); }
       else if (user) syncAccount(user);
     })();
-    // Sign-in/out in another tab, and the password-reset link landing here.
+    // Sign-in/out in another tab.
     const off = store.auth.onChange(async (event) => {
-      if (event === "PASSWORD_RECOVERY") { setState({ authDialog: "reset" }); return; }
       if (event === "SIGNED_OUT") { setState({ user: null, accountOrders: null }); return; }
       if (event === "SIGNED_IN" && !ref.current.user) {
         const user = await store.auth.current().catch(() => null);
@@ -422,11 +421,11 @@ export function StoreProvider({ children }) {
     setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefillPhone: "" });
   }, [setState]);
 
-  /* ---------- customer account (Supabase Auth, email + password) ----------
+  /* ---------- customer account (Supabase Auth, emailed one-time code) -----
      One account = the same orders and favorites on every device. The dialog
      (AuthDialog.jsx) is opened from the header / account page; these
      actions do the real work and throw Hebrew messages the dialog shows. */
-  const openAuth = useCallback((mode = "login") => setState({ authDialog: mode }), [setState]);
+  const openAuth = useCallback(() => setState({ authDialog: "login" }), [setState]);
   const closeAuth = useCallback(() => setState({ authDialog: null }), [setState]);
 
   const afterSignIn = useCallback(async (user) => {
@@ -434,23 +433,18 @@ export function StoreProvider({ children }) {
     if (user && user.role !== "admin") await syncAccount(user);
   }, [setState, syncAccount]);
 
-  const signIn = useCallback(async ({ email, password }) => {
-    const user = await store.auth.login({ email, password });
+  // Customers: email + mobile → a 6-digit code by email → signed in (the
+  // first sign-in creates the account). Admins sign in with their password
+  // on the admin page (submitAdminLogin).
+  const requestLoginCode = useCallback(async ({ email, phone }) => {
+    await store.auth.requestLoginCode({ email, phone });
+    try { localStorage.setItem("alfi:lastContact", JSON.stringify({ email: String(email || "").trim(), phone })); } catch { /* ignore */ }
+  }, []);
+
+  const verifyLoginCode = useCallback(async ({ email, code }) => {
+    const user = await store.auth.verifyLoginCode({ email, code });
     await afterSignIn(user);
     return user;
-  }, [afterSignIn]);
-
-  const signUp = useCallback(async ({ name, email, password, phone }) => {
-    const { user, needsConfirmation } = await store.auth.signUp({ name, email, password, phone });
-    if (user) await afterSignIn(user);
-    return { needsConfirmation };
-  }, [afterSignIn]);
-
-  const requestPasswordReset = useCallback((email) => store.auth.requestPasswordReset(email), []);
-
-  const setNewPassword = useCallback(async (password) => {
-    const user = await store.auth.updatePassword(password);
-    await afterSignIn(user);
   }, [afterSignIn]);
 
   // Ends the session on this device. Favorites and the guest order list
@@ -479,6 +473,8 @@ export function StoreProvider({ children }) {
 
   const submitSignup = useCallback(async ({ name, email, phone }) => {
     const { code, percent } = await store.signup.subscribe({ name, email, phone });
+    // Pre-fills the sign-in form later (same email + mobile).
+    try { localStorage.setItem("alfi:lastContact", JSON.stringify({ email: String(email || "").trim(), phone })); } catch { /* ignore */ }
     saveCoupon(code, percent);
     try { localStorage.setItem("alfi:signupCouponClaimed", "1"); } catch { /* ignore */ }
     setState({ couponCode: code, couponPercent: percent, couponError: "" });
@@ -761,7 +757,7 @@ export function StoreProvider({ children }) {
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
     setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
     openSignupPopup, closeSignupPopup, maybeOfferSignupPopup, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
-    openAuth, closeAuth, signIn, signUp, requestPasswordReset, setNewPassword, refreshAccountOrders, loadSiteData,
+    openAuth, closeAuth, requestLoginCode, verifyLoginCode, refreshAccountOrders, loadSiteData,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

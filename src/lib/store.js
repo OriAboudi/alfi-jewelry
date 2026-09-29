@@ -204,16 +204,35 @@ const local = {
       const pub = localPub(u);
       write(LS.session, pub); localAuthEmit("SIGNED_IN"); return pub;
     },
-    async signUp({ name, email, password, phone }) {
-      const users = read(LS.users, []);
+    // Customer sign-in with an emailed code. Local mode has no email: the
+    // code is printed to the console instead.
+    async requestLoginCode({ email, phone }) {
       email = (email || "").trim().toLowerCase();
-      if (users.some((x) => x.email === email)) throw new Error("כבר קיים חשבון עם האימייל הזה, אפשר להתחבר");
-      if (String(password || "").length < 6) throw new Error("הסיסמה צריכה להכיל לפחות 6 תווים");
-      const u = { id: uid(), name: String(name || "").trim(), email, phone: String(phone || "").trim(), pass: weakHash(password), role: "customer", favorites: [], created_at: new Date().toISOString() };
-      users.push(u); write(LS.users, users);
+      const code = String(Math.floor(Math.random() * 1e6)).padStart(6, "0");
+      write("alfi:loginCode", { email, phone: String(phone || "").replace(/\D/g, ""), code, expires: Date.now() + 600000, attempts: 0 });
+      console.info(`ALFI (local): login code for ${email} → ${code}`);
+    },
+    async verifyLoginCode({ email, code }) {
+      email = (email || "").trim().toLowerCase();
+      const pending = read("alfi:loginCode", null);
+      if (!pending || pending.email !== email || pending.expires < Date.now() || pending.attempts >= 5) throw new Error("הקוד פג תוקף, אפשר לבקש קוד חדש");
+      if (pending.code !== String(code || "").replace(/\D/g, "")) {
+        pending.attempts += 1; write("alfi:loginCode", pending);
+        throw new Error(pending.attempts >= 5 ? "הקוד פג תוקף, אפשר לבקש קוד חדש" : `הקוד שגוי. נשארו ${5 - pending.attempts} ניסיונות.`);
+      }
+      localStorage.removeItem("alfi:loginCode");
+      const users = read(LS.users, []);
+      let u = users.find((x) => x.email === email);
+      if (u && u.role === "admin") throw new Error("לחשבון הזה יש כניסת מנהל נפרדת");
+      if (!u) {
+        const coupon = read(LS.coupons, []).find((c) => c.email === email);
+        u = { id: uid(), name: coupon?.name || "", email, phone: pending.phone, role: "customer", favorites: [], created_at: new Date().toISOString() };
+        users.push(u);
+      } else u.phone = pending.phone || u.phone;
+      write(LS.users, users);
       const pub = localPub(u);
       write(LS.session, pub); localAuthEmit("SIGNED_IN");
-      return { user: pub, needsConfirmation: false };
+      return pub;
     },
     async logout() { localStorage.removeItem(LS.session); localAuthEmit("SIGNED_OUT"); },
     async current() {
@@ -221,10 +240,6 @@ const local = {
       const u = s && read(LS.users, []).find((x) => x.id === s.id);
       return u ? localPub(u) : null;
     },
-    async requestPasswordReset() {
-      console.info("ALFI (local): password reset emails are not sent in local mode");
-    },
-    async updatePassword(password) { return localUpdateUser({ pass: weakHash(password) }); },
     async updateMeta(patch) { return localUpdateUser(patch); },
     onChange(cb) { localAuthListeners.add(cb); return () => localAuthListeners.delete(cb); },
   },
@@ -458,15 +473,6 @@ const local = {
       write(LS.coupons, coupons);
       return { code, percent };
     },
-    // Dev-only stand-in for the login-by-phone Edge Function.
-    async loginByPhone(phone) {
-      const phoneDigits = String(phone || "").replace(/[^\d]/g, "");
-      const match = read(LS.coupons, [])
-        .filter((c) => c.phone && String(c.phone).replace(/[^\d]/g, "") === phoneDigits)
-        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
-      if (!match) return { found: false };
-      return { found: true, name: String(match.name || "").trim().split(/\s+/)[0] || "" };
-    },
   },
   coupon: {
     async validate(code) {
@@ -521,34 +527,27 @@ function makeSupabase() {
         if (error) throw new Error(authMessage(error, "אימייל או סיסמה שגויים"));
         return profileFor(data.user);
       },
-      // Customer registration (Supabase Auth, email + password). The
-      // handle_new_user trigger creates the profiles row, always as
-      // role 'customer' (see production-hardening.sql).
-      async signUp({ name, email, password, phone }) {
-        const { data, error } = await sb.auth.signUp({
-          email: String(email || "").trim(),
-          password,
-          options: { data: { name: String(name || "").trim(), phone: String(phone || "").trim() } },
-        });
-        if (error) throw new Error(authMessage(error, "ההרשמה נכשלה"));
-        // Email confirmation on: the account exists but has no session yet.
-        if (!data.session) return { user: null, needsConfirmation: true };
-        return { user: await profileFor(data.user), needsConfirmation: false };
+      // Customers sign in without a password: email + mobile → a 6-digit
+      // code by email (login-code Edge Function, Resend) → the function
+      // returns a one-time token that becomes a normal session here. The
+      // first sign-in creates the account. (Admins keep login() above.)
+      async requestLoginCode({ email, phone }) {
+        const { data, error } = await sb.functions.invoke("login-code", { body: { action: "send", email: String(email || "").trim(), phone } });
+        if (error) throw new Error("שליחת הקוד נכשלה, נסי שוב");
+        if (data?.error) throw new Error(data.error);
+      },
+      async verifyLoginCode({ email, code }) {
+        const { data, error } = await sb.functions.invoke("login-code", { body: { action: "verify", email: String(email || "").trim(), code } });
+        if (error) throw new Error("ההתחברות נכשלה, נסי שוב");
+        if (data?.error) throw new Error(data.error);
+        const { data: session, error: otpError } = await sb.auth.verifyOtp({ token_hash: data.token_hash, type: "magiclink" });
+        if (otpError) throw new Error(authMessage(otpError, "ההתחברות נכשלה, נסי שוב"));
+        return profileFor(session.user);
       },
       async logout() { await sb.auth.signOut(); },
       async current() {
         const { data } = await sb.auth.getUser();
         return profileFor(data?.user);
-      },
-      async requestPasswordReset(email) {
-        const redirectTo = typeof window !== "undefined" ? window.location.origin + "/" : undefined;
-        const { error } = await sb.auth.resetPasswordForEmail(String(email || "").trim(), { redirectTo });
-        if (error) throw new Error(authMessage(error, "שליחת הקישור נכשלה"));
-      },
-      async updatePassword(password) {
-        const { data, error } = await sb.auth.updateUser({ password });
-        if (error) throw new Error(authMessage(error, "עדכון הסיסמה נכשל"));
-        return profileFor(data.user);
       },
       // Small per-account data (favorites, phone) lives in the auth user's
       // own metadata — the user can already edit it, so no table/policy is
@@ -737,12 +736,6 @@ function makeSupabase() {
         if (error) throw new Error(error.message || "ההרשמה נכשלה");
         if (data?.error) throw new Error(data.error);
         return data; // { code, percent }
-      },
-      async loginByPhone(phone) {
-        const { data, error } = await sb.functions.invoke("login-by-phone", { body: { phone } });
-        if (error) throw new Error(error.message || "ההתחברות נכשלה");
-        if (data?.error) throw new Error(data.error);
-        return data; // { found, name }
       },
     },
     coupon: {

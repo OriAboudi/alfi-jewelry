@@ -16,7 +16,7 @@ export function Favorites() {
       {authReady && !customer && favorites.length > 0 && (
         <p style={css("font-size:14px;color:var(--c-ink-mute);margin:-8px 0 var(--sp-5);")}>
           המועדפים שמורים במכשיר הזה.{" "}
-          <button type="button" onClick={() => openAuth("login")} style={css("background:none;border:0;padding:0;font:inherit;color:var(--c-accent-dark);text-decoration:underline;cursor:pointer;min-height:var(--tap);")}>התחברי</button>
+          <button type="button" onClick={() => openAuth()} style={css("background:none;border:0;padding:0;font:inherit;color:var(--c-accent-dark);text-decoration:underline;cursor:pointer;min-height:var(--tap);")}>התחברי</button>
           {" "}כדי לראות אותם בכל מכשיר.
         </p>
       )}

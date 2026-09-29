@@ -126,6 +126,19 @@ export async function sendSignupCouponEmail({ name, email, code, percent }: { na
 /*  Building blocks                                                    */
 /* ------------------------------------------------------------------ */
 
+// The one-time sign-in code (login-code function). Returns the send result
+// so the caller can tell the shopper when the email couldn't go out.
+export async function sendLoginCodeEmail({ email, code, minutes }: { email: string; code: string; minutes: number }) {
+  if (!RESEND_API_KEY) return { ok: false, error: "RESEND_API_KEY not set" };
+  const html = emailShell(`
+    ${headingHtml("קוד הכניסה שלך")}
+    ${paragraphHtml("כדי להיכנס לחשבון שלך ב‑ALFI, הזיני את הקוד הזה באתר:")}
+    <div class="em-code" dir="ltr" style="background-color:${C.card};border:1.5px solid ${C.line};border-radius:12px;padding:18px;text-align:center;font-size:30px;font-weight:bold;letter-spacing:.35em;color:${C.ink};margin:20px 0;">${escapeHtml(code)}</div>
+    ${paragraphHtml(`הקוד תקף ל‑${Number(minutes)} דקות ולשימוש אחד. אם לא ביקשת להיכנס, אפשר פשוט להתעלם מהמייל.`, `font-size:13px;color:${C.inkMute};`)}
+  `);
+  return sendViaResend(email, `קוד הכניסה שלך ל‑ALFI: ${code}`, html);
+}
+
 async function sendViaResend(to: string, subject: string, html: string): Promise<{ ok: boolean; error?: string }> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",

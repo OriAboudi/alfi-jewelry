@@ -93,8 +93,8 @@ export function Header() {
   // account-specific renders until the session check finished (authReady),
   // so a signed-in shopper never sees "התחברות" flash first.
   const firstName = customer ? String(customer.name || customer.email || "").split(/[s@]/)[0] : "";
-  const accountLabel = customer ? `החשבון שלי, ${firstName}` : "התחברות / הרשמה";
-  const accountAction = customer ? () => navigate("my-orders") : () => { setMenuOpen(false); openAuth("login"); };
+  const accountLabel = customer ? `החשבון שלי, ${firstName}` : "כניסה / הרשמה";
+  const accountAction = customer ? () => navigate("my-orders") : () => { setMenuOpen(false); openAuth(); };
   // Back/forward (or any screen change) closes the open mobile menu.
   useEffect(() => { setMenuOpen(false); }, [screen, catFilter]);
 
@@ -220,10 +220,7 @@ export function Header() {
                 <button type="button" onClick={() => { setMenuOpen(false); customerLogout(); }} style={css("align-self:flex-start;background:none;border:0;padding:0;font:inherit;cursor:pointer;color:var(--c-accent-dark);font-size:15px;min-height:var(--tap);")}>התנתקות</button>
               </div>
             ) : (
-              <div style={css("margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;")}>
-                <button type="button" onClick={() => { setMenuOpen(false); openAuth("login"); }} className="btn btn-primary" style={css("min-height:48px;font-size:15px;")}>התחברות</button>
-                <button type="button" onClick={() => { setMenuOpen(false); openAuth("register"); }} className="btn" style={css("min-height:48px;font-size:15px;border:1px solid var(--ink);background:transparent;color:var(--ink);")}>הרשמה</button>
-              </div>
+              <button type="button" onClick={() => { setMenuOpen(false); openAuth(); }} className="btn btn-primary" style={css("margin-top:14px;min-height:48px;font-size:15px;width:100%;")}>כניסה / הרשמה</button>
             ))}
           </nav>
         )}

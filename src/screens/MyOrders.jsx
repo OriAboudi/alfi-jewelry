@@ -53,11 +53,10 @@ export function MyOrders() {
     return shell(
       <>
         <p style={css("font-size:15.5px;color:var(--c-ink-soft);margin-bottom:20px;line-height:1.7;")}>
-          עם חשבון, ההזמנות והמועדפים שלך זמינים בכל מכשיר: בטלפון, במחשב ובכל מקום אחר.
+          עם חשבון, ההזמנות והמועדפים שלך זמינים בכל מכשיר: בטלפון, במחשב ובכל מקום אחר. בלי סיסמה: נכנסים עם אימייל ונייד, ומקבלים קוד למייל.
         </p>
         <div style={css("display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--sp-6);")}>
-          <button type="button" onClick={() => openAuth("login")} className="btn btn-primary" style={css("min-height:48px;padding:0 28px;")}>התחברות</button>
-          <button type="button" onClick={() => openAuth("register")} className="btn" style={css("min-height:48px;padding:0 28px;border:1px solid var(--ink);background:transparent;color:var(--ink);")}>יצירת חשבון</button>
+          <button type="button" onClick={() => openAuth()} className="btn btn-primary" style={css("min-height:48px;padding:0 28px;")}>כניסה עם קוד במייל</button>
         </div>
         {myOrders.length > 0 && (
           <section aria-labelledby="device-orders">

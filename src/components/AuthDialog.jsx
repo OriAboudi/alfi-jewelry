@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
-import { isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
+import { isValidEmail, formatIsraeliPhone } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { useDialog } from "../hooks/useDialog.js";
 import { PrivacyConsent } from "./PrivacyConsent.jsx";
@@ -10,105 +10,126 @@ const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line
 const fieldErrStyle = fieldStyle.replace("var(--c-line-strong)", "#d98a72");
 const linkBtn = "background:none;border:0;padding:4px 2px;font:inherit;cursor:pointer;color:var(--c-accent-dark);font-size:13.5px;font-weight:600;min-height:var(--tap);";
 
-const TITLES = {
-  login: "התחברות לחשבון",
-  register: "יצירת חשבון",
-  forgot: "איפוס סיסמה",
-  reset: "בחירת סיסמה חדשה",
+const RESEND_SECONDS = 45;
+const isMobile = (v) => /^05\d{8}$/.test(String(v || "").replace(/\D/g, ""));
+
+const readLastContact = () => {
+  try { return JSON.parse(localStorage.getItem("alfi:lastContact") || "null") || {}; } catch { return {}; }
+};
+const readAgreed = () => {
+  try { return localStorage.getItem("alfi:privacyAgreed") === "1"; } catch { return false; }
 };
 
 /**
- * AuthDialog — customer sign-in / sign-up (Supabase Auth, email + password).
+ * AuthDialog — customer sign-in without a password, in two steps:
+ *   1. email + mobile → "שליחת קוד" (a 6-digit code goes to the email)
+ *   2. the code → signed in. The first sign-in creates the account.
  * An account keeps the customer's orders and favorites on every device.
- * Opened with openAuth("login" | "register") from the header, the mobile
- * menu or the account page; "reset" opens by itself when a password-reset
- * email link lands on the site (PASSWORD_RECOVERY, see StoreContext).
+ * Opened with openAuth() from the header, the mobile menu, the account and
+ * favorites pages.
  */
 export function AuthDialog() {
-  const { authDialog: mode, openAuth, closeAuth, signIn, signUp, requestPasswordReset, setNewPassword } = useStore();
-  const open = !!mode;
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const { authDialog, closeAuth, requestLoginCode, verifyLoginCode } = useStore();
+  const open = !!authDialog;
+  const [step, setStep] = useState("details"); // "details" | "code"
+  const [form, setForm] = useState({ email: "", phone: "" });
+  const [code, setCode] = useState("");
   const [touched, setTouched] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
   const [agreed, setAgreed] = useState(false);
   const [agreeError, setAgreeError] = useState("");
+  const [cooldown, setCooldown] = useState(0);
+  const codeRef = useRef(null);
 
-  // Fresh state for every mode; the typed email carries over between modes.
+  // Every opening starts at step 1, pre-filled with the details this device
+  // used last (sign-in or the sign-up coupon form).
   useEffect(() => {
-    setTouched({}); setError(""); setNotice(""); setBusy(false); setAgreeError("");
-    setForm((f) => ({ ...f, password: "" }));
-  }, [mode]);
+    if (!open) return;
+    const last = readLastContact();
+    setForm((f) => ({ email: f.email || last.email || "", phone: f.phone || (last.phone ? formatIsraeliPhone(last.phone) : "") }));
+    setAgreed(readAgreed());
+    setStep("details"); setCode(""); setTouched({}); setError(""); setAgreeError(""); setBusy(false);
+  }, [open]);
+
+  // "Send again" countdown.
+  useEffect(() => {
+    if (cooldown <= 0) return undefined;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  useEffect(() => { if (step === "code") codeRef.current?.focus(); }, [step]);
 
   const panelRef = useDialog(open, closeAuth, { initialFocus: "input" });
   if (!open) return null;
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: k === "phone" ? formatIsraeliPhone(e.target.value) : e.target.value }));
-  const blur = (k) => () => setTouched((t) => ({ ...t, [k]: true }));
-
-  const need = {
-    login: ["email", "password"],
-    register: ["name", "email", "password"],
-    forgot: ["email"],
-    reset: ["password"],
-  }[mode];
-
   const errors = {
-    name: form.name.trim() ? "" : "שדה חובה",
     email: form.email.trim() ? (isValidEmail(form.email) ? "" : "כתובת אימייל לא תקינה") : "שדה חובה",
-    phone: form.phone.trim() && !isValidIsraeliPhone(form.phone) ? "מספר טלפון לא תקין" : "",
-    password: form.password ? (mode !== "login" && form.password.length < 6 ? "לפחות 6 תווים" : "") : "שדה חובה",
+    phone: form.phone.trim() ? (isMobile(form.phone) ? "" : "מספר נייד לא תקין") : "שדה חובה",
   };
-  const fieldsToCheck = mode === "register" ? [...need, "phone"] : need;
-  const valid = fieldsToCheck.every((k) => !errors[k]);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    if (mode === "register" && !agreed) setAgreeError("יש לאשר את מדיניות הפרטיות כדי להמשיך");
-    if (!valid) { setTouched(Object.fromEntries(fieldsToCheck.map((k) => [k, true]))); return; }
-    if (mode === "register" && !agreed) return;
-    setBusy(true); setError(""); setNotice("");
+  const sendCode = async (e) => {
+    e?.preventDefault();
+    if (!agreed) setAgreeError("יש לאשר את מדיניות הפרטיות כדי להמשיך");
+    if (errors.email || errors.phone) { setTouched({ email: true, phone: true }); return; }
+    if (!agreed) return;
+    setBusy(true); setError("");
     try {
-      if (mode === "login") await signIn(form);
-      else if (mode === "register") {
-        const { needsConfirmation } = await signUp(form);
-        if (needsConfirmation) setNotice("שלחנו אלייך מייל לאישור החשבון. אחרי האישור אפשר להתחבר.");
-      } else if (mode === "forgot") {
-        await requestPasswordReset(form.email);
-        setNotice("אם קיים חשבון עם האימייל הזה, נשלח אליו קישור לבחירת סיסמה חדשה.");
-      } else if (mode === "reset") await setNewPassword(form.password);
+      await requestLoginCode({ email: form.email.trim(), phone: form.phone.replace(/\D/g, "") });
+      try { localStorage.setItem("alfi:privacyAgreed", "1"); } catch { /* ignore */ }
+      setStep("code"); setCode(""); setCooldown(RESEND_SECONDS);
     } catch (err) {
-      setError(err.message || "משהו השתבש, נסי שוב");
+      setError(err.message || "שליחת הקוד נכשלה, נסי שוב");
     } finally {
       setBusy(false);
     }
   };
 
-  const field = (k, label, opts = {}) => (
-    <div key={k}>
+  const verify = async (value = code) => {
+    if (value.length !== 6 || busy) return;
+    setBusy(true); setError("");
+    try {
+      await verifyLoginCode({ email: form.email.trim(), code: value });
+    } catch (err) {
+      setError(err.message || "ההתחברות נכשלה, נסי שוב");
+      setCode("");
+      codeRef.current?.focus();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onCode = (e) => {
+    const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+    setCode(v);
+    if (error) setError("");
+    if (v.length === 6) verify(v); // pasted / autofilled: sign in right away
+  };
+
+  const field = (k, label, opts) => (
+    <div>
       <label htmlFor={`auth-${k}`} style={css(labelStyle)}>{label}</label>
       <input
         id={`auth-${k}`}
         name={k}
-        type={opts.type || "text"}
-        dir={opts.ltr ? "ltr" : undefined}
+        type={opts.type}
+        inputMode={opts.inputMode}
+        dir="ltr"
         autoComplete={opts.autoComplete}
-        required={!opts.optional}
-        aria-required={!opts.optional}
+        required
+        aria-required="true"
         aria-invalid={!!(touched[k] && errors[k])}
         aria-describedby={touched[k] && errors[k] ? `auth-${k}-err` : undefined}
         value={form[k]}
-        onChange={set(k)}
-        onBlur={blur(k)}
+        onChange={(e) => setForm((f) => ({ ...f, [k]: k === "phone" ? formatIsraeliPhone(e.target.value) : e.target.value }))}
+        onBlur={() => setTouched((t) => ({ ...t, [k]: true }))}
         placeholder={opts.placeholder}
-        style={css((touched[k] && errors[k] ? fieldErrStyle : fieldStyle) + (opts.ltr ? "text-align:right;" : ""))}
+        style={css((touched[k] && errors[k] ? fieldErrStyle : fieldStyle) + "text-align:right;")}
       />
       {touched[k] && errors[k] && <div id={`auth-${k}-err`} role="alert" style={css("color:var(--c-danger);font-size:12px;margin-top:5px;")}>{errors[k]}</div>}
     </div>
   );
-
-  const submitLabel = { login: "התחברות", register: "יצירת חשבון", forgot: "שליחת קישור", reset: "שמירת הסיסמה" }[mode];
 
   return (
     <div
@@ -128,54 +149,63 @@ export function AuthDialog() {
         <button type="button" onClick={closeAuth} aria-label="סגירה" className="tap-target" style={css("position:absolute;top:6px;left:6px;background:none;border:0;padding:0;cursor:pointer;font-size:22px;color:var(--c-ink-mute);line-height:1;width:44px;height:44px;display:flex;align-items:center;justify-content:center;")}>×</button>
 
         <div className="serif" aria-hidden="true" style={css("text-align:center;font-size:24px;letter-spacing:.36em;padding-right:.36em;color:var(--ink);margin-bottom:8px;")}>ALFI</div>
-        <h2 id="auth-title" style={css("text-align:center;font-family:var(--font-serif);font-weight:400;font-size:20px;margin-bottom:6px;")}>{TITLES[mode]}</h2>
-        {(mode === "login" || mode === "register") && (
-          <p style={css("text-align:center;font-size:13px;color:var(--c-ink-soft);margin-bottom:16px;")}>ההזמנות והמועדפים שלך, בכל מכשיר.</p>
-        )}
-        {mode === "forgot" && (
-          <p style={css("text-align:center;font-size:13px;color:var(--c-ink-soft);margin-bottom:16px;")}>נשלח קישור לבחירת סיסמה חדשה לאימייל של החשבון.</p>
-        )}
 
-        {/* Login / register switch */}
-        {(mode === "login" || mode === "register") && (
-          <div role="tablist" aria-label="התחברות או הרשמה" style={css("display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border-radius:var(--r-pill);background:rgba(58,45,61,.06);margin-bottom:16px;")}>
-            {[["login", "התחברות"], ["register", "הרשמה"]].map(([m, label]) => (
-              <button
-                key={m}
-                type="button"
-                role="tab"
-                aria-selected={mode === m}
-                onClick={() => openAuth(m)}
-                style={css(`min-height:40px;border:0;border-radius:var(--r-pill);font-family:inherit;font-size:14.5px;cursor:pointer;${mode === m ? "background:#fff;color:var(--c-ink);font-weight:600;box-shadow:0 1px 4px rgba(58,45,61,.12);" : "background:transparent;color:var(--c-ink-mute);font-weight:400;"}`)}
-              >{label}</button>
-            ))}
-          </div>
-        )}
-
-        {notice ? (
-          <div role="status" style={css("background:var(--c-success-bg);color:var(--c-success);border-radius:var(--r-md);padding:14px;font-size:14px;line-height:1.6;margin-bottom:14px;text-align:center;")}>{notice}</div>
-        ) : (
-          <form onSubmit={submit} noValidate style={css("display:flex;flex-direction:column;gap:11px;")}>
-            {mode === "register" && field("name", "שם מלא", { autoComplete: "name" })}
-            {mode !== "reset" && field("email", "אימייל", { type: "email", autoComplete: "email", placeholder: "example@mail.com", ltr: true })}
-            {mode === "register" && field("phone", "טלפון (לא חובה)", { type: "tel", autoComplete: "tel", placeholder: "050-1234567", optional: true })}
-            {mode !== "forgot" && field("password", mode === "login" ? "סיסמה" : "סיסמה (לפחות 6 תווים)", { type: "password", autoComplete: mode === "login" ? "current-password" : "new-password" })}
-
-            {mode === "register" && (
+        {step === "details" ? (
+          <>
+            <h2 id="auth-title" style={css("text-align:center;font-family:var(--font-serif);font-weight:400;font-size:20px;margin-bottom:6px;")}>כניסה לחשבון</h2>
+            <p style={css("text-align:center;font-size:13px;line-height:1.6;color:var(--c-ink-soft);margin-bottom:16px;")}>בלי סיסמה: נשלח לך קוד כניסה למייל.<br />ההזמנות והמועדפים שלך, בכל מכשיר.</p>
+            <form onSubmit={sendCode} noValidate style={css("display:flex;flex-direction:column;gap:11px;")}>
+              {field("email", "אימייל", { type: "email", inputMode: "email", autoComplete: "email", placeholder: "example@mail.com" })}
+              {field("phone", "טלפון נייד", { type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: "050-1234567" })}
               <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
-            )}
-            {error && <div role="alert" style={css("color:var(--c-danger);font-size:13px;")}>{error}</div>}
-
-            <button type="submit" disabled={busy} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;margin-top:4px;")}>
-              {busy ? "רגע…" : submitLabel}
-            </button>
-          </form>
+              {error && <div role="alert" style={css("color:var(--c-danger);font-size:13px;")}>{error}</div>}
+              <button type="submit" disabled={busy} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;margin-top:4px;")}>
+                {busy ? "שולחת…" : "שליחת קוד למייל"}
+              </button>
+            </form>
+            <p style={css("text-align:center;font-size:12px;color:var(--c-ink-mute);margin-top:12px;")}>אין עדיין חשבון? הוא נוצר אוטומטית בכניסה הראשונה.</p>
+          </>
+        ) : (
+          <>
+            <h2 id="auth-title" style={css("text-align:center;font-family:var(--font-serif);font-weight:400;font-size:20px;margin-bottom:6px;")}>הזיני את הקוד</h2>
+            <p style={css("text-align:center;font-size:13.5px;line-height:1.6;color:var(--c-ink-soft);margin-bottom:16px;")}>
+              שלחנו קוד בן 6 ספרות אל<br />
+              <b dir="ltr" style={css("color:var(--c-ink);word-break:break-all;")}>{form.email.trim()}</b>
+            </p>
+            <form onSubmit={(e) => { e.preventDefault(); verify(); }} noValidate style={css("display:flex;flex-direction:column;gap:11px;")}>
+              <label htmlFor="auth-code" style={css("position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);")}>קוד הכניסה</label>
+              <input
+                ref={codeRef}
+                id="auth-code"
+                name="code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                pattern="[0-9]*"
+                maxLength={6}
+                dir="ltr"
+                value={code}
+                onChange={onCode}
+                disabled={busy}
+                aria-invalid={!!error}
+                aria-describedby={error ? "auth-code-err" : "auth-code-hint"}
+                placeholder="••••••"
+                style={css(`width:100%;padding:14px;border:1.5px solid ${error ? "#d98a72" : "var(--c-line-strong)"};border-radius:var(--r-md);background:#fff;text-align:center;font-size:28px;font-weight:600;letter-spacing:.45em;padding-left:calc(14px + .45em);font-variant-numeric:tabular-nums;color:var(--c-ink);`)}
+              />
+              {error
+                ? <div id="auth-code-err" role="alert" style={css("color:var(--c-danger);font-size:13px;text-align:center;")}>{error}</div>
+                : <div id="auth-code-hint" style={css("font-size:12px;color:var(--c-ink-mute);text-align:center;")}>הקוד תקף ל‑10 דקות. לא מוצאת? כדאי לבדוק גם בספאם.</div>}
+              <button type="submit" disabled={busy || code.length !== 6} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;margin-top:2px;")}>
+                {busy ? "רגע…" : "כניסה"}
+              </button>
+            </form>
+            <div style={css("display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:8px;")}>
+              <button type="button" onClick={() => sendCode()} disabled={busy || cooldown > 0} style={css(linkBtn + (cooldown > 0 ? "color:var(--c-ink-faint);cursor:default;" : ""))}>
+                {cooldown > 0 ? `שליחה חוזרת בעוד ${cooldown} שנ׳` : "שליחת קוד חדש"}
+              </button>
+              <button type="button" onClick={() => { setStep("details"); setError(""); }} style={css(linkBtn)}>שינוי פרטים</button>
+            </div>
+          </>
         )}
-
-        <div style={css("display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:8px;")}>
-          {mode === "login" && <button type="button" onClick={() => openAuth("forgot")} style={css(linkBtn)}>שכחתי סיסמה</button>}
-          {mode === "forgot" && <button type="button" onClick={() => openAuth("login")} style={css(linkBtn)}>חזרה להתחברות</button>}
-        </div>
       </div>
     </div>
   );
