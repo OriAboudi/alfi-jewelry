@@ -257,6 +257,12 @@ export function StoreProvider({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // A product set's own page (/סט/<name>) — the set's name rides in pid.
+  const openSet = useCallback((name) => {
+    setState({ screen: "set", pid: name });
+    scrollTop();
+  }, [setState]);
+
   const openProduct = useCallback((id) => {
     const p = ref.current.products.find((x) => String(x.id) === String(id));
     setState({ screen: "product", pid: id, qty: 1, size: (p && p.sizes && p.sizes[0]) || "" });
@@ -671,7 +677,7 @@ export function StoreProvider({ children }) {
     cartCount: state.cart.reduce((a, c) => a + c.qty, 0),
     favoritesCount: state.favorites.length,
     // actions
-    go, openProduct, goAdmin, goCheckout,
+    go, openProduct, openSet, goAdmin, goCheckout,
     addToCart, changeQty, removeItem, addCurrent, toggleFavorite, setDeliveryMethod,
     setAdminField, submitAdminLogin, logout,
     setQty, setSize, setCatFilter,

@@ -38,6 +38,9 @@ export function pathFor(screen, ctx = {}) {
       return "/קולקציות";
     case "sets":
       return "/סטים";
+    // A set's own page. The set's name rides in pid (the screen's item id).
+    case "set":
+      return pid ? `/סט/${slugify(pid)}` : "/סטים";
     case "story":
       return "/הסיפור-שלנו";
     case "contact":
@@ -78,6 +81,9 @@ export function parsePath(pathname) {
 
   const productMatch = /^\/מוצר\/(\d+)/.exec(path);
   if (productMatch) return { screen: "product", pid: productMatch[1] };
+
+  const setMatch = /^\/סט\/(.+?)\/?$/.exec(path);
+  if (setMatch) return { screen: "set", pid: setMatch[1] };
 
   const segment = path.replace(/^\/+|\/+$/g, "");
   if (CAT_NAMES.includes(segment)) return { screen: "catalog", catFilter: segment };

@@ -1,18 +1,19 @@
 import React from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
+import { pathFor } from "../lib/routes.js";
+import { useStore } from "../context/StoreContext.jsx";
 
 /**
- * SetStack — a set's photos stacked like a fanned set (up to 3 pieces).
- * Hovering/focusing the card fans them a little wider.
+ * SetStack — a set's photos as a neat deck of cards (up to 4 pieces): the
+ * first piece in front, the others stepped up behind it.
  */
 export function SetStack({ set, count = true }) {
-  const stack = set.members.slice(0, 3);
-  const pose = ["rd-set-pose-a", "rd-set-pose-b", "rd-set-pose-c"].slice(-stack.length);
+  const stack = set.members.slice(0, 4);
   return (
     <div className="rd-set-stack" aria-hidden="true">
       {stack.map((m, i) => (
-        <span key={m.id} className={`rd-set-photo ${pose[i]}`}>
+        <span key={m.id} className="rd-set-photo" style={{ "--d": i, zIndex: stack.length - i }}>
           {m.image ? <img src={m.image} alt="" loading="lazy" decoding="async" /> : null}
         </span>
       ))}
@@ -22,19 +23,18 @@ export function SetStack({ set, count = true }) {
 }
 
 /**
- * SetCard — a product set in the home "סטים" slider. The whole card is one
- * button: it opens the set in place (SetDetail, under the slider), where the
- * customer sees every piece on its own, picks sizes and adds the set.
+ * SetCard — a product set in the home "סטים" slider and on /סטים. The whole
+ * card links to the set's own page (/סט/<name>).
  */
-export function SetCard({ set, open, onOpen }) {
+export function SetCard({ set }) {
+  const { openSet } = useStore();
   const save = set.regular - set.price;
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      aria-expanded={open}
-      aria-label={`סט ${set.name}, ${set.members.length} פריטים, ${fmt(set.price)} — פתיחת הסט`}
-      className={`rd-card glass-strong rd-set-card${open ? " is-open" : ""}`}
+    <a
+      href={pathFor("set", { pid: set.name })}
+      onClick={(e) => { e.preventDefault(); openSet(set.name); }}
+      aria-label={`סט ${set.name}, ${set.members.length} פריטים, ${fmt(set.price)}`}
+      className="rd-card glass-strong rd-set-card"
     >
       <SetStack set={set} />
       <span style={css("padding:0 8px;display:flex;flex-direction:column;gap:6px;margin-top:14px;text-align:right;")}>
@@ -46,7 +46,7 @@ export function SetCard({ set, open, onOpen }) {
           {save > 0 && <span style={css("font-size:12px;font-weight:600;color:var(--c-success);")}>חיסכון {fmt(save)}</span>}
         </span>
       </span>
-      <span className="rd-add-btn rd-outline rd-set-open-cta">{open ? "הסט פתוח למטה ↓" : "לצפייה בסט"}</span>
-    </button>
+      <span className="rd-add-btn rd-outline rd-set-open-cta">לצפייה בסט</span>
+    </a>
   );
 }

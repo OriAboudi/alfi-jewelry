@@ -565,70 +565,94 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 .rd-promo-h2 { font-size: 46px; line-height: 1; }
 .rd-promo-p { font-size: 15px; line-height: 1.6; }
 .rd-promo-cta { height: 54px; width: 100%; justify-content: center; }
-/* ---------- product sets: stacked-photo cards ---------- */
-/* Card = one button that opens the set in place. */
+/* ---------- product sets: stacked cards ---------- */
+/* Set card (home slider, /סטים) = one link to the set's own page. */
 .rd-set-card {
   width: 100%; display: flex; flex-direction: column; text-align: right;
   font: inherit; color: var(--ink); cursor: pointer; border: 1px solid rgba(255, 255, 255, .7);
+  text-decoration: none;
 }
-.rd-set-card.is-open { outline: 2px solid var(--c-accent); outline-offset: -2px; }
 .rd-set-open-cta { display: flex; align-items: center; justify-content: center; margin: 10px 8px 8px; letter-spacing: .06em; }
-.rd-set-card:hover .rd-set-open-cta, .rd-set-card.is-open .rd-set-open-cta { background: var(--ink-fill); color: var(--cream); }
+.rd-set-card:hover .rd-set-open-cta, .rd-set-card:focus-visible .rd-set-open-cta { background: var(--ink-fill); color: var(--cream); }
 
+/* A neat deck: the front card at the bottom-right, each card behind it
+   stepped up and to the left, a touch smaller — hover spreads the deck. */
 .rd-set-stack { position: relative; aspect-ratio: 1 / 1; margin: 6px 6px 0; }
 .rd-set-photo {
-  position: absolute; inset: 14% 18%; background: #fff; overflow: hidden;
-  box-shadow: 0 10px 24px -8px rgba(58, 45, 61, .35), 0 0 0 1px rgba(58, 45, 61, .06);
-  transition: transform .45s cubic-bezier(.16, 1, .3, 1);
+  position: absolute; right: 6%; bottom: 6%; width: 72%; aspect-ratio: 1 / 1; background: #fff; overflow: hidden;
+  box-shadow: 0 14px 28px -12px rgba(58, 45, 61, .4), 0 0 0 1px rgba(58, 45, 61, .06);
+  transform: translate(calc(var(--d) * -9%), calc(var(--d) * -9%)) scale(calc(1 - var(--d) * .05));
+  transform-origin: top left;
+  transition: transform .5s cubic-bezier(.16, 1, .3, 1);
 }
 .rd-set-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-/* resting fan (back → front) and a wider fan on hover / when open */
-.rd-set-pose-a { transform: translate(-18%, 4%) rotate(-8deg); z-index: 1; }
-.rd-set-pose-b { transform: translate(18%, 4%) rotate(7deg); z-index: 2; }
-.rd-set-pose-c { transform: translate(0, -2%) rotate(0deg); z-index: 3; }
-.rd-set-card:hover .rd-set-pose-a, .rd-set-card:focus-visible .rd-set-pose-a, .rd-set-card.is-open .rd-set-pose-a { transform: translate(-30%, 6%) rotate(-12deg); }
-.rd-set-card:hover .rd-set-pose-b, .rd-set-card:focus-visible .rd-set-pose-b, .rd-set-card.is-open .rd-set-pose-b { transform: translate(30%, 6%) rotate(11deg); }
-.rd-set-card:hover .rd-set-pose-c, .rd-set-card:focus-visible .rd-set-pose-c, .rd-set-card.is-open .rd-set-pose-c { transform: translate(0, -5%) scale(1.04); }
+.rd-set-card:hover .rd-set-photo, .rd-set-card:focus-visible .rd-set-photo {
+  transform: translate(calc(var(--d) * -13%), calc(var(--d) * -11%)) scale(calc(1 - var(--d) * .05));
+}
 .rd-set-count {
-  position: absolute; top: 8px; right: 8px; z-index: 4; font-size: 12px; letter-spacing: .1em;
+  position: absolute; bottom: 8px; left: 8px; z-index: 6; font-size: 12px; letter-spacing: .1em;
   background: rgba(246, 240, 235, .92); padding: 6px 12px; color: var(--ink);
 }
 
-/* Opened set: each piece on its own + the set purchase row. */
-.rd-set-detail { position: relative; margin: 0 16px; padding: 22px 18px 20px; animation: rd-set-open .45s cubic-bezier(.16, 1, .3, 1) both; }
-@keyframes rd-set-open { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
-.rd-set-detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-.rd-set-close { flex: none; width: 44px; height: 44px; border: 1px solid var(--c-line-strong); background: transparent; font-size: 24px; line-height: 1; color: var(--ink); cursor: pointer; }
-.rd-set-pieces {
-  list-style: none; margin: 0 -18px; padding: 0 18px 4px; display: flex; gap: 14px;
-  overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+/* ---------- a set's own page (/סט/<name>) ---------- */
+.rd-setpage-grid { display: grid; grid-template-columns: 1.05fr .95fr; gap: 44px; align-items: start; }
+
+/* The deck: the selected piece in front, the rest stacked behind it. */
+.rd-deck { position: relative; aspect-ratio: 1 / .94; touch-action: pan-y; outline: none; user-select: none; -webkit-user-select: none; }
+.rd-deck:focus-visible { box-shadow: 0 0 0 2px var(--c-accent); }
+.rd-deck-card {
+  position: absolute; right: 0; bottom: 0; width: 84%; aspect-ratio: 1 / 1; padding: 0; border: 0; background: #fff;
+  overflow: hidden; cursor: pointer;
+  box-shadow: 0 24px 48px -22px rgba(58, 45, 61, .5), 0 0 0 1px rgba(58, 45, 61, .06);
+  transform: translate(calc(var(--d) * -8%), calc(var(--d) * -7%)) scale(calc(1 - var(--d) * .04));
+  transform-origin: top left;
+  transition: transform .55s cubic-bezier(.16, 1, .3, 1), opacity .4s ease, filter .4s ease;
+  filter: brightness(calc(1 - var(--d) * .05));
 }
-.rd-set-pieces::-webkit-scrollbar { display: none; }
-.rd-set-piece { flex: 0 0 min(62vw, 230px); scroll-snap-align: start; display: flex; flex-direction: column; gap: 8px; }
-.rd-set-piece-img { padding: 0; border: 0; aspect-ratio: 1 / 1; background: #fff; overflow: hidden; cursor: pointer; }
-.rd-set-piece-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .45s cubic-bezier(.16, 1, .3, 1); }
-.rd-set-piece-img:hover img { transform: scale(1.04); }
-.rd-set-buy { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(58, 45, 61, .14); }
-.rd-set-add { height: 54px; border: 0; background: var(--ink-fill); color: var(--cream); font: inherit; font-size: 16px; letter-spacing: .06em; cursor: pointer; }
-.rd-set-add:disabled { opacity: .55; cursor: default; }
-@media (min-width: 1024px) {
-  .rd-set-detail { margin: 0 64px; padding: 32px 36px 30px; }
-  .rd-set-pieces { overflow: visible; flex-wrap: wrap; margin: 0; padding: 0; }
-  .rd-set-piece { flex: 0 1 240px; }
-  .rd-set-buy { flex-direction: row; align-items: center; justify-content: space-between; }
-  .rd-set-add { padding: 0 44px; }
+.rd-deck-card[data-hidden] { opacity: 0; pointer-events: none; }
+.rd-deck-card.is-front { cursor: grab; }
+.rd-deck-card:not(.is-front):hover { transform: translate(calc(var(--d) * -10%), calc(var(--d) * -9%)) scale(calc(1 - var(--d) * .04)); }
+.rd-deck-card img { width: 100%; height: 100%; object-fit: cover; display: block; pointer-events: none; }
+.rd-deck-empty { display: block; width: 100%; height: 100%; background: radial-gradient(120% 100% at 60% 25%, #ede1ea, #ddc8dd); }
+.rd-deck-count {
+  position: absolute; bottom: 12px; left: 18%; z-index: 20; font-size: 12px; letter-spacing: .12em;
+  background: rgba(246, 240, 235, .92); padding: 6px 12px; color: var(--ink); pointer-events: none;
 }
 
-/* /סטים page: each set = its stack beside the opened set. */
-.rd-sets-page-item { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; margin-bottom: 40px; }
-.rd-sets-page-item .rd-set-detail { margin: 0; animation: none; min-width: 0; }
-.rd-sets-page-stack { max-width: 320px; width: 100%; justify-self: center; }
-@media (min-width: 1024px) {
-  .rd-sets-page-item { grid-template-columns: 300px minmax(0, 1fr); align-items: center; gap: 36px; }
+/* Every piece at a glance, under the deck. */
+.rd-deck-thumbs { display: flex; gap: 10px; margin-top: 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; }
+.rd-deck-thumbs::-webkit-scrollbar { display: none; }
+.rd-deck-thumb { flex: 0 0 auto; width: 92px; display: flex; flex-direction: column; gap: 6px; padding: 0; border: 0; background: none; font: inherit; cursor: pointer; text-align: center; color: var(--c-ink-mute); }
+.rd-deck-thumb-img { display: block; aspect-ratio: 1 / 1; background: #fff; overflow: hidden; outline: 1px solid transparent; outline-offset: 2px; opacity: .72; transition: opacity .25s, outline-color .25s; }
+.rd-deck-thumb-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rd-deck-thumb-name { font-size: 12.5px; line-height: 1.3; }
+.rd-deck-thumb.is-on { color: var(--c-ink); }
+.rd-deck-thumb.is-on .rd-deck-thumb-img { opacity: 1; outline-color: var(--c-ink); }
+
+/* The set's pieces list (with sizes) in the info column. */
+.rd-setpage-list { list-style: none; margin: 0 0 18px; padding: 0; border-top: 1px solid var(--c-line); }
+.rd-setpage-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--c-line); padding: 8px 8px 8px 0; transition: background .2s; }
+.rd-setpage-list li.is-on { background: rgba(255, 255, 255, .6); box-shadow: inset -2px 0 0 var(--c-accent); }
+.rd-setpage-row { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 0 8px 0 0; border: 0; background: none; font: inherit; text-align: right; cursor: pointer; min-height: var(--tap); }
+.rd-setpage-row-img { flex: none; width: 52px; height: 52px; background: #fff; overflow: hidden; display: block; }
+.rd-setpage-row-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rd-setpage-size { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--c-ink-mute); flex: none; }
+.rd-setpage-size select { font: inherit; font-size: 14px; min-height: 40px; padding: 4px 8px; border: 1px solid var(--c-line-strong); background: #fff; color: var(--ink); }
+.rd-setpage-piece { padding: 16px 18px; background: rgba(255, 255, 255, .55); animation: rd-piece-in .35s ease both; }
+@keyframes rd-piece-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rd-setpage-other { display: flex; align-items: center; gap: 12px; padding: 10px 16px 10px 10px; color: var(--ink); text-decoration: none; font-size: 15px; line-height: 1.4; }
+
+@media (max-width: 899px) {
+  .rd-setpage-grid { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .rd-setpage-grid .r-sticky { position: static !important; }
 }
+
+/* /סטים: every set as a card. */
+.rd-sets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 18px; }
+
 @media (prefers-reduced-motion: reduce) {
-  .rd-set-photo, .rd-set-piece-img img { transition: none; }
-  .rd-set-detail { animation: none; }
+  .rd-set-photo, .rd-deck-card { transition: none; }
+  .rd-setpage-piece { animation: none; }
 }
 
 /* The deal's products directly under the promo banner (same section). */

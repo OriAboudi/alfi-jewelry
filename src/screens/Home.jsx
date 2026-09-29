@@ -2,7 +2,6 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { saleInfo, buildSets } from "../lib/pricing.js";
 import { SetCard } from "../components/SetCard.jsx";
-import { SetDetail } from "../components/SetDetail.jsx";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { GRAD_CARD } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
@@ -94,14 +93,6 @@ export function Home() {
   const bundleProducts = products.filter((p) => p.in_bundle && Number(p.stock) > 0);
   // Product sets the admin priced (2+ pieces sharing a set name).
   const productSets = Object.values(buildSets(products, C));
-  // Opening a set shows its pieces in place, right under the slider.
-  const [openSetName, setOpenSetName] = React.useState(null);
-  const openSet = productSets.find((s) => s.name === openSetName) || null;
-  const setPanelRef = React.useRef(null);
-  const toggleSet = (name) => setOpenSetName((cur) => (cur === name ? null : name));
-  React.useEffect(() => {
-    if (openSetName) setPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [openSetName]);
   const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
   const usedIds = new Set(slider1.map((p) => p.id));
   const leftover2 = slider2raw.filter((p) => !usedIds.has(p.id));
@@ -262,22 +253,16 @@ export function Home() {
         )}
       </Reveal>
 
-      {/* SETS — pieces sold together at a set price, photos stacked */}
+      {/* SETS — pieces sold together at a set price; each card opens the set's page */}
       {productSets.length > 0 && (
         <Reveal as="section" className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
           <div className="glass rd-slider-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
             <h2 className="serif rd-slider-title" style={css("margin:0;font-weight:300;")}>סטים במחיר מיוחד</h2>
+            <a href={pathFor("sets")} onClick={(e) => { e.preventDefault(); go("sets"); }} style={css("cursor:pointer;font-size:15px;letter-spacing:.06em;border-bottom:1px solid var(--ink);padding:8px 0 2px;")}>לכל הסטים</a>
           </div>
           <CardSlider>
-            {productSets.map((s) => (
-              <SetCard key={s.name} set={s} open={openSetName === s.name} onOpen={() => toggleSet(s.name)} />
-            ))}
+            {productSets.map((s) => <SetCard key={s.name} set={s} />)}
           </CardSlider>
-          {openSet && (
-            <div ref={setPanelRef}>
-              <SetDetail key={openSet.name} set={openSet} onClose={() => setOpenSetName(null)} />
-            </div>
-          )}
         </Reveal>
       )}
 

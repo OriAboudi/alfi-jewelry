@@ -3,11 +3,9 @@ import { css } from "../lib/css.js";
 import { buildSets } from "../lib/pricing.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
-import { SetStack } from "../components/SetCard.jsx";
-import { SetDetail } from "../components/SetDetail.jsx";
+import { SetCard } from "../components/SetCard.jsx";
 
-// /סטים — every product set, each shown stacked and opened (its pieces,
-// sizes and the set price) so a set can be bought straight from here.
+// /סטים — every product set as a stacked card; each opens its own page.
 export function Sets() {
   const { products, content: C, go } = useStore();
   const sets = Object.values(buildSets(products, C));
@@ -32,12 +30,9 @@ export function Sets() {
           <button type="button" onClick={() => go("catalog")} style={css("background:none;border:0;padding:0;font:inherit;color:var(--c-accent-dark);text-decoration:underline;cursor:pointer;")}>לכל התכשיטים</button>
         </div>
       ) : (
-        sets.map((s) => (
-          <section key={s.name} className="rd-sets-page-item" aria-labelledby={`set-${s.name}`}>
-            <div className="rd-sets-page-stack"><SetStack set={s} /></div>
-            <SetDetail set={s} headingId={`set-${s.name}`} />
-          </section>
-        ))
+        <div className="rd-sets-grid">
+          {sets.map((s) => <SetCard key={s.name} set={s} />)}
+        </div>
       )}
     </div>
   );

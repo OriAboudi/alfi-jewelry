@@ -45,12 +45,15 @@ async function main() {
   ];
 
   let products = [];
+  let setPrices = {};
   if (url && key) {
     try {
       const supabase = createClient(url, key);
-      const { data, error } = await supabase.from("products").select("id,name,category");
+      const { data, error } = await supabase.from("products").select("id,name,category,set_name");
       if (error) throw error;
       products = data || [];
+      const { data: content } = await supabase.from("content").select("data").eq("id", 1).maybeSingle();
+      setPrices = content?.data?.setPrices || {};
     } catch (e) {
       console.warn("[sitemap] Supabase fetch failed, writing static-only sitemap:", e.message);
     }
@@ -61,12 +64,16 @@ async function main() {
   const liveCategories = Array.from(new Set(products.map((p) => p.category))).filter(Boolean);
   const categoryPages = liveCategories.map((c) => `/${c}`);
   const productPages = products.map((p) => `/מוצר/${p.id}-${slugify(p.name)}`);
+  // A set is live with 2+ pieces and a price (same rule as buildSets).
+  const setCounts = {};
+  for (const p of products) { const n = String(p.set_name || "").trim(); if (n) setCounts[n] = (setCounts[n] || 0) + 1; }
+  const setPages = Object.keys(setCounts).filter((n) => setCounts[n] >= 2 && Number(setPrices[n]) > 0).map((n) => `/סט/${slugify(n)}`);
 
-  const allUrls = [...staticPages, ...categoryPages, ...productPages];
+  const allUrls = [...staticPages, ...categoryPages, ...productPages, ...setPages];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${allUrls.map(urlEntry).join("\n")}\n</urlset>\n`;
 
   writeFileSync("public/sitemap.xml", xml, "utf8");
-  console.log(`[sitemap] wrote public/sitemap.xml with ${allUrls.length} URLs (${staticPages.length} static, ${categoryPages.length} categories, ${productPages.length} products).`);
+  console.log(`[sitemap] wrote public/sitemap.xml with ${allUrls.length} URLs (${staticPages.length} static, ${categoryPages.length} categories, ${productPages.length} products, ${setPages.length} sets).`);
 }
 
 main().catch((e) => {

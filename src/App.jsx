@@ -10,6 +10,7 @@ import { Catalog } from "./screens/Catalog.jsx";
 import { Product } from "./screens/Product.jsx";
 import { Collections } from "./screens/Collections.jsx";
 import { Sets } from "./screens/Sets.jsx";
+import { SetPage } from "./screens/SetPage.jsx";
 import { Story } from "./screens/Story.jsx";
 import { Cart } from "./screens/Cart.jsx";
 import { Checkout } from "./screens/Checkout.jsx";
@@ -38,6 +39,7 @@ const SCREENS = {
   product: Product,
   collections: Collections,
   sets: Sets,
+  set: SetPage,
   story: Story,
   cart: Cart,
   checkout: Checkout,
