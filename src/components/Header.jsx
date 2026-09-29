@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { SearchOverlay } from "./SearchOverlay.jsx";
-import { pathFor } from "../lib/routes.js";
+import { pathFor, DEAL_FILTER } from "../lib/routes.js";
+import { bundleConfig } from "../lib/pricing.js";
 
 // Design-handoff nav only lists the 4 categories (no "הכל"/collections item
 // in the header itself) — see reference/desktop.html's <nav class="nav">.
@@ -13,7 +14,8 @@ const iconBtnMobile = "width:48px;height:48px;border:0;background:transparent;cu
 const cartBadge = "position:absolute;top:-8px;left:-8px;min-width:16px;height:16px;border-radius:50%;background:var(--ink-fill);color:var(--cream);font-size:10px;line-height:16px;text-align:center;padding:0 3px;box-sizing:border-box;";
 
 export function Header() {
-  const { go, screen, catFilter, setCatFilter, cartCount, favoritesCount, customerName, openPhoneLogin, customerLogout } = useStore();
+  const { go, screen, catFilter, cartCount, favoritesCount, customerName, openPhoneLogin, customerLogout, content } = useStore();
+  const deal = bundleConfig(content);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
 
@@ -35,8 +37,7 @@ export function Header() {
   const goCat = (cat) => (e) => {
     e.preventDefault();
     setMenuOpen(false);
-    setCatFilter(cat);
-    go("catalog");
+    go("catalog", cat);
   };
   const goCollections = (e) => {
     e.preventDefault();
@@ -157,6 +158,7 @@ export function Header() {
               <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{cat}</a>
             ))}
             <a href={pathFor("collections")} {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
+            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton((e) => { e.preventDefault(); setMenuOpen(false); go("catalog", DEAL_FILTER); })} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--c-accent-dark);font-weight:600;font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>מבצע {deal.size} ב־₪{deal.price}</a>
             <a href={pathFor("story")} {...asButton(goStory)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>הסיפור</a>
             <span {...asButton(() => navigate("favorites"))} className="tap-target" style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>
               מועדפים

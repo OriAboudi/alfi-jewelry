@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { saleInfo } from "../lib/pricing.js";
+import { saleInfo, buildSets } from "../lib/pricing.js";
+import { SetCard } from "../components/SetCard.jsx";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { GRAD_CARD } from "../lib/ui.js";
 import { Disc } from "../components/Ornaments.jsx";
@@ -90,6 +91,8 @@ export function Home() {
   const slider1 = (featuredList.length ? featuredList : products).slice(0, 8);
   // "N for ₪X" deal pieces, shown in a slider right after the promo banner.
   const bundleProducts = products.filter((p) => p.in_bundle && Number(p.stock) > 0);
+  // Product sets the admin priced (2+ pieces sharing a set name).
+  const productSets = Object.values(buildSets(products, C));
   const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
   const usedIds = new Set(slider1.map((p) => p.id));
   const leftover2 = slider2raw.filter((p) => !usedIds.has(p.id));
@@ -104,9 +107,9 @@ export function Home() {
   const heroImages = C.heroImages && C.heroImages.length ? C.heroImages : [];
   const heroImagesMobile = C.heroImagesMobile || [];
 
-  const goCat = (c) => { setCatFilter(c); go("catalog"); };
+  const goCat = (c) => go("catalog", c);
   const goCatalog = () => go("catalog");
-  const goDeal = () => { setCatFilter(DEAL_FILTER); go("catalog"); };
+  const goDeal = () => go("catalog", DEAL_FILTER);
 
   return (
     <div>
@@ -249,6 +252,18 @@ export function Home() {
           </div>
         )}
       </Reveal>
+
+      {/* SETS — pieces sold together at a set price, photos stacked */}
+      {productSets.length > 0 && (
+        <Reveal as="section" className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
+          <div className="glass rd-slider-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
+            <h2 className="serif rd-slider-title" style={css("margin:0;font-weight:300;")}>סטים במחיר מיוחד</h2>
+          </div>
+          <CardSlider>
+            {productSets.map((s) => <SetCard key={s.name} set={s} />)}
+          </CardSlider>
+        </Reveal>
+      )}
 
       {/* SECOND SLIDER — best sellers */}
       <ProductSlider title="עוד תכשיטים שתאהבי" mobileTitle="עוד תכשיטים" ctaLabel="לכל התכשיטים" onCta={goCatalog} products={slider2} />

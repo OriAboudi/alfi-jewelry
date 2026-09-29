@@ -15,7 +15,7 @@
  * ========================================================================== */
 import { createClient } from "@supabase/supabase-js";
 import { compressImage } from "./imageCompress.js";
-import { bundleConfig, bundleDiscount } from "./pricing.js";
+import { bundleConfig, bundleDiscount, buildSets, setDeal } from "./pricing.js";
 
 const SB_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -323,8 +323,12 @@ const local = {
       const subtotal = verified.reduce((a, it) => a + it.price * it.qty, 0);
       const pickup = deliveryMethod === "pickup";
       const bcfg = bundleConfig(content);
-      const bundle_discount = bundleDiscount(verified.flatMap((it) => (it.bundle ? Array(it.qty).fill(it.price) : [])), bcfg.size, bcfg.price).discount;
-      const itemsTotal = subtotal - bundle_discount;
+      const setRes = setDeal(verified, buildSets(products, content));
+      const set_discount = setRes.discount;
+      const left = { ...setRes.used };
+      const bundleUnits = verified.flatMap((it) => { if (!it.bundle) return []; const k = String(it.id); const skip = Math.min(it.qty, left[k] || 0); if (skip) left[k] -= skip; return Array(it.qty - skip).fill(it.price); });
+      const bundle_discount = bundleDiscount(bundleUnits, bcfg.size, bcfg.price).discount;
+      const itemsTotal = subtotal - set_discount - bundle_discount;
       const shipping = pickup ? 0 : (itemsTotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
 
       let discount = 0;
@@ -340,7 +344,7 @@ const local = {
       const total = Math.max(0, itemsTotal + shipping - discount);
 
       const order = await local.orders.create({
-        items: verified, subtotal, shipping, discount, bundle_discount, coupon_code: appliedCouponCode, total,
+        items: verified, subtotal, shipping, discount, bundle_discount, set_discount, coupon_code: appliedCouponCode, total,
         shipping_address: pickup ? { ...shipping_address } : { city: "תל אביב", ...shipping_address },
         delivery_method: pickup ? "pickup" : "delivery",
         pickup_address: pickup ? (String(content.pickupAddress || "").trim() || "דן 13, נהלל") : null,

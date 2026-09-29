@@ -18,6 +18,8 @@ export function ProductsTab() {
     content, draft, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
   } = useStore();
   const { size: bundleSize, price: bundlePrice } = bundleConfig(content);
+  const { products: allProducts } = useStore();
+  const existingSets = [...new Set((allProducts || []).map((x) => String(x.set_name || "").trim()).filter(Boolean))];
   const low = Number(content.lowStockThreshold ?? 5);
   const fine = Number(content.stockFineThreshold ?? 10);
 
@@ -116,6 +118,7 @@ export function ProductsTab() {
               )}
             </div>
             {p.featured && <span style={css("font-size:12px;background:var(--c-accent-soft);color:var(--c-accent);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>מוצג בעמוד הבית</span>}
+            {p.set_name && <span style={css("font-size:12px;background:var(--c-accent-soft);color:var(--c-accent-dark);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>סט: {p.set_name}</span>}
             {p.in_bundle && <span style={css("font-size:12px;background:var(--c-success-bg);color:var(--c-success);padding:4px 10px;border-radius:100px;white-space:nowrap;")}>במבצע {bundleSize} ב־{fmt(bundlePrice)}</span>}
             {tier !== "ok" && <span style={css(`font-size:12px;background:${tc.bg};color:${tc.fg};padding:4px 10px;border-radius:100px;white-space:nowrap;`)}>{TIER_LABEL[tier]}</span>}
             <button onClick={() => openDraft(editProduct, p)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
@@ -167,6 +170,17 @@ export function ProductsTab() {
             <label style={css("display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;")}>
               <input type="checkbox" checked={!!draft.in_bundle} onChange={(e) => setDraft("in_bundle", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />משתתף במבצע {bundleSize} ב־{fmt(bundlePrice)}
             </label>
+            <div>
+              <Field label="שם סט (אופציונלי) — מוצרים עם אותו שם יוצגו ויימכרו כסט" value={draft.set_name || ""} onChange={(v) => setDraft("set_name", v)} placeholder="לדוגמה: פרח" />
+              {existingSets.length > 0 && (
+                <div style={css("display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;")}>
+                  {existingSets.map((n) => (
+                    <button key={n} type="button" onClick={() => setDraft("set_name", n)} style={css("padding:5px 12px;border:1px solid var(--c-line-strong);border-radius:100px;background:#fff;font-size:12.5px;cursor:pointer;")}>{n}</button>
+                  ))}
+                </div>
+              )}
+              <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>את מחיר הסט קובעים בלשונית ״תוכן האתר״.</div>
+            </div>
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
               <button onClick={submitDraft} style={css("flex:1;padding:14px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
               <button onClick={() => { setStockError(""); cancelDraft(); }} style={css("padding:14px 24px;background:#fff;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;cursor:pointer;")}>ביטול</button>

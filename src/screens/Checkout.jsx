@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { fmt, isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
-import { computeTotals, saleInfo } from "../lib/pricing.js";
+import { computeTotals, saleInfo, buildSets } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { PrivacyConsent } from "../components/PrivacyConsent.jsx";
@@ -46,7 +46,8 @@ export function Checkout() {
     const p = products.find((x) => String(x.id) === String(c.id)) || { name: "", price: 0, image: "" };
     return { ...c, p };
   });
-  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved, bundleDiscount, bundleSize, bundlePrice } = computeTotals(lines.map((l) => ({ price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty, bundle: !!l.p.in_bundle })), C, couponCode ? couponPercent : 0, deliveryMethod);
+  const productSets = buildSets(products, C);
+  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved, bundleDiscount, bundleSize, bundlePrice, setsApplied } = computeTotals(lines.map((l) => ({ id: l.id, price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty, bundle: !!l.p.in_bundle })), C, couponCode ? couponPercent : 0, deliveryMethod, productSets);
   // What home delivery would cost for this cart — shown on its option.
   const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
 
@@ -145,7 +146,10 @@ export function Checkout() {
               {saleSavings > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
               )}
-          {bundleDiscount > 0 && (
+          {setsApplied.map((sa) => (
+                <div key={sa.name} style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>סט {sa.name}{sa.count > 1 ? ` ×${sa.count}` : ""}</span><span>-{fmt(sa.discount)}</span></div>
+              ))}
+              {bundleDiscount > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>מבצע {bundleSize} ב־{fmt(bundlePrice)}</span><span>-{fmt(bundleDiscount)}</span></div>
               )}
               <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>{isPickup ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>

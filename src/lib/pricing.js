@@ -31,6 +31,47 @@ export function bundleDiscount(unitPrices, size, price) {
   return { discount: Math.round(discount * 100) / 100, sets, eligible: units.length, missing: units.length && rest ? size - rest : 0 };
 }
 
+// Product sets: products sharing a set_name form a set, priced by the admin
+// in content.setPrices. Only sets with 2+ members and a price are live.
+export function buildSets(products, content) {
+  const prices = content?.setPrices || {};
+  const byName = {};
+  for (const p of products || []) {
+    const name = String(p.set_name || "").trim();
+    if (name) (byName[name] ||= []).push(p);
+  }
+  const sets = {};
+  for (const [name, members] of Object.entries(byName)) {
+    const price = Number(prices[name]) || 0;
+    if (members.length < 2 || price <= 0) continue;
+    const regular = members.reduce((a, m) => a + (Number(m.price) || 0), 0);
+    sets[name] = { name, price, regular, members, ids: members.map((m) => String(m.id)) };
+  }
+  return sets;
+}
+
+// Set deal: each complete set in the cart (one of every member) costs the
+// set price instead of its members' prices (never more). Returns the units
+// it used per product id, so those units don't also count toward the
+// bundle deal. Mirrored exactly in create-takbull-payment — keep in sync.
+export function setDeal(lines, sets) {
+  const qty = {};
+  for (const l of lines) if (l.id != null) qty[String(l.id)] = (qty[String(l.id)] || 0) + l.qty;
+  const used = {};
+  const applied = [];
+  let discount = 0;
+  for (const s of Object.values(sets || {})) {
+    const count = Math.min(...s.ids.map((id) => qty[id] || 0));
+    if (!(count >= 1)) continue;
+    const each = Math.max(0, s.regular - s.price);
+    if (!(each > 0)) continue;
+    for (const id of s.ids) used[id] = (used[id] || 0) + count;
+    discount += each * count;
+    applied.push({ name: s.name, count, discount: each * count });
+  }
+  return { discount: Math.round(discount * 100) / 100, used, applied };
+}
+
 // Shared cart-totals math, used for DISPLAY only by Cart/Checkout/Product.
 // The real, authoritative total (including coupon discount) is always
 // computed server-side in supabase/functions/create-takbull-payment — this
@@ -40,14 +81,23 @@ export function bundleDiscount(unitPrices, size, price) {
 // deliveryMethod "pickup" (self pickup) is always free — same rule as the
 // server. Order of application (same on the server): bundle deal → free-
 // shipping threshold and coupon on what the items cost after the deal.
-export function computeTotals(lines, content, couponPercent = 0, deliveryMethod = "delivery") {
+export function computeTotals(lines, content, couponPercent = 0, deliveryMethod = "delivery", sets = {}) {
   const subtotal = lines.reduce((a, l) => a + l.price * l.qty, 0);
   const regularSubtotal = lines.reduce((a, l) => a + Math.max(l.regular || 0, l.price) * l.qty, 0);
   const saleSavings = regularSubtotal - subtotal;
+  // 1) complete sets, 2) the bundle deal on the remaining units.
+  const setRes = setDeal(lines, sets);
+  const left = { ...setRes.used };
   const cfg = bundleConfig(content);
-  const units = lines.flatMap((l) => (l.bundle ? Array(Math.max(0, l.qty)).fill(l.price) : []));
+  const units = lines.flatMap((l) => {
+    if (!l.bundle) return [];
+    const id = String(l.id);
+    const skip = Math.min(l.qty, left[id] || 0);
+    if (skip) left[id] -= skip;
+    return Array(Math.max(0, l.qty - skip)).fill(l.price);
+  });
   const bundle = bundleDiscount(units, cfg.size, cfg.price);
-  const itemsTotal = subtotal - bundle.discount;
+  const itemsTotal = subtotal - setRes.discount - bundle.discount;
   const shipping = deliveryMethod === "pickup" ? 0 : (itemsTotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
   const discount = couponPercent > 0 ? Math.round(itemsTotal * couponPercent) / 100 : 0;
   const total = Math.max(0, itemsTotal + shipping - discount);
@@ -55,6 +105,7 @@ export function computeTotals(lines, content, couponPercent = 0, deliveryMethod 
     subtotal, regularSubtotal, saleSavings, shipping, discount, total,
     bundleDiscount: bundle.discount, bundleSets: bundle.sets, bundleEligible: bundle.eligible, bundleMissing: bundle.missing,
     bundleSize: cfg.size, bundlePrice: cfg.price,
-    totalSaved: saleSavings + bundle.discount + discount,
+    setDiscount: setRes.discount, setsApplied: setRes.applied,
+    totalSaved: saleSavings + setRes.discount + bundle.discount + discount,
   };
 }

@@ -193,7 +193,14 @@ export function StoreProvider({ children }) {
   }, [setState]);
 
   /* ---------- navigation ---------- */
-  const go = useCallback((screen) => { setState({ screen, contentSaved: false }); scrollTop(); }, [setState]);
+  // Opening the catalog always states its filter: go("catalog") = all
+  // jewellery, go("catalog", "טבעות" | DEAL_FILTER …) = that view. A filter
+  // left over from an earlier visit (e.g. the deal page) never leaks into
+  // later "all jewellery" buttons.
+  const go = useCallback((screen, catFilter) => {
+    setState(screen === "catalog" ? { screen, catFilter: catFilter || "הכל", contentSaved: false } : { screen, contentSaved: false });
+    scrollTop();
+  }, [setState]);
 
   // Returning from Takbull: ?paid=<orderId> is used for both success and
   // failure (the actual result is only known from &statusCode=0/nonzero),
@@ -519,7 +526,7 @@ export function StoreProvider({ children }) {
       store.users.list().then((users) => setState({ users })).catch(() => {});
     }
   }, [setState]);
-  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", regularPrice: "", salePrice: "", stock: 1, material: "כסף 925", description: "", details: "", images: [], featured: false, in_bundle: false, sizesText: "S, M, L" } }), [setState]);
+  const newProduct = useCallback(() => setState({ draft: { _new: true, name: "", category: "טבעות", regularPrice: "", salePrice: "", stock: 1, material: "כסף 925", description: "", details: "", images: [], featured: false, in_bundle: false, set_name: "", sizesText: "S, M, L" } }), [setState]);
   const editProduct = useCallback((p) => setState({ draft: { ...p, ...draftPrices(p), images: p.images && p.images.length ? p.images : (p.image ? [p.image] : []), sizesText: (p.sizes || []).join(", ") } }), [setState]);
   const setDraft = useCallback((k, v) => setState((s) => ({ draft: { ...s.draft, [k]: v } })), [setState]);
   const cancelDraft = useCallback(() => setState({ draft: null }), [setState]);
@@ -533,7 +540,7 @@ export function StoreProvider({ children }) {
     const onSale = sale > 0 && sale < regular;
     const payload = {
       name: d.name, category: d.category, price: onSale ? sale : regular, compare_at_price: onSale ? regular : null, stock: Math.max(0, Number(d.stock) || 0), material: d.material,
-      description: d.description, details: (d.details || "").trim(), image: images[0] || "", images, featured: !!d.featured, in_bundle: !!d.in_bundle,
+      description: d.description, details: (d.details || "").trim(), image: images[0] || "", images, featured: !!d.featured, in_bundle: !!d.in_bundle, set_name: String(d.set_name || "").trim() || null,
       sizes: (d.sizesText || "").split(",").map((x) => x.trim()).filter(Boolean),
     };
     if (!payload.sizes.length) payload.sizes = ["יחיד"];

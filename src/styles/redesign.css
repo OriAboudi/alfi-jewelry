@@ -545,6 +545,22 @@ div.rd-only-desktop, section.rd-only-desktop { display: none !important; }
 .rd-promo-h2 { font-size: 46px; line-height: 1; }
 .rd-promo-p { font-size: 15px; line-height: 1.6; }
 .rd-promo-cta { height: 54px; width: 100%; justify-content: center; }
+/* ---------- product sets: stacked-photo cards ---------- */
+.rd-set-stack { position: relative; aspect-ratio: 1 / 1; margin: 6px 6px 0; }
+.rd-set-photo {
+  position: absolute; inset: 14% 18%; padding: 0; border: 0; cursor: pointer;
+  background: #fff; overflow: hidden;
+  box-shadow: 0 10px 24px -8px rgba(58, 45, 61, .35), 0 0 0 1px rgba(58, 45, 61, .06);
+  transition: transform .35s cubic-bezier(.16, 1, .3, 1);
+}
+.rd-set-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rd-set-card:hover .rd-set-photo:nth-last-child(2) { transform: translate(0, -4%) rotate(0deg) scale(1.03) !important; }
+.rd-set-count {
+  position: absolute; top: 8px; right: 8px; z-index: 4; font-size: 12px; letter-spacing: .1em;
+  background: rgba(246, 240, 235, .92); padding: 6px 12px; color: var(--ink);
+}
+@media (prefers-reduced-motion: reduce) { .rd-set-photo { transition: none; } }
+
 /* The deal's products directly under the promo banner (same section). */
 .rd-promo-deal { margin-top: 18px; display: flex; flex-direction: column; }
 .rd-promo-deal-all {

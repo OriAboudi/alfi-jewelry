@@ -43,6 +43,31 @@ function bundleDiscount(unitPrices: number[], size: number, price: number) {
   return Math.round(discount * 100) / 100;
 }
 
+// Product sets — mirrors buildSets()/setDeal() in src/lib/pricing.js. Each
+// complete set in the cart (one of every member) costs the admin's set price
+// (content.setPrices) instead of its members' prices; those units are then
+// left out of the bundle deal.
+function setDeal(qtyById: Map<string, number>, members: any[], setPrices: Record<string, unknown>) {
+  const byName: Record<string, any[]> = {};
+  for (const m of members) {
+    const n = String(m.set_name || "").trim();
+    if (n) (byName[n] ||= []).push(m);
+  }
+  const used: Record<string, number> = {};
+  let discount = 0;
+  for (const [name, ms] of Object.entries(byName)) {
+    const price = Number(setPrices?.[name]) || 0;
+    if (ms.length < 2 || price <= 0) continue;
+    const regular = ms.reduce((a, m) => a + (Number(m.price) || 0), 0);
+    const count = Math.min(...ms.map((m) => qtyById.get(String(m.id)) || 0));
+    const each = Math.max(0, regular - price);
+    if (!(count >= 1) || !(each > 0)) continue;
+    for (const m of ms) used[String(m.id)] = (used[String(m.id)] || 0) + count;
+    discount += each * count;
+  }
+  return { discount: Math.round(discount * 100) / 100, used };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -104,7 +129,7 @@ Deno.serve(async (req) => {
 
       const { data: products, error: prodErr } = await supabase
         .from("products")
-        .select("id, name, price, image, stock, in_bundle")
+        .select("id, name, price, image, stock, in_bundle, set_name")
         .in("id", [...new Set(ids)]);
       if (prodErr) throw prodErr;
 
@@ -119,7 +144,7 @@ Deno.serve(async (req) => {
         const total = (qtyByProduct.get(String(p.id)) || 0) + qty;
         qtyByProduct.set(String(p.id), total);
         if (Number(p.stock) < total) throw new PublicError(`אזל במלאי: ${p.name}`);
-        return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: cleanString(it.size, 40), bundle: !!p.in_bundle };
+        return { id: p.id, name: p.name, price: Number(p.price) || 0, qty, size: cleanString(it.size, 40), bundle: !!p.in_bundle, set_name: p.set_name || null };
       });
     }
 
@@ -130,9 +155,28 @@ Deno.serve(async (req) => {
     const shipFee = Number(cfg.shipFee || 39);
     const bundleSize = Math.max(2, Math.floor(Number(cfg.bundleSize)) || 3);
     const bundlePrice = Math.max(0, Number(cfg.bundlePrice) || 200);
-    const bundle_discount = isTest ? 0 : bundleDiscount(verified.flatMap((it: any) => (it.bundle ? Array(it.qty).fill(it.price) : [])), bundleSize, bundlePrice);
-    // Free-shipping threshold and coupon apply to what the items cost after the deal.
-    const itemsTotal = subtotal - bundle_discount;
+    // 1) complete product sets (needs every member's current price, not
+    //    just the ones in the cart), 2) the bundle deal on the remaining units.
+    let set_discount = 0;
+    let setUsed: Record<string, number> = {};
+    const setNames = [...new Set(verified.map((it: any) => String(it.set_name || "").trim()).filter(Boolean))];
+    if (!isTest && setNames.length) {
+      const { data: members } = await supabase.from("products").select("id, price, set_name").in("set_name", setNames);
+      const qtyById = new Map<string, number>();
+      for (const it of verified) qtyById.set(String(it.id), (qtyById.get(String(it.id)) || 0) + it.qty);
+      const r = setDeal(qtyById, members || [], cfg.setPrices || {});
+      set_discount = r.discount; setUsed = r.used;
+    }
+    const left: Record<string, number> = { ...setUsed };
+    const bundleUnits = verified.flatMap((it: any) => {
+      if (!it.bundle) return [];
+      const k = String(it.id); const skip = Math.min(it.qty, left[k] || 0);
+      if (skip) left[k] -= skip;
+      return Array(it.qty - skip).fill(it.price);
+    });
+    const bundle_discount = isTest ? 0 : bundleDiscount(bundleUnits, bundleSize, bundlePrice);
+    // Free-shipping threshold and coupon apply to what the items cost after the deals.
+    const itemsTotal = subtotal - set_discount - bundle_discount;
     const shipping = isTest || isPickup ? 0 : (itemsTotal >= freeShipFrom ? 0 : shipFee);
     // Snapshot of the pickup address at order time (the admin can change the
     // setting later without rewriting where past orders were collected).
@@ -171,6 +215,7 @@ Deno.serve(async (req) => {
         total,
         discount,
         bundle_discount,
+        set_discount,
         coupon_code: appliedCouponCode,
         shipping_address,
         delivery_method: isPickup ? "pickup" : "delivery",
@@ -257,7 +302,7 @@ Deno.serve(async (req) => {
 
     return json({
       url: takbullData.url || `https://api.takbull.co.il/PaymentGateway?orderUniqId=${takbullData.uniqId}`,
-      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, bundle_discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address, delivery_method: order.delivery_method, pickup_address: order.pickup_address },
+      order: { id: order.id, number: order.number, total, subtotal, shipping, discount, bundle_discount, set_discount, coupon_code: appliedCouponCode, shipping_address: order.shipping_address, delivery_method: order.delivery_method, pickup_address: order.pickup_address },
     });
   } catch (e) {
     console.error(e);

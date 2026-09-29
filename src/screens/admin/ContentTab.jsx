@@ -7,8 +7,13 @@ import { useStore } from "../../context/StoreContext.jsx";
 import { Field, Area, lbl, CAT_NAMES } from "./shared.jsx";
 
 export function ContentTab() {
-  const { content: C, cdraft, contentSaved, setCdraft, saveContent } = useStore();
+  const { content: C, cdraft, contentSaved, setCdraft, saveContent , products } = useStore();
   const cd = cdraft || C;
+  const setNames = Object.values((products || []).reduce((acc, p) => {
+    const n = String(p.set_name || "").trim();
+    if (n) { acc[n] ||= { name: n, count: 0, regular: 0 }; acc[n].count += 1; acc[n].regular += Number(p.price) || 0; }
+    return acc;
+  }, {}));
 
   return (
     <div style={css("max-width:760px;")}>
@@ -80,6 +85,22 @@ export function ContentTab() {
           <Field label="מבצע: מחיר לסט (₪)" value={cd.bundlePrice ?? 200} onChange={(v) => setCdraft("bundlePrice", v)} type="number" />
         </div>
         <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:-8px;")}>סמנו מוצרים כ״משתתף במבצע״ בעריכת מוצר. המחיר מחושב אוטומטית בעגלה ובתשלום.</div>
+        <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
+        <div>
+          <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);margin-bottom:8px;")}>סטים — מחיר מיוחד לסט</div>
+          {setNames.length === 0 ? (
+            <div style={css("font-size:13px;color:var(--c-ink-mute);")}>עדיין אין סטים. בעריכת מוצר, תנו לכמה מוצרים את אותו ״שם סט״ והם יופיעו כאן.</div>
+          ) : (
+            <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
+              {setNames.map(({ name, count, regular }) => (
+                <div key={name}>
+                  <Field label={`סט ״${name}״ (${count} פריטים, בנפרד ₪${regular}) — מחיר הסט ₪`} value={(cd.setPrices || {})[name] ?? ""} onChange={(v) => setCdraft("setPrices", { ...(cd.setPrices || {}), [name]: v })} type="number" />
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>סט יוצג באתר רק כשיש לו לפחות 2 מוצרים ומחיר. כשכל פריטי הסט בעגלה — מחיר הסט מחושב אוטומטית.</div>
+        </div>
         <div style={css("font-size:12px;color:var(--c-ink-faint);")}>שימו לב: זהו באנר שיווקי בלבד — המחיר/המבצע לא נאכף אוטומטית בקופה.</div>
 
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />

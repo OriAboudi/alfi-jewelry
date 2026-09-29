@@ -76,7 +76,7 @@ export function Product() {
   return (
     <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:26px var(--sp-5) 64px;")}>
       <div style={css("font-size:13px;color:var(--c-ink-faint);margin-bottom:var(--sp-4);")}>
-        <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); setCatFilter("הכל"); go("catalog"); }} style={css("cursor:pointer;")}>קטלוג</a> &nbsp;/&nbsp; <a href={pathFor("catalog", { catFilter: sel.category })} onClick={(e) => { e.preventDefault(); setCatFilter(sel.category); go("catalog"); }} style={css("cursor:pointer;")}>{sel.category}</a> &nbsp;/&nbsp; {sel.name}
+        <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={(e) => { e.preventDefault(); go("catalog"); }} style={css("cursor:pointer;")}>קטלוג</a> &nbsp;/&nbsp; <a href={pathFor("catalog", { catFilter: sel.category })} onClick={(e) => { e.preventDefault(); go("catalog", sel.category); }} style={css("cursor:pointer;")}>{sel.category}</a> &nbsp;/&nbsp; {sel.name}
       </div>
       <div className="r-product-grid" style={css("display:grid;grid-template-columns:1.05fr .95fr;gap:44px;align-items:start;")}>
         <div>

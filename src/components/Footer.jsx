@@ -42,7 +42,7 @@ function ContactList({ textStyle }) {
 
 export function Footer() {
   const { go, setCatFilter } = useStore();
-  const goCat = (c) => (e) => { e.preventDefault(); setCatFilter(c); go("catalog"); };
+  const goCat = (c) => (e) => { e.preventDefault(); go("catalog", c); };
   const goPage = (screen) => (e) => { e.preventDefault(); go(screen); };
   const [openSection, setOpenSection] = useState(null);
 

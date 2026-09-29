@@ -17,8 +17,7 @@ export function Collections() {
 
   const openCollection = (col) => (e) => {
     e.preventDefault();
-    setCatFilter(col.category_filter || "הכל");
-    go("catalog");
+    go("catalog", col.category_filter || "הכל");
   };
 
   return (
