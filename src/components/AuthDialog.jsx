@@ -34,6 +34,9 @@ export function AuthDialog() {
   const [step, setStep] = useState("details"); // "details" | "code"
   const [form, setForm] = useState({ email: "", phone: "" });
   const [code, setCode] = useState("");
+  // Field errors appear only after the first send attempt, never on blur: a
+  // message appearing on blur pushes the consent checkbox down between
+  // mousedown and mouseup, and the click on it gets lost.
   const [touched, setTouched] = useState({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -123,7 +126,6 @@ export function AuthDialog() {
         aria-describedby={touched[k] && errors[k] ? `auth-${k}-err` : undefined}
         value={form[k]}
         onChange={(e) => setForm((f) => ({ ...f, [k]: k === "phone" ? formatIsraeliPhone(e.target.value) : e.target.value }))}
-        onBlur={() => setTouched((t) => ({ ...t, [k]: true }))}
         placeholder={opts.placeholder}
         style={css((touched[k] && errors[k] ? fieldErrStyle : fieldStyle) + "text-align:right;")}
       />
