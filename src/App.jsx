@@ -9,6 +9,7 @@ import { Home } from "./screens/Home.jsx";
 import { Catalog } from "./screens/Catalog.jsx";
 import { Product } from "./screens/Product.jsx";
 import { Collections } from "./screens/Collections.jsx";
+import { Sets } from "./screens/Sets.jsx";
 import { Story } from "./screens/Story.jsx";
 import { Cart } from "./screens/Cart.jsx";
 import { Checkout } from "./screens/Checkout.jsx";
@@ -36,6 +37,7 @@ const SCREENS = {
   catalog: Catalog,
   product: Product,
   collections: Collections,
+  sets: Sets,
   story: Story,
   cart: Cart,
   checkout: Checkout,

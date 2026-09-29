@@ -579,6 +579,12 @@ export function StoreProvider({ children }) {
 
   /* ---------- admin: content ---------- */
   const setCdraft = useCallback((k, v) => setState((s) => ({ cdraft: { ...s.cdraft, [k]: v }, contentSaved: false })), [setState]);
+  // Save just some content keys (e.g. setPrices from the admin Sets tab)
+  // without going through the full content-tab draft.
+  const saveContentPatch = useCallback(async (patch) => {
+    const content = await store.content.update(patch);
+    setState((s) => ({ content: { ...s.content, ...content } }));
+  }, [setState]);
   const saveContent = useCallback(async () => {
     try {
       const content = await store.content.update(ref.current.cdraft);
@@ -671,7 +677,7 @@ export function StoreProvider({ children }) {
     setQty, setSize, setCatFilter,
     setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
-    setCdraft, saveContent, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
+    setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
     openSignupPopup, closeSignupPopup, maybeOfferSignupPopup, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
     openPhoneLogin, closePhoneLogin, loginByPhone,
   };

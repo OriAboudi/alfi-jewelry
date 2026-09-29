@@ -36,6 +36,8 @@ export function pathFor(screen, ctx = {}) {
     }
     case "collections":
       return "/קולקציות";
+    case "sets":
+      return "/סטים";
     case "story":
       return "/הסיפור-שלנו";
     case "contact":
@@ -58,6 +60,7 @@ const STATIC_ROUTES = {
   "/קטלוג": { screen: "catalog", catFilter: "הכל" },
   "/מבצע": { screen: "catalog", catFilter: "מבצע" },
   "/קולקציות": { screen: "collections" },
+  "/סטים": { screen: "sets" },
   "/הסיפור-שלנו": { screen: "story" },
   "/צור-קשר": { screen: "contact" },
   "/משלוחים-והחזרות": { screen: "shipping" },

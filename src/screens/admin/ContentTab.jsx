@@ -87,21 +87,11 @@ export function ContentTab() {
         <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:-8px;")}>סמנו מוצרים כ״משתתף במבצע״ בעריכת מוצר. המחיר מחושב אוטומטית בעגלה ובתשלום.</div>
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <div>
-          <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);margin-bottom:8px;")}>סטים — מחיר מיוחד לסט</div>
-          {setNames.length === 0 ? (
-            <div style={css("font-size:13px;color:var(--c-ink-mute);")}>עדיין אין סטים. בעריכת מוצר, תנו לכמה מוצרים את אותו ״שם סט״ והם יופיעו כאן.</div>
-          ) : (
-            <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
-              {setNames.map(({ name, count, regular }) => (
-                <div key={name}>
-                  <Field label={`סט ״${name}״ (${count} פריטים, בנפרד ₪${regular}) — מחיר הסט ₪`} value={(cd.setPrices || {})[name] ?? ""} onChange={(v) => setCdraft("setPrices", { ...(cd.setPrices || {}), [name]: v })} type="number" />
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>סט יוצג באתר רק כשיש לו לפחות 2 מוצרים ומחיר. כשכל פריטי הסט בעגלה — מחיר הסט מחושב אוטומטית.</div>
+          <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);margin-bottom:6px;")}>סטים</div>
+          <div style={css("font-size:13px;color:var(--c-ink-mute);")}>
+            יצירת סטים, בחירת הפריטים ומחיר הסט — בלשונית <strong>״סטים״</strong> ({setNames.length} סטים כרגע).
+          </div>
         </div>
-        <div style={css("font-size:12px;color:var(--c-ink-faint);")}>שימו לב: זהו באנר שיווקי בלבד — המחיר/המבצע לא נאכף אוטומטית בקופה.</div>
 
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <Field label="כותרת מקטע ״קצת עלינו״" value={cd.aboutTitle} onChange={(v) => setCdraft("aboutTitle", v)} />

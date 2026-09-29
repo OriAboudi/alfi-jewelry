@@ -5,8 +5,8 @@ import { SearchOverlay } from "./SearchOverlay.jsx";
 import { pathFor, DEAL_FILTER } from "../lib/routes.js";
 import { bundleConfig } from "../lib/pricing.js";
 
-// Design-handoff nav only lists the 4 categories (no "הכל"/collections item
-// in the header itself) — see reference/desktop.html's <nav class="nav">.
+// The 4 categories now live under a "קטגוריות" dropdown (desktop) /
+// accordion (mobile menu), next to "סטים" and "מבצעים".
 const CATEGORY_LINKS = ["טבעות", "שרשראות", "עגילים", "צמידים"];
 
 const iconBtnDesktop = "width:44px;height:44px;border:0;background:transparent;cursor:pointer;color:var(--ink);display:flex;align-items:center;justify-content:center;padding:0;flex:none;";
@@ -18,6 +18,18 @@ export function Header() {
   const deal = bundleConfig(content);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  // "קטגוריות": desktop dropdown / mobile-menu accordion.
+  const [catsOpen, setCatsOpen] = useState(false);
+  const [mCatsOpen, setMCatsOpen] = useState(false);
+  const catsRef = useRef(null);
+  useEffect(() => {
+    if (!catsOpen) return undefined;
+    const onDown = (e) => { if (catsRef.current && !catsRef.current.contains(e.target)) setCatsOpen(false); };
+    const onKey = (e) => { if (e.key === "Escape") setCatsOpen(false); };
+    document.addEventListener("pointerdown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("pointerdown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [catsOpen]);
 
   // Plays a one-shot "bump" on the cart icon whenever an item is added
   // (cartCount going up) — a removeItem/qty-decrease won't retrigger it,
@@ -37,8 +49,11 @@ export function Header() {
   const goCat = (cat) => (e) => {
     e.preventDefault();
     setMenuOpen(false);
+    setCatsOpen(false);
     go("catalog", cat);
   };
+  const goSets = (e) => { e.preventDefault(); setMenuOpen(false); go("sets"); };
+  const goDeal = (e) => { e.preventDefault(); setMenuOpen(false); go("catalog", DEAL_FILTER); };
   const goCollections = (e) => {
     e.preventDefault();
     setMenuOpen(false);
@@ -55,6 +70,9 @@ export function Header() {
   };
 
   const isCatActive = (cat) => screen === "catalog" && catFilter === cat;
+  const isCatsActive = screen === "catalog" && catFilter !== DEAL_FILTER;
+  const isSetsActive = screen === "sets";
+  const isDealActive = screen === "catalog" && catFilter === DEAL_FILTER;
   const isCollectionsActive = screen === "collections";
   const isStoryActive = screen === "story";
 
@@ -100,9 +118,22 @@ export function Header() {
         {/* ---- Desktop bar (>=768px) ---- */}
         <div className="rd-header-desktop" style={css("height:92px;box-sizing:border-box;padding:0 clamp(24px, 4.4vw, 64px);align-items:center;")}>
           <nav className="rd-nav" style={css("display:flex;gap:clamp(16px, 2vw, 36px);white-space:nowrap;font-size:15px;letter-spacing:.04em;")}>
-            {CATEGORY_LINKS.map((cat) => (
-              <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} aria-current={isCatActive(cat) ? "page" : undefined} style={css("cursor:pointer;")}>{cat}</a>
-            ))}
+            <div ref={catsRef} className="rd-nav-drop">
+              <button type="button" className="rd-nav-drop-btn" aria-expanded={catsOpen} aria-haspopup="true" aria-current={isCatsActive ? "page" : undefined} onClick={() => setCatsOpen((v) => !v)}>
+                קטגוריות
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" style={css(`transition:transform .2s;transform:rotate(${catsOpen ? 180 : 0}deg);`)}><path d="M6 9l6 6 6-6" /></svg>
+              </button>
+              {catsOpen && (
+                <div className="rd-nav-drop-panel glass-strong">
+                  {CATEGORY_LINKS.map((cat) => (
+                    <a key={cat} href={pathFor("catalog", { catFilter: cat })} onClick={goCat(cat)} aria-current={isCatActive(cat) ? "page" : undefined}>{cat}</a>
+                  ))}
+                  <a href={pathFor("catalog", { catFilter: "הכל" })} onClick={goCat("הכל")} className="rd-nav-drop-all">כל התכשיטים</a>
+                </div>
+              )}
+            </div>
+            <a href={pathFor("sets")} {...asButton(goSets)} aria-current={isSetsActive ? "page" : undefined} style={css("cursor:pointer;")}>סטים</a>
+            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton(goDeal)} aria-current={isDealActive ? "page" : undefined} style={css("cursor:pointer;")}>מבצעים</a>
             <a href={pathFor("collections")} {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>
             <a href={pathFor("story")} {...asButton(goStory)} aria-current={isStoryActive ? "page" : undefined} style={css("cursor:pointer;")}>הסיפור</a>
           </nav>
@@ -154,11 +185,20 @@ export function Header() {
 
         {menuOpen && (
           <nav className="glass" style={css("border-top:1px solid rgba(255,255,255,.65);padding:6px 16px 16px;display:flex;flex-direction:column;")}>
-            {CATEGORY_LINKS.map((cat) => (
-              <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>{cat}</a>
-            ))}
+            <button type="button" aria-expanded={mCatsOpen} onClick={() => setMCatsOpen((v) => !v)} style={css("padding:15px 2px;border:0;border-bottom:1px solid rgba(58,45,61,.12);background:none;font:inherit;text-align:right;cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;width:100%;")}>
+              קטגוריות
+              <span aria-hidden="true" style={css(`color:var(--c-accent);font-size:20px;line-height:1;transition:transform .2s;transform:rotate(${mCatsOpen ? 45 : 0}deg);`)}>+</span>
+            </button>
+            {mCatsOpen && (
+              <div style={css("display:flex;flex-direction:column;padding:0 14px 0 0;border-bottom:1px solid rgba(58,45,61,.12);")}>
+                {[...CATEGORY_LINKS, "הכל"].map((cat) => (
+                  <a key={cat} href={pathFor("catalog", { catFilter: cat })} {...asButton(goCat(cat))} style={css("padding:12px 2px;cursor:pointer;color:var(--ink);font-size:15.5px;min-height:var(--tap);display:flex;align-items:center;")}>{cat === "הכל" ? "כל התכשיטים" : cat}</a>
+                ))}
+              </div>
+            )}
+            <a href={pathFor("sets")} {...asButton(goSets)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>סטים</a>
+            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton(goDeal)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--c-accent-dark);font-weight:600;font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>מבצעים<span style={css("font-size:13px;font-weight:400;")}>{deal.size} ב־₪{deal.price}</span></a>
             <a href={pathFor("collections")} {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
-            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton((e) => { e.preventDefault(); setMenuOpen(false); go("catalog", DEAL_FILTER); })} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--c-accent-dark);font-weight:600;font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>מבצע {deal.size} ב־₪{deal.price}</a>
             <a href={pathFor("story")} {...asButton(goStory)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>הסיפור</a>
             <span {...asButton(() => navigate("favorites"))} className="tap-target" style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>
               מועדפים
