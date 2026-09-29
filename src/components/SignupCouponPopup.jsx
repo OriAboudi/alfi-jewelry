@@ -4,37 +4,24 @@ import { isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/fo
 import { useStore } from "../context/StoreContext.jsx";
 import { PrivacyConsent } from "./PrivacyConsent.jsx";
 import { useDialog } from "../hooks/useDialog.js";
-
-const labelStyle = "display:block;font-size:12.5px;color:var(--c-ink-mute);margin-bottom:5px;";
-const fieldStyle = "width:100%;padding:13px 14px;border:1.5px solid var(--c-line-strong);border-radius:var(--r-md);font-size:15px;background:transparent;transition:border-color .2s;";
-const fieldErrStyle = fieldStyle.replace("var(--c-line-strong)", "#d98a72");
-const errMsgStyle = "color:var(--c-danger);font-size:12px;margin-top:5px;";
+import { BrandDialog, preloadBrandImages, brandLabel, brandField, brandFieldErr, brandErrMsg, brandTitle, brandLead, brandLink, brandQuiet } from "./BrandDialog.jsx";
 
 const REQUIRED = ["name", "email", "phone"];
 
-// The panel is painted with two images (the floral background and the ALFI
-// band). Opening before they are decoded showed the panel first and then
-// the pictures popping in one after the other; wait for both (briefly — a
-// slow network still gets the popup after 2.5s).
-const POPUP_IMAGES = ["/floral-bg.jpg", "/signup-bg.jpg"];
-let popupImagesReady = null;
-function preloadPopupImages() {
-  if (!popupImagesReady) {
-    popupImagesReady = Promise.race([
-      Promise.all(POPUP_IMAGES.map((src) => { const img = new Image(); img.src = src; return img.decode().catch(() => {}); })),
-      new Promise((r) => setTimeout(r, 2500)),
-    ]);
-  }
-  return popupImagesReady;
-}
-
+/**
+ * SignupCouponPopup — "X% off your first order" for new visitors: name,
+ * email and mobile → a one-time coupon (on screen and by email). When it may
+ * appear at all is decided in one place, StoreContext's
+ * shouldOfferSignupPopup (never to a signed-in visitor, during sign-in,
+ * around payment or to someone who already ordered).
+ */
 export function SignupCouponPopup() {
-  const { signupPopupOpen, signupPopupPendingCheckout, signupPopupPrefillPhone, content: C, loaded, couponCode, submitSignup, closeSignupPopup } = useStore();
+  const { signupPopupOpen, signupPopupPendingCheckout, signupPopupPrefillPhone, content: C, loaded, submitSignup, closeSignupPopup, switchToSignIn } = useStore();
   const [imagesReady, setImagesReady] = useState(false);
   useEffect(() => {
     if (!signupPopupOpen || imagesReady) return undefined;
     let alive = true;
-    preloadPopupImages().then(() => { if (alive) setImagesReady(true); });
+    preloadBrandImages().then(() => { if (alive) setImagesReady(true); });
     return () => { alive = false; };
   }, [signupPopupOpen, imagesReady]);
   // Shown only once complete: images decoded AND the server settings (the
@@ -42,7 +29,9 @@ export function SignupCouponPopup() {
   const visible = signupPopupOpen && imagesReady && loaded;
 
   const [form, setForm] = useState({ name: "", email: "", phone: "" });
-  const [touched, setTouched] = useState({});
+  // Errors show after the first submit attempt, not on blur — a message
+  // appearing on blur shifts the consent checkbox under the pointer.
+  const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(null); // { code, percent }
@@ -50,9 +39,6 @@ export function SignupCouponPopup() {
   const [agreed, setAgreed] = useState(false);
   const [agreeError, setAgreeError] = useState("");
 
-  // Reaching this popup from the header's phone-login flow (number not on
-  // file yet) hands off the phone already typed there, so it doesn't need
-  // to be re-entered here.
   useEffect(() => {
     if (signupPopupOpen && signupPopupPrefillPhone) {
       setForm((f) => ({ ...f, phone: formatIsraeliPhone(signupPopupPrefillPhone) }));
@@ -63,9 +49,7 @@ export function SignupCouponPopup() {
 
   if (!visible) return null;
 
-  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
-  const setPhone = (e) => setForm((f) => ({ ...f, phone: formatIsraeliPhone(e.target.value) }));
-  const blur = (k) => () => setTouched((t) => ({ ...t, [k]: true }));
+  const set = (k) => (e) => setForm((f) => ({ ...f, [k]: k === "phone" ? formatIsraeliPhone(e.target.value) : e.target.value }));
 
   const errors = {
     name: form.name.trim() ? "" : "שדה חובה",
@@ -75,17 +59,17 @@ export function SignupCouponPopup() {
   const formValid = REQUIRED.every((k) => !errors[k]);
   const percent = C.signupCouponPercent || 5;
 
-  const submit = async () => {
+  const submit = async (e) => {
+    e.preventDefault();
+    setTouched(true);
     if (!agreed) setAgreeError("יש לאשר את מדיניות הפרטיות כדי להמשיך");
-    if (!formValid) { setTouched({ name: true, email: true, phone: true }); return; }
-    if (!agreed) return;
+    if (!formValid || !agreed) return;
     setBusy(true);
     setError("");
     try {
-      const result = await submitSignup(form);
-      setSuccess(result);
-    } catch (e) {
-      setError(e.message || "ההרשמה נכשלה, נסי שוב");
+      setSuccess(await submitSignup(form));
+    } catch (err) {
+      setError(err.message || "ההרשמה נכשלה, נסי שוב");
     } finally {
       setBusy(false);
     }
@@ -99,85 +83,70 @@ export function SignupCouponPopup() {
     } catch { /* clipboard unavailable — code is still shown on screen */ }
   };
 
-  const close = () => closeSignupPopup();
+  const field = (k, label, opts = {}) => {
+    const bad = touched && errors[k];
+    return (
+      <div>
+        <label htmlFor={`signup-${k}`} style={css(brandLabel)}>{label}</label>
+        <input
+          id={`signup-${k}`}
+          required
+          aria-required="true"
+          aria-invalid={!!bad}
+          aria-describedby={bad ? `signup-${k}-err` : undefined}
+          autoComplete={opts.autoComplete}
+          inputMode={opts.inputMode}
+          dir={opts.ltr ? "ltr" : undefined}
+          value={form[k]}
+          onChange={set(k)}
+          type={opts.type || "text"}
+          placeholder={opts.placeholder}
+          style={css((bad ? brandFieldErr : brandField) + (opts.ltr ? "text-align:right;" : ""))}
+        />
+        {bad && <div id={`signup-${k}-err`} role="alert" style={css(brandErrMsg)}>{errors[k]}</div>}
+      </div>
+    );
+  };
 
-  const field = (k, label, opts = {}) => (
-    <div>
-      <label htmlFor={`signup-${k}`} style={css(labelStyle)}>{label}</label>
-      <input
-        id={`signup-${k}`}
-        required
-        aria-required="true"
-        aria-invalid={!!(touched[k] && errors[k])}
-        aria-describedby={touched[k] && errors[k] ? `signup-${k}-err` : undefined}
-        autoComplete={opts.autoComplete}
-        value={form[k]}
-        onChange={opts.onChange || set(k)}
-        onBlur={blur(k)}
-        type={opts.type || "text"}
-        placeholder={opts.placeholder}
-        style={css(touched[k] && errors[k] ? fieldErrStyle : fieldStyle)}
-      />
-      {touched[k] && errors[k] && <div id={`signup-${k}-err`} role="alert" style={css(errMsgStyle)}>{errors[k]}</div>}
-    </div>
+  const footer = !success && (
+    <>כבר יש לך חשבון? <button type="button" onClick={switchToSignIn} style={css(brandLink + "padding:4px 2px;")}>כניסה</button></>
   );
 
   return (
-    <div
-      onClick={close}
-      style={css("position:fixed;inset:0;z-index:90;background:rgba(46,34,49,.55);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:16px;")}
-    >
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="signup-title"
-        onClick={(e) => e.stopPropagation()}
-        dir="rtl"
-        className="r-signup-panel"
-        // Top band: the brand painting with the ALFI JEWELRY logo
-        // (public/signup-bg.jpg). Behind the form: the site's own floral
-        // painting (no lettering to ghost through), under a frosted cream
-        // layer so every line stays readable.
-        style={css("position:relative;background:#efe4ec url(/floral-bg.jpg) center/cover;border-radius:20px;width:100%;max-width:380px;max-height:88vh;overflow:hidden;box-shadow:var(--shadow-modal);text-align:center;display:flex;flex-direction:column;")}
-      >
-        <div role="img" aria-label="ALFI Jewelry" style={css("flex:none;height:150px;background:url(/signup-bg.jpg) center 48%/100% auto no-repeat;")} />
-
-        <div className="no-scrollbar" style={css("flex:1;min-height:0;overflow-y:auto;padding:22px 22px 18px;background:rgba(248,243,238,.8);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.7);")}>
-        {success ? (
-          <>
-            <h2 id="signup-title" style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:7px;")}>ברוכה הבאה ל‑ALFI!</h2>
-            <p style={css("font-size:12.5px;color:var(--c-ink-soft);margin-bottom:14px;")}>קוד ההנחה שלך ל‑{success.percent}% הנחה נשלח גם לאימייל שלך:</p>
-            <div style={css("border:1.5px dashed var(--c-accent);border-radius:12px;padding:11px;font-size:18px;font-weight:700;letter-spacing:.07em;color:var(--c-accent);margin-bottom:12px;")}>{success.code}</div>
-            <button onClick={copyCode} className="tap-target" style={css("width:100%;padding:10px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:transparent;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:10px;")}>
-              {copied ? "✓ הועתק!" : "העתקת הקוד"}
-            </button>
-            <button onClick={close} className="btn btn-primary btn-block" style={css("font-size:14px;padding:11px;")}>
-              {signupPopupPendingCheckout ? "המשך לתשלום" : "המשך בקניות"}
-            </button>
-          </>
-        ) : (
-          <>
-            <h2 id="signup-title" style={css("font-family:var(--font-serif);font-weight:400;font-size:19px;margin-bottom:14px;")}>{percent}% הנחה על ההזמנה הראשונה</h2>
-            <div style={css("display:flex;flex-direction:column;gap:9px;text-align:right;margin-bottom:12px;")}>
-              {field("name", "שם מלא", { autoComplete: "name" })}
-              {field("email", "אימייל", { type: "email", placeholder: "example@mail.com", autoComplete: "email" })}
-              {field("phone", "טלפון", { type: "tel", onChange: setPhone, placeholder: "050-1234567", autoComplete: "tel" })}
-            </div>
-            <div style={css("margin-bottom:12px;")}>
-              <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
-            </div>
-            {error && <div role="alert" style={css("color:var(--c-danger);font-size:12px;margin-bottom:10px;")}>{error}</div>}
-            <button onClick={submit} disabled={busy} className="btn btn-primary btn-block" style={css("font-size:14px;padding:11px;margin-bottom:8px;")}>
-              {busy ? "רגע…" : "קבלת הקופון"}
-            </button>
-            <button type="button" onClick={close} className="tap-target" style={css("display:inline-block;background:none;border:0;padding:0 6px;font-family:inherit;cursor:pointer;font-size:12px;color:var(--c-ink-mute);")}>
-              {signupPopupPendingCheckout ? "להמשיך בלי קופון" : "אולי מאוחר יותר"}
-            </button>
-          </>
-        )}
-        </div>
-      </div>
-    </div>
+    <BrandDialog panelRef={panelRef} labelledBy="signup-title" onClose={closeSignupPopup} footer={footer}>
+      {success ? (
+        <>
+          <h2 id="signup-title" style={css(brandTitle)}>ברוכה הבאה ל‑ALFI!</h2>
+          <p style={css(brandLead)}>קוד ההנחה שלך ל‑{success.percent}% הנחה כבר הופעל בעגלה, ונשלח גם למייל:</p>
+          <div style={css("border:1.5px dashed var(--c-accent);border-radius:12px;padding:12px;font-size:19px;font-weight:700;letter-spacing:.08em;color:var(--c-accent);margin-bottom:12px;background:rgba(255,255,255,.5);")} dir="ltr">{success.code}</div>
+          <button type="button" onClick={copyCode} className="tap-target" style={css("width:100%;padding:10px;border:1px solid var(--c-line-strong);border-radius:var(--r-md);background:transparent;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:10px;color:var(--c-ink);")}>
+            {copied ? "✓ הועתק" : "העתקת הקוד"}
+          </button>
+          <button type="button" onClick={closeSignupPopup} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;")}>
+            {signupPopupPendingCheckout ? "המשך לתשלום" : "המשך בקניות"}
+          </button>
+        </>
+      ) : (
+        <form onSubmit={submit} noValidate>
+          <h2 id="signup-title" style={css(brandTitle)}>{percent}% הנחה על ההזמנה הראשונה</h2>
+          <p style={css(brandLead)}>הצטרפי ל‑ALFI וקבלי קוד הנחה מיד, גם למייל.</p>
+          <div style={css("display:flex;flex-direction:column;gap:10px;margin-bottom:12px;")}>
+            {field("name", "שם מלא", { autoComplete: "name" })}
+            {field("email", "אימייל", { type: "email", inputMode: "email", placeholder: "example@mail.com", autoComplete: "email", ltr: true })}
+            {field("phone", "טלפון נייד", { type: "tel", inputMode: "tel", placeholder: "050-1234567", autoComplete: "tel", ltr: true })}
+          </div>
+          <div style={css("margin-bottom:12px;")}>
+            <PrivacyConsent checked={agreed} onChange={(v) => { setAgreed(v); if (v) setAgreeError(""); }} error={agreeError} />
+          </div>
+          {error && <div role="alert" style={css("color:var(--c-danger);font-size:13px;margin-bottom:10px;")}>{error}</div>}
+          <button type="submit" disabled={busy} className="btn btn-primary btn-block" style={css("font-size:15px;padding:12px;margin-bottom:4px;")}>
+            {busy ? "רגע…" : "קבלת קוד ההנחה"}
+          </button>
+          <button type="button" onClick={closeSignupPopup} style={css(brandQuiet)}>
+            {signupPopupPendingCheckout ? "להמשיך בלי קופון" : "אולי מאוחר יותר"}
+          </button>
+        </form>
+      )}
+    </BrandDialog>
   );
 }

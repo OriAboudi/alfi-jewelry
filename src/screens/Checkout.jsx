@@ -36,7 +36,7 @@ export function Checkout() {
   // that are still empty, never overwrites what was typed).
   useEffect(() => {
     if (!customer) return;
-    const [first = "", ...rest] = String(customer.name || "").trim().split(/s+/);
+    const [first = "", ...rest] = String(customer.name || "").trim().split(/\s+/);
     setForm((f) => ({
       ...f,
       first: f.first || first,

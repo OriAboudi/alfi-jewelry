@@ -223,8 +223,8 @@ const local = {
       localStorage.removeItem("alfi:loginCode");
       const users = read(LS.users, []);
       let u = users.find((x) => x.email === email);
-      if (u && u.role === "admin") throw new Error("לחשבון הזה יש כניסת מנהל נפרדת");
-      if (!u) {
+      if (u && u.role === "admin") { /* admin email: signed in as admin, profile untouched */ }
+      else if (!u) {
         const coupon = read(LS.coupons, []).find((c) => c.email === email);
         u = { id: uid(), name: coupon?.name || "", email, phone: pending.phone, role: "customer", favorites: [], created_at: new Date().toISOString() };
         users.push(u);

@@ -6,6 +6,25 @@ import { initNavMemory, rememberScroll, pushEntry, onPopEntry, restoreScroll } f
 
 initNavMemory();
 
+// The sign-up coupon is for new visitors only: never for someone signed in,
+// who already placed an order on this device (it's a first-order offer),
+// who has a coupon applied, is mid-payment, or already claimed it.
+// Dismissing the pop-up is not remembered across page loads.
+function signupCouponEligible(s) {
+  if (s.content?.signupCouponEnabled === false) return false;
+  if (s.user || s.couponCode) return false;
+  if ((s.myOrders || []).length || s.lastOrder) return false;
+  try {
+    if (localStorage.getItem("alfi:signupCouponClaimed") === "1") return false;
+    if (localStorage.getItem("alfi:pendingOrder")) return false;
+  } catch { /* ignore */ }
+  return true;
+}
+
+// Pages the pop-up never opens on by itself: around payment, the account,
+// admin. (Checkout offers it on its own, see Checkout.jsx.)
+const NO_SIGNUP_POPUP_SCREENS = new Set(["checkout", "confirm", "payment-failed", "status", "loading", "my-orders", "admin", "admin-login"]);
+
 const StoreContext = createContext(null);
 export const useStore = () => useContext(StoreContext);
 
@@ -394,27 +413,29 @@ export function StoreProvider({ children }) {
   }, [setState, go]);
 
   /* ---------- signup pop-up + coupon ---------- */
-  // Dismissing the pop-up is never remembered across page loads (no
-  // localStorage write for it) — only actually claiming a coupon suppresses
-  // it, so it keeps offering the coupon on every fresh visit/navigation
-  // until the visitor signs up.
-  const shouldOfferSignupPopup = useCallback(() => {
-    if (ref.current.content?.signupCouponEnabled === false) return false;
-    try {
-      if (localStorage.getItem("alfi:signupCouponClaimed") === "1") return false;
-    } catch { /* ignore */ }
-    return true;
+  // When the pop-up may open by itself: never before the session check
+  // finished, never over the sign-in dialog, and not on the pages around
+  // payment and the account (NO_SIGNUP_POPUP_SCREENS). The checkout page
+  // offers it itself (atCheckout), once, while the details are filled in.
+  // Who may get it at all: signupCouponEligible (module level).
+  const shouldOfferSignupPopup = useCallback((atCheckout = false) => {
+    const s = ref.current;
+    if (typeof window === "undefined" || isAdminPath()) return false;
+    if (!s.authReady || s.authDialog || s.signupPopupOpen) return false;
+    if (!atCheckout && NO_SIGNUP_POPUP_SCREENS.has(s.screen)) return false;
+    return signupCouponEligible(s);
   }, []);
 
+  // Explicit "הרשמה" clicks: open unless the visitor is signed in.
   const openSignupPopup = useCallback((pendingCheckout = false, prefillPhone = "") => {
-    setState({ signupPopupOpen: true, signupPopupPendingCheckout: pendingCheckout, signupPopupPrefillPhone: prefillPhone });
+    if (ref.current.user) return;
+    setState({ signupPopupOpen: true, authDialog: null, signupPopupPendingCheckout: pendingCheckout, signupPopupPrefillPhone: prefillPhone });
   }, [setState]);
 
-  // Only opens if eligible (not already claimed/dismissed-recently/disabled)
-  // and nothing else has it open — used by the 10s-browsing timer and by
-  // the checkout page's own mount trigger, so both funnel through one place.
+  // The 10s-browsing timer and the checkout page's own trigger both funnel
+  // through here.
   const maybeOfferSignupPopup = useCallback((pendingCheckout = false) => {
-    if (!ref.current.signupPopupOpen && shouldOfferSignupPopup()) openSignupPopup(pendingCheckout);
+    if (shouldOfferSignupPopup(pendingCheckout)) openSignupPopup(pendingCheckout);
   }, [shouldOfferSignupPopup, openSignupPopup]);
 
   const closeSignupPopup = useCallback(() => {
@@ -425,17 +446,29 @@ export function StoreProvider({ children }) {
      One account = the same orders and favorites on every device. The dialog
      (AuthDialog.jsx) is opened from the header / account page; these
      actions do the real work and throw Hebrew messages the dialog shows. */
-  const openAuth = useCallback(() => setState({ authDialog: "login" }), [setState]);
+  // Only one of the two pop-ups is ever open: opening sign-in closes the
+  // coupon pop-up, and each links to the other.
+  const openAuth = useCallback(() => setState({ authDialog: "login", signupPopupOpen: false }), [setState]);
   const closeAuth = useCallback(() => setState({ authDialog: null }), [setState]);
+  const switchToSignIn = useCallback(() => setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, authDialog: "login" }), [setState]);
+  const switchToSignup = useCallback(() => setState({ authDialog: null, signupPopupOpen: true, signupPopupPendingCheckout: false }), [setState]);
 
   const afterSignIn = useCallback(async (user) => {
-    setState({ user, authDialog: null });
-    if (user && user.role !== "admin") await syncAccount(user);
-  }, [setState, syncAccount]);
+    setState({ user, authDialog: null, signupPopupOpen: false });
+    if (!user) return;
+    if (user.role === "admin") {
+      // The store's own email: straight to the admin panel, at its URL so a
+      // reload stays there.
+      if (!isAdminPath()) window.history.pushState({}, "", ADMIN_PATH);
+      await goAdmin();
+      return;
+    }
+    await syncAccount(user);
+  }, [setState, syncAccount, goAdmin]);
 
-  // Customers: email + mobile → a 6-digit code by email → signed in (the
-  // first sign-in creates the account). Admins sign in with their password
-  // on the admin page (submitAdminLogin).
+  // Email + mobile → a 6-digit code by email → signed in (the first sign-in
+  // creates the account; the admin email opens the admin panel). The admin
+  // page's own password sign-in (submitAdminLogin) still works too.
   const requestLoginCode = useCallback(async ({ email, phone }) => {
     await store.auth.requestLoginCode({ email, phone });
     try { localStorage.setItem("alfi:lastContact", JSON.stringify({ email: String(email || "").trim(), phone })); } catch { /* ignore */ }
@@ -746,6 +779,7 @@ export function StoreProvider({ children }) {
     isAdmin: !!(state.user && state.user.role === "admin"),
     // The signed-in shopper (never the admin session).
     customer: state.user && state.user.role !== "admin" ? state.user : null,
+    signupCouponAvailable: signupCouponEligible(state),
     cartCount: state.cart.reduce((a, c) => a + c.qty, 0),
     favoritesCount: state.favorites.length,
     // actions
@@ -757,7 +791,7 @@ export function StoreProvider({ children }) {
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
     setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
     openSignupPopup, closeSignupPopup, maybeOfferSignupPopup, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
-    openAuth, closeAuth, requestLoginCode, verifyLoginCode, refreshAccountOrders, loadSiteData,
+    openAuth, closeAuth, switchToSignIn, switchToSignup, requestLoginCode, verifyLoginCode, refreshAccountOrders, loadSiteData,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

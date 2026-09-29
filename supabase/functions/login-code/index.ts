@@ -18,8 +18,9 @@
 // Safety: only a SHA-256 hash of the code is stored (supabase/add-email-
 // login-codes.sql); a code lives 10 minutes and allows 5 wrong tries;
 // sending is rate-limited per IP and per email with a short cooldown, so this
-// can't be used to flood an inbox. Admin accounts never sign in this way —
-// they keep their own password login.
+// can't be used to flood an inbox. The admin's email works too (it signs in
+// as the admin and the site opens the admin panel) — "send" answers the same
+// for every address, so it never reveals which email is the admin's.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import { corsHeaders } from "../_shared/cors.ts";
 import { sendLoginCodeEmail } from "../_shared/email.ts";
@@ -83,9 +84,6 @@ Deno.serve(async (req) => {
         return json({ error: "רגע, קוד נשלח זה עתה. אפשר לבקש קוד חדש בעוד פחות מדקה." });
       }
 
-      const existing = await userIdByEmail(email);
-      if (existing && (await isAdmin(existing))) return json({ error: "לחשבון הזה יש כניסת מנהל נפרדת" });
-
       const code = String(secureRandomInt(1_000_000)).padStart(6, "0");
       const { error: upsertError } = await supabase.from("login_codes").upsert({
         email,
@@ -131,8 +129,10 @@ Deno.serve(async (req) => {
       await supabase.from("login_codes").delete().eq("email", email);
 
       let userId = await userIdByEmail(email);
-      if (userId) {
-        if (await isAdmin(userId)) return json({ error: "לחשבון הזה יש כניסת מנהל נפרדת" });
+      if (userId && (await isAdmin(userId))) {
+        // The store's admin email: signed in as the admin (the browser then
+        // opens the admin panel). The admin's profile is left untouched.
+      } else if (userId) {
         const { data: got } = await supabase.auth.admin.getUserById(userId);
         const meta = got?.user?.user_metadata || {};
         // The code proved the email, so an account from the old password

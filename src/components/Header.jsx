@@ -92,7 +92,7 @@ export function Header() {
   // details, logout); signed out → the login/register dialog. Nothing
   // account-specific renders until the session check finished (authReady),
   // so a signed-in shopper never sees "התחברות" flash first.
-  const firstName = customer ? String(customer.name || customer.email || "").split(/[s@]/)[0] : "";
+  const firstName = customer ? String(customer.name || customer.email || "").split(/[\s@]/)[0] : "";
   const accountLabel = customer ? `החשבון שלי, ${firstName}` : "כניסה / הרשמה";
   const accountAction = customer ? () => navigate("my-orders") : () => { setMenuOpen(false); openAuth(); };
   // Back/forward (or any screen change) closes the open mobile menu.

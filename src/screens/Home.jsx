@@ -61,7 +61,7 @@ function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products, loading 
 }
 
 export function Home() {
-  const { content: C, products, loaded, go, setCatFilter, openSignupPopup, openProduct } = useStore();
+  const { content: C, products, loaded, go, setCatFilter, openSignupPopup, openProduct, signupCouponAvailable } = useStore();
   const [bestSellers, setBestSellers] = React.useState([]);
 
   useSeoTags({
@@ -334,7 +334,9 @@ export function Home() {
           exists; this opens the same sign-up/coupon popup as the footer's
           "קבלת קוד הנחה" button always has, per HANDOFF.md's "keep the
           existing newsletter submit logic if there is one". */}
-      <Reveal as="section" className="rd-only-desktop" style={css("padding:0 64px 120px;display:flex;justify-content:center;")}>
+      {/* Only for visitors the coupon is still on offer to (not signed in,
+          not claimed, no order yet — see signupCouponEligible). */}
+      {signupCouponAvailable && <Reveal as="section" className="rd-only-desktop" style={css("padding:0 64px 120px;display:flex;justify-content:center;")}>
         <div className="glass" style={css("width:680px;padding:48px 56px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px;align-items:center;text-align:center;")}>
           <h3 className="serif" style={css("margin:0;font-size:38px;font-weight:300;")}>הצטרפי לגן של ALFI</h3>
           <button
@@ -345,7 +347,7 @@ export function Home() {
             <span style={css("height:52px;display:flex;align-items:center;font-size:16px;letter-spacing:.08em;color:var(--ink);")}>הרשמה</span>
           </button>
         </div>
-      </Reveal>
+      </Reveal>}
     </div>
   );
 }
