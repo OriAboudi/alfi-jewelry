@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { buildSets } from "../lib/pricing.js";
+import { buildSets, setInStock } from "../lib/pricing.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { SetCard } from "../components/SetCard.jsx";
@@ -9,7 +9,7 @@ import { SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
 // /סטים — every product set as a stacked card; each opens its own page.
 export function Sets() {
   const { products, content: C, go, loaded } = useStore();
-  const sets = Object.values(buildSets(products, C));
+  const sets = Object.values(buildSets(products, C)).filter(setInStock);
 
   useSeoTags({
     title: "סטים של תכשיטי כסף · ALFI",

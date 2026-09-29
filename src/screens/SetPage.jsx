@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 import { fmt, productDetailsText } from "../lib/format.js";
-import { buildSets } from "../lib/pricing.js";
+import { buildSets, setTitle, setInStock } from "../lib/pricing.js";
 import { pathFor, slugify } from "../lib/routes.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
@@ -38,7 +38,7 @@ function SetDeck({ members, active, onSelect, setName }) {
       className="rd-deck"
       role="region"
       aria-roledescription="קרוסלה"
-      aria-label={`פריטי סט ${setName}`}
+      aria-label={`פריטי ${setTitle(setName)}`}
       tabIndex={0}
       onKeyDown={onKeyDown}
       onPointerDown={onPointerDown}
@@ -99,15 +99,15 @@ export function SetPage() {
 
   const path = set ? pathFor("set", { pid: set.name }) : "/סטים";
   useSeoTags({
-    title: set ? `סט ${set.name} · ${members.length} תכשיטי כסף 925 · ALFI` : undefined,
-    description: set ? `סט ${set.name}: ${members.map((m) => m.name).join(", ")}. מחיר הסט ${fmt(set.price)} במקום ${fmt(set.regular)}.` : undefined,
+    title: set ? `${setTitle(set.name)} · ${members.length} תכשיטי כסף 925 · ALFI` : undefined,
+    description: set ? `${setTitle(set.name)}: ${members.map((m) => m.name).join(", ")}. מחיר הסט ${fmt(set.price)} במקום ${fmt(set.regular)}.` : undefined,
     canonical: set ? path : undefined,
     image: members[0]?.image,
     type: "product",
     jsonLd: set ? [{
       "@context": "https://schema.org",
       "@type": "Product",
-      name: `סט ${set.name}`,
+      name: setTitle(set.name),
       image: members.map((m) => m.image).filter(Boolean),
       brand: { "@type": "Brand", name: "ALFI Jewelry" },
       offers: {
@@ -139,7 +139,7 @@ export function SetPage() {
       <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }}>בית</a>
       <span aria-hidden="true">/</span>
       <a href={pathFor("sets")} onClick={(e) => { e.preventDefault(); go("sets"); }}>סטים</a>
-      {set && <><span aria-hidden="true">/</span><span aria-current="page">סט {set.name}</span></>}
+      {set && <><span aria-hidden="true">/</span><span aria-current="page">{setTitle(set.name)}</span></>}
     </nav>
   );
 
@@ -162,7 +162,7 @@ export function SetPage() {
     );
   }
 
-  const otherSets = sets.filter((s) => s.name !== set.name);
+  const otherSets = sets.filter((s) => s.name !== set.name && setInStock(s));
 
   return (
     <div className="r-container glass-card" style={css("max-width:1240px;margin:30px auto;padding:26px var(--sp-5) 64px;")}>
@@ -191,7 +191,7 @@ export function SetPage() {
         {/* ---- set info ---- */}
         <div className="r-sticky" style={css("position:sticky;top:100px;min-width:0;")}>
           <div style={css("font-size:12.5px;letter-spacing:.16em;color:var(--c-accent-dark);font-weight:600;margin-bottom:6px;")}>סט · {members.length} פריטים</div>
-          <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:clamp(30px, 3vw, 40px);line-height:1.15;margin:0 0 12px;")}>סט {set.name}</h1>
+          <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:clamp(30px, 3vw, 40px);line-height:1.15;margin:0 0 12px;")}>{setTitle(set.name)}</h1>
           <div style={css("display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 12px;margin-bottom:6px;")}>
             <span style={css("font-size:26px;color:var(--c-accent);font-weight:700;")}>{fmt(set.price)}</span>
             {save > 0 && <s style={css("font-size:17px;color:var(--c-ink-faint);")}>{fmt(set.regular)}</s>}
@@ -261,7 +261,7 @@ export function SetPage() {
             {otherSets.map((s) => (
               <a key={s.name} href={pathFor("set", { pid: s.name })} onClick={(e) => { e.preventDefault(); openSet(s.name); }} className="rd-setpage-other glass-strong">
                 <span className="rd-setpage-row-img">{s.members[0]?.image ? <img src={s.members[0].image} alt="" loading="lazy" decoding="async" /> : null}</span>
-                <span>סט {s.name}<br /><b style={css("color:var(--c-accent);")}>{fmt(s.price)}</b></span>
+                <span>{setTitle(s.name)}<br /><b style={css("color:var(--c-accent);")}>{fmt(s.price)}</b></span>
               </a>
             ))}
           </div>

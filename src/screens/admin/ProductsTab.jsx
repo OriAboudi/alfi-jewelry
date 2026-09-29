@@ -179,7 +179,7 @@ export function ProductsTab() {
                   ))}
                 </div>
               )}
-              <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>את מחיר הסט קובעים בלשונית ״תוכן האתר״.</div>
+              <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:6px;")}>הסט יוצג באתר רק אחרי שנקבע לו מחיר, בלשונית ״סטים״.</div>
             </div>
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
               <button onClick={submitDraft} style={css("flex:1;padding:14px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>

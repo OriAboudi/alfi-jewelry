@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
+import { setTitle } from "../lib/pricing.js";
 import { pathFor } from "../lib/routes.js";
 import { useStore } from "../context/StoreContext.jsx";
 
@@ -33,12 +34,12 @@ export function SetCard({ set }) {
     <a
       href={pathFor("set", { pid: set.name })}
       onClick={(e) => { e.preventDefault(); openSet(set.name); }}
-      aria-label={`סט ${set.name}, ${set.members.length} פריטים, ${fmt(set.price)}`}
+      aria-label={`${setTitle(set.name)}, ${set.members.length} פריטים, ${fmt(set.price)}`}
       className="rd-card glass-strong rd-set-card"
     >
       <SetStack set={set} />
       <span style={css("padding:0 8px;display:flex;flex-direction:column;gap:6px;margin-top:14px;text-align:right;")}>
-        <span className="serif rd-card-name" style={css("line-height:1.25;")}>סט {set.name}</span>
+        <span className="serif rd-card-name" style={css("line-height:1.25;")}>{setTitle(set.name)}</span>
         <span className="rd-card-meta" style={css("color:var(--text-muted);line-height:1.5;")}>{set.members.map((m) => m.name).join(" · ")}</span>
         <span style={css("display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;")}>
           <span style={css("font-weight:700;color:var(--c-accent);font-size:17px;")}>{fmt(set.price)}</span>

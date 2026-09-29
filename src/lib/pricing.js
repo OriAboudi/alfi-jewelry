@@ -31,6 +31,19 @@ export function bundleDiscount(unitPrices, size, price) {
   return { discount: Math.round(discount * 100) / 100, sets, eligible: units.length, missing: units.length && rest ? size - rest : 0 };
 }
 
+// How a set is named to shoppers: "סט <name>" — unless the admin already
+// wrote the word (set_name "סט גלייס" stays "סט גלייס", not "סט סט גלייס").
+export function setTitle(name) {
+  const n = String(name || "").trim();
+  return /^סט(\s|$)/.test(n) ? n : `סט ${n}`;
+}
+
+// A set is shown in the sets slider / sets page only while every piece is
+// in stock (its own page still opens, marked sold out).
+export function setInStock(set) {
+  return set.members.every((m) => Number(m.stock) > 0);
+}
+
 // Product sets: products sharing a set_name form a set, priced by the admin
 // in content.setPrices. Only sets with 2+ members and a price are live.
 export function buildSets(products, content) {

@@ -1,6 +1,7 @@
 import React from "react";
 import { css } from "../../lib/css.js";
 import { fmt } from "../../lib/format.js";
+import { setTitle } from "../../lib/pricing.js";
 import { thumb } from "../../lib/ui.js";
 import { store } from "../../lib/store.js";
 import { useStore } from "../../context/StoreContext.jsx";
@@ -10,7 +11,8 @@ import { lbl, inp } from "./shared.jsx";
 // its price is content.setPrices[name]. From here the admin sees each set's
 // pieces, the separate total vs. the set price (and the saving), adds or
 // removes pieces, sets the price, creates or dissolves a set. A set is live
-// on the site once it has 2+ pieces and a price.
+// on the site once it has 2+ pieces, a price, and every piece in stock
+// (statusOf says which one is missing).
 const btn = "padding:9px 16px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;";
 const btnPrimary = btn + "background:var(--c-accent-fill);color:#fff;border:none;";
 const btnGhost = btn + "background:none;color:var(--c-danger);border:1px solid var(--c-line-strong);";
@@ -58,14 +60,35 @@ export function SetsTab() {
   };
   const setMember = (id, name) => store.products.update(id, { set_name: name || null });
 
+  // Why a set is (not) on the site — the same rules the storefront applies
+  // (buildSets + setInStock): 2+ pieces, a price, every piece in stock.
+  const statusOf = (s) => {
+    const price = Number(prices[s.name]) || 0;
+    if (s.members.length < 2) return { live: false, text: "לא מוצג באתר · חסר פריט נוסף" };
+    if (!(price > 0)) return { live: false, text: "לא מוצג באתר · חסר מחיר לסט" };
+    const out = s.members.filter((m) => !(Number(m.stock) > 0));
+    if (out.length) return { live: false, text: `לא מוצג באתר · אזל: ${out.map((m) => m.name).join(", ")}` };
+    return { live: true, text: "פעיל באתר" };
+  };
+  const hidden = sets.filter((s) => !statusOf(s).live);
+
+  // Prices are kept only for sets that still exist (drops leftovers of
+  // renamed/dissolved sets).
+  const withPrice = (name, value) => {
+    const next = {};
+    for (const s of sets) if (prices[s.name] != null) next[s.name] = prices[s.name];
+    next[name] = value;
+    return next;
+  };
+
   const savePrice = (name) => run(`price:${name}`, async () => {
     const v = Number(priceDraft[name] ?? prices[name]);
-    await saveContentPatch({ setPrices: { ...prices, [name]: v > 0 ? v : 0 } });
+    await saveContentPatch({ setPrices: withPrice(name, v > 0 ? v : 0) });
   }, "מחיר הסט נשמר");
   const addMember = (name, id) => id && run(`add:${name}`, async () => { await setMember(id, name); await refreshProducts(); }, "הפריט נוסף לסט");
   const removeMember = (name, id) => run(`rm:${id}`, async () => { await setMember(id, null); await refreshProducts(); });
   const dissolve = (set) => {
-    if (!confirm(`לפרק את סט ״${set.name}״? הפריטים יישארו בחנות, רק בלי הסט.`)) return;
+    if (!confirm(`לפרק את ״${setTitle(set.name)}״? הפריטים יישארו בחנות, רק בלי הסט.`)) return;
     run(`del:${set.name}`, async () => {
       for (const m of set.members) await setMember(m.id, null);
       const next = { ...prices }; delete next[set.name];
@@ -80,7 +103,7 @@ export function SetsTab() {
     if (newPick.length < 2) return alert("בחרו לפחות 2 פריטים לסט");
     run("create", async () => {
       for (const id of newPick) await setMember(id, name);
-      if (Number(newPrice) > 0) await saveContentPatch({ setPrices: { ...prices, [name]: Number(newPrice) } });
+      if (Number(newPrice) > 0) await saveContentPatch({ setPrices: withPrice(name, Number(newPrice)) });
       await refreshProducts();
       setNewName(""); setNewPick([]); setNewPrice("");
     }, "הסט נוצר");
@@ -93,8 +116,18 @@ export function SetsTab() {
         {msg && <span role="status" style={css("font-size:13.5px;color:var(--c-success);font-weight:600;")}>✓ {msg}</span>}
       </div>
       <p style={css("font-size:14px;color:var(--c-ink-mute);margin-bottom:22px;line-height:1.6;")}>
-        סט מוצג באתר (בעמוד הבית ובעמוד ״סטים״) כשיש בו לפחות 2 פריטים ומחיר. כשלקוח מכניס לעגלה את כל פריטי הסט, מחיר הסט מחושב אוטומטית בעגלה ובתשלום.
+        סט מוצג באתר (בעמוד הבית ובעמוד ״סטים״) כשיש בו לפחות 2 פריטים, מחיר לסט, וכל הפריטים במלאי. כשלקוח מכניס לעגלה את כל פריטי הסט, מחיר הסט מחושב אוטומטית בעגלה ובתשלום.
       </p>
+
+      {hidden.length > 0 && (
+        <div role="note" style={css("display:flex;gap:10px;align-items:flex-start;background:var(--c-warning-bg, #f6ecd9);color:var(--c-warning, #8a5a14);border-radius:12px;padding:12px 14px;margin-bottom:18px;font-size:14px;line-height:1.6;")}>
+          <span aria-hidden="true" style={css("font-size:16px;line-height:1.4;")}>!</span>
+          <span>
+            {hidden.length === sets.length ? "אף סט לא מוצג כרגע באתר." : `${hidden.length} מתוך ${sets.length} סטים לא מוצגים באתר.`}{" "}
+            הסיבה מופיעה ליד כל סט. לרוב חסר מחיר לסט: הזינו מחיר ולחצו ״שמירת מחיר״.
+          </span>
+        </div>
+      )}
 
       {sets.length > 0 && (
         <div style={css("position:relative;max-width:420px;margin-bottom:18px;")}>
@@ -114,16 +147,16 @@ export function SetsTab() {
       {shownSets.map((s) => {
         const regular = s.members.reduce((a, m) => a + (Number(m.price) || 0), 0);
         const price = Number(prices[s.name]) || 0;
-        const live = s.members.length >= 2 && price > 0;
+        const status = statusOf(s);
         const draft = priceDraft[s.name] ?? (price || "");
         const save = regular - (Number(draft) || 0);
         return (
           <div key={s.name} style={css("background:#fff;border:1px solid var(--c-line);border-radius:14px;padding:18px;margin-bottom:14px;")}>
             <div style={css("display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;")}>
-              <div style={css("display:flex;align-items:center;gap:10px;")}>
-                <span style={css("font-family:var(--font-serif);font-size:20px;")}>סט {s.name}</span>
-                <span style={css(`font-size:12px;padding:4px 10px;border-radius:100px;${live ? "background:var(--c-success-bg);color:var(--c-success);" : "background:var(--c-warning-bg, #f6ecd9);color:var(--c-warning, #8a5a14);"}`)}>
-                  {live ? "פעיל באתר" : s.members.length < 2 ? "חסר פריט נוסף" : "חסר מחיר"}
+              <div style={css("display:flex;align-items:center;gap:10px;flex-wrap:wrap;")}>
+                <span style={css("font-family:var(--font-serif);font-size:20px;")}>{setTitle(s.name)}</span>
+                <span style={css(`font-size:12px;padding:4px 10px;border-radius:100px;${status.live ? "background:var(--c-success-bg);color:var(--c-success);" : "background:var(--c-warning-bg, #f6ecd9);color:var(--c-warning, #8a5a14);"}`)}>
+                  {status.text}
                 </span>
               </div>
               <button type="button" onClick={() => dissolve(s)} disabled={!!busy} style={css(btnGhost)}>פירוק הסט</button>

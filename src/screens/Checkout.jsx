@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { css } from "../lib/css.js";
 import { fmt, isValidEmail, isValidIsraeliPhone, formatIsraeliPhone } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
-import { computeTotals, saleInfo, buildSets } from "../lib/pricing.js";
+import { computeTotals, saleInfo, buildSets, setTitle } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { PrivacyConsent } from "../components/PrivacyConsent.jsx";
@@ -177,7 +177,7 @@ export function Checkout() {
                 <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>הנחת מבצע</span><span>-{fmt(saleSavings)}</span></div>
               )}
           {setsApplied.map((sa) => (
-                <div key={sa.name} style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>סט {sa.name}{sa.count > 1 ? ` ×${sa.count}` : ""}</span><span>-{fmt(sa.discount)}</span></div>
+                <div key={sa.name} style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>{setTitle(sa.name)}{sa.count > 1 ? ` ×${sa.count}` : ""}</span><span>-{fmt(sa.discount)}</span></div>
               ))}
               {bundleDiscount > 0 && (
                 <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>מבצע {bundleSize} ב־{fmt(bundlePrice)}</span><span>-{fmt(bundleDiscount)}</span></div>
