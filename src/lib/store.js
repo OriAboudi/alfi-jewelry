@@ -164,6 +164,7 @@ const LS = {
   collections: "alfi:collections",
   session: "alfi:session",
   coupons: "alfi:coupons",
+  costs: "alfi:costs",
 };
 const read = (k, fb) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } };
 const write = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { console.warn("ALFI: storage write failed", e); } };
@@ -291,6 +292,15 @@ const local = {
       items[i] = { ...items[i], ...patch, id: items[i].id }; write(LS.products, items); return items[i];
     },
     async remove(id) { write(LS.products, read(LS.products, []).filter((p) => String(p.id) !== String(id))); },
+  },
+  // Cost prices (admin-only). Keys: "p:<product id>" | "s:<set name>".
+  costs: {
+    async list() { return read(LS.costs, {}); },
+    async set(key, cost) {
+      const all = read(LS.costs, {});
+      if (cost == null) delete all[key]; else all[key] = Number(cost) || 0;
+      write(LS.costs, all);
+    },
   },
   collections: {
     async list() { return read(LS.collections, []); },
@@ -609,6 +619,22 @@ function makeSupabase() {
       async create(d) { const { data, error } = await sb.from("products").insert(d).select().single(); if (error) throw error; return data; },
       async update(id, p) { const { data, error } = await sb.from("products").update(p).eq("id", id).select().single(); if (error) throw error; return data; },
       async remove(id) { const { error } = await sb.from("products").delete().eq("id", id); if (error) throw error; },
+    },
+    // Cost prices live in their own admin-only table (cost_prices,
+    // supabase/add-cost-prices.sql) — never on products, which is public.
+    // Keys: "p:<product id>" | "s:<set name>". Returns { key: cost }.
+    costs: {
+      async list() {
+        const { data, error } = await sb.from("cost_prices").select("item_key, cost");
+        if (error) throw error;
+        return Object.fromEntries((data || []).map((r) => [r.item_key, Number(r.cost) || 0]));
+      },
+      async set(key, cost) {
+        const { error } = cost == null
+          ? await sb.from("cost_prices").delete().eq("item_key", key)
+          : await sb.from("cost_prices").upsert({ item_key: key, cost: Number(cost) || 0, updated_at: new Date().toISOString() });
+        if (error) throw error;
+      },
     },
     collections: {
       async list() { const { data, error } = await sb.from("collections").select("*").order("id"); if (error) throw error; return data || []; },

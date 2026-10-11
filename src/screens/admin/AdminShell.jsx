@@ -4,6 +4,7 @@ import { useStore } from "../../context/StoreContext.jsx";
 import { useSeoTags } from "../../hooks/useSeoTags.js";
 import { DashboardTab } from "./DashboardTab.jsx";
 import { InventoryTab } from "./InventoryTab.jsx";
+import { RestockTab } from "./RestockTab.jsx";
 import { ProductsTab } from "./ProductsTab.jsx";
 import { CollectionsTab } from "./CollectionsTab.jsx";
 import { SetsTab } from "./SetsTab.jsx";
@@ -16,6 +17,7 @@ import { PaymentTestsTab } from "./PaymentTestsTab.jsx";
 const ADMIN_TABS = [
   ["dashboard", "סקירה כללית"],
   ["inventory", "מלאי"],
+  ["restock", "הזמנת מלאי"],
   ["products", "מוצרים"],
   ["sets", "סטים"],
   ["collections", "קולקציות"],
@@ -29,6 +31,7 @@ const ADMIN_TABS = [
 const TAB_COMPONENTS = {
   dashboard: DashboardTab,
   inventory: InventoryTab,
+  restock: RestockTab,
   products: ProductsTab,
   sets: SetsTab,
   collections: CollectionsTab,

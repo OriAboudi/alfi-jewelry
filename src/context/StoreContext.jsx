@@ -703,8 +703,13 @@ export function StoreProvider({ children }) {
     };
     if (!payload.sizes.length) payload.sizes = ["יחיד"];
     try {
-      if (d._new) await store.products.create(payload);
-      else await store.products.update(d.id, payload);
+      const saved = d._new ? await store.products.create(payload) : await store.products.update(d.id, payload);
+      // Cost price is stored apart from the (public) product row — see
+      // store.costs. Only touched when the admin edited the field.
+      if (d.costPrice !== undefined && saved?.id != null) {
+        const cost = String(d.costPrice).trim() === "" ? null : Math.max(0, Number(d.costPrice) || 0);
+        try { await store.costs.set(`p:${saved.id}`, cost); } catch { alert("המוצר נשמר, אבל שמירת מחיר העלות נכשלה"); }
+      }
       await refreshProducts();
       setState({ draft: null });
     } catch (e) { alert("שמירה נכשלה: " + e.message); }

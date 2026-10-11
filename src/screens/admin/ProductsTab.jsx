@@ -33,6 +33,9 @@ export function ProductsTab() {
   const [stockError, setStockError] = React.useState("");
   const [priceError, setPriceError] = React.useState("");
   const [viewImages, setViewImages] = React.useState(null);
+  // Cost prices (admin-only table). null = not available (table missing).
+  const [costs, setCosts] = React.useState({});
+  const loadCosts = React.useCallback(() => { store.costs.list().then(setCosts).catch(() => setCosts(null)); }, []);
 
   const reload = React.useCallback(() => {
     setLoading(true);
@@ -46,7 +49,7 @@ export function ProductsTab() {
   React.useEffect(() => { setPage(1); }, [search, category]);
   React.useEffect(() => { const t = setTimeout(reload, 250); return () => clearTimeout(t); }, [reload]);
   // Product editor overlay just closed (saved or cancelled) — refresh this view either way.
-  React.useEffect(() => { if (!draft) reload(); }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
+  React.useEffect(() => { if (!draft) { reload(); loadCosts(); } }, [draft]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const adjustStock = async (id, value) => {
     const stock = Math.max(0, Number(value) || 0);
@@ -157,6 +160,20 @@ export function ProductsTab() {
                 return sp < r
                   ? <div style={css("font-size:12.5px;color:var(--c-success);margin-top:5px;")}>{Math.round(((r - sp) / r) * 100)}% הנחה · חיסכון של {fmt(r - sp)} ללקוח</div>
                   : <div style={css("font-size:12.5px;color:var(--c-danger);margin-top:5px;")}>מחיר המבצע חייב להיות נמוך מהמחיר הרגיל</div>;
+              })()}
+            </div>
+            <div>
+              {costs ? (
+                <Field label="מחיר עלות (₪) — לשימוש פנימי, לא מוצג באתר" value={draft.costPrice ?? costs[`p:${draft.id}`] ?? ""} onChange={(v) => setDraft("costPrice", v)} type="number" placeholder="כמה המוצר עולה אצל הספק" />
+              ) : (
+                <div style={css("font-size:13px;color:var(--c-ink-mute);background:var(--c-line-soft);border-radius:11px;padding:12px 14px;")}>מחיר עלות: כדי להפעיל את השדה יש להריץ פעם אחת את <span dir="ltr">supabase/add-cost-prices.sql</span> ב‑SQL Editor של Supabase.</div>
+              )}
+              {(() => {
+                const cost = Number(draft.costPrice ?? costs?.[`p:${draft.id}`]) || 0;
+                const r = Number(draft.regularPrice) || 0, sp = Number(draft.salePrice) || 0;
+                const sell = sp > 0 && sp < r ? sp : r;
+                if (!cost || !sell) return null;
+                return <div style={css(`font-size:12.5px;color:${sell > cost ? "var(--c-success)" : "var(--c-danger)"};margin-top:5px;`)}>רווח גולמי ליחידה {fmt(sell - cost)} ({Math.round(((sell - cost) / sell) * 100)}% ממחיר המכירה)</div>;
               })()}
             </div>
             <Field label="מלאי (יחידות זמינות) *" value={draft.stock} onChange={(v) => { setStockError(""); setDraft("stock", v); }} type="number" error={stockError} />
