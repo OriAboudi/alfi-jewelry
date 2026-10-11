@@ -4,7 +4,7 @@ import { fmt, productDetailsText } from "../lib/format.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { ZoomImage } from "../components/ZoomImage.jsx";
 import { PriceTag } from "../components/PriceTag.jsx";
-import { saleInfo, bundleConfig } from "../lib/pricing.js";
+import { saleInfo, bundleConfig, buildSets, unifiedSetOf, soldAlone, setTitle } from "../lib/pricing.js";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { CardSlider } from "../components/CardSlider.jsx";
 import { pathFor } from "../lib/routes.js";
@@ -14,7 +14,7 @@ import { SkeletonText, SkeletonBlock, LoadingLabel } from "../components/Skeleto
 import { hasInAppBack } from "../lib/navMemory.js";
 
 export function Product() {
-  const { products, loaded, favorites, toggleFavorite, content: C, pid, qty, size, setQty, setSize, addCurrent, go, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
+  const { products, loaded, favorites, toggleFavorite, content: C, pid, qty, size, setQty, setSize, addCurrent, go, openSet, couponCode, couponPercent, couponError, couponBusy, applyCoupon, removeCoupon } = useStore();
   const [showCouponField, setShowCouponField] = useState(false);
   const [couponInput, setCouponInput] = useState("");
 
@@ -22,9 +22,13 @@ export function Product() {
   // stand-in while loading or when the id doesn't exist.
   const found = products.find((p) => String(p.id) === String(pid)) || null;
   const sel = found || {};
+  // A piece of a unified set isn't sold on its own — the page sends the
+  // shopper to the set instead of offering "add to cart".
+  const wholeSet = unifiedSetOf(found, buildSets(products, C));
+  const others = soldAlone(products, C).filter((p) => p.id !== sel.id);
   // Same category first, so "אולי יתאים גם" stays on topic.
-  const related = [...products.filter((p) => p.id !== sel.id && p.category === sel.category), ...products.filter((p) => p.id !== sel.id && p.category !== sel.category)].slice(0, 4);
-  const moreProducts = products.filter((p) => p.id !== sel.id && !related.some((r) => r.id === p.id)).slice(0, 8);
+  const related = [...others.filter((p) => p.category === sel.category), ...others.filter((p) => p.category !== sel.category)].slice(0, 4);
+  const moreProducts = others.filter((p) => !related.some((r) => r.id === p.id)).slice(0, 8);
   const sizes = sel.sizes || [];
   const images = sel.images && sel.images.length ? sel.images : (sel.image ? [sel.image] : []);
   const outOfStock = Number(sel.stock) <= 0;
@@ -234,13 +238,21 @@ export function Product() {
             </>
           )}
 
+          {wholeSet && (
+            <p role="note" style={css("font-size:14.5px;line-height:1.6;color:var(--c-ink-soft);background:var(--c-accent-soft);border-radius:var(--r-md);padding:12px 14px;margin:0 0 12px;")}>
+              התכשיט הזה נמכר רק כחלק מ<strong>{setTitle(wholeSet.name)}</strong> ({wholeSet.members.length} פריטים), ולא בנפרד.
+            </p>
+          )}
           <div style={css("display:flex;gap:10px;margin-bottom:14px;")}>
-            <div style={css("display:flex;align-items:center;border:1px solid var(--c-line-strong);border-radius:var(--r-md);overflow:hidden;background:#fff;")}>
+            {wholeSet && (
+              <button type="button" onClick={() => openSet(wholeSet.name)} className="btn btn-primary" style={css("flex:1;font-size:16px;")}>לצפייה בסט · {fmt(wholeSet.price)}</button>
+            )}
+            <div style={css(`display:${wholeSet ? "none" : "flex"};align-items:center;border:1px solid var(--c-line-strong);border-radius:var(--r-md);overflow:hidden;background:#fff;`)}>
               <button onClick={() => setQty(qty - 1)} disabled={qty <= 1} className="tap-target" style={css(`width:46px;border:none;background:#fff;font-size:20px;cursor:pointer;color:var(--c-ink-mute);opacity:${qty <= 1 ? .4 : 1};`)}>−</button>
               <span style={css("width:44px;text-align:center;font-size:16px;font-weight:600;")}>{qty}</span>
               <button onClick={() => setQty(Math.min(qty + 1, Number(sel.stock) || 0))} disabled={qty >= Number(sel.stock)} className="tap-target" style={css(`width:46px;border:none;background:#fff;font-size:20px;cursor:pointer;color:var(--c-ink-mute);opacity:${qty >= Number(sel.stock) ? .4 : 1};`)}>+</button>
             </div>
-            <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css(`flex:1;font-size:16px;${outOfStock ? "background:var(--c-danger-bg);color:var(--c-danger);" : ""}`)}>{addToCartLabel}</button>
+            {!wholeSet && <button onClick={addCurrent} disabled={outOfStock} className="btn btn-primary" style={css(`flex:1;font-size:16px;${outOfStock ? "background:var(--c-danger-bg);color:var(--c-danger);" : ""}`)}>{addToCartLabel}</button>}
             <button
               type="button"
               onClick={() => toggleFavorite(sel.id)}

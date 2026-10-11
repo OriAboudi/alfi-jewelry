@@ -12,20 +12,46 @@ import { lbl, inp } from "./shared.jsx";
 // pieces, the separate total vs. the set price (and the saving), adds or
 // removes pieces, sets the price, creates or dissolves a set. A set is live
 // on the site once it has 2+ pieces, a price, and every piece in stock
-// (statusOf says which one is missing).
+// (statusOf says which one is missing). Each set has a type
+// (content.setUnified[name]): splittable — its pieces are also sold one by
+// one; unified — sold only whole.
 const btn = "padding:9px 16px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;";
 const btnPrimary = btn + "background:var(--c-accent-fill);color:#fff;border:none;";
 const btnGhost = btn + "background:none;color:var(--c-danger);border:1px solid var(--c-line-strong);";
 
+const SET_TYPES = [
+  { unified: false, title: "ניתן לפירוק", hint: "כל פריט נמכר גם בנפרד" },
+  { unified: true, title: "סט אחיד", hint: "נמכר רק כסט שלם" },
+];
+
+// The two set types as a pair of radio buttons.
+function SetTypePicker({ name, value, onChange, disabled }) {
+  return (
+    <div role="radiogroup" aria-label="סוג הסט" style={css("display:flex;flex-wrap:wrap;gap:8px;")}>
+      {SET_TYPES.map((t) => {
+        const on = t.unified === value;
+        return (
+          <label key={t.title} style={css(`display:flex;align-items:center;gap:8px;padding:9px 14px;border-radius:10px;cursor:${disabled ? "default" : "pointer"};font-size:13.5px;background:#fff;border:1.5px solid ${on ? "var(--c-accent)" : "var(--c-line-strong)"};`)}>
+            <input type="radio" name={name} checked={on} disabled={disabled} onChange={() => onChange(t.unified)} style={css("accent-color:var(--c-accent);width:16px;height:16px;margin:0;")} />
+            <span><b style={css("font-weight:600;")}>{t.title}</b><span style={css("color:var(--c-ink-mute);")}> · {t.hint}</span></span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
 export function SetsTab() {
   const { products, content, refreshProducts, saveContentPatch } = useStore();
   const prices = content.setPrices || {};
+  const unified = content.setUnified || {};
   const [priceDraft, setPriceDraft] = React.useState({});
   const [busy, setBusy] = React.useState("");
   const [msg, setMsg] = React.useState("");
   const [newName, setNewName] = React.useState("");
   const [newPick, setNewPick] = React.useState([]);
   const [newPrice, setNewPrice] = React.useState("");
+  const [newUnified, setNewUnified] = React.useState(false);
   const [query, setQuery] = React.useState("");       // filters the sets list
   const [pickQuery, setPickQuery] = React.useState(""); // filters "סט חדש" pieces
   const [addDraft, setAddDraft] = React.useState({});  // per-set "add a piece" field
@@ -81,6 +107,17 @@ export function SetsTab() {
     return next;
   };
 
+  // Same for the types: only unified sets that still exist are kept.
+  const withType = (name, isUnified) => {
+    const next = {};
+    for (const s of sets) if (unified[s.name]) next[s.name] = true;
+    if (isUnified) next[name] = true; else delete next[name];
+    return next;
+  };
+
+  const saveType = (name, isUnified) => run(`type:${name}`, async () => {
+    await saveContentPatch({ setUnified: withType(name, isUnified) });
+  }, isUnified ? "הסט נמכר מעכשיו רק כסט שלם" : "פריטי הסט נמכרים מעכשיו גם בנפרד");
   const savePrice = (name) => run(`price:${name}`, async () => {
     const v = Number(priceDraft[name] ?? prices[name]);
     await saveContentPatch({ setPrices: withPrice(name, v > 0 ? v : 0) });
@@ -92,7 +129,7 @@ export function SetsTab() {
     run(`del:${set.name}`, async () => {
       for (const m of set.members) await setMember(m.id, null);
       const next = { ...prices }; delete next[set.name];
-      await saveContentPatch({ setPrices: next });
+      await saveContentPatch({ setPrices: next, setUnified: withType(set.name, false) });
       await refreshProducts();
     }, "הסט פורק");
   };
@@ -103,9 +140,9 @@ export function SetsTab() {
     if (newPick.length < 2) return alert("בחרו לפחות 2 פריטים לסט");
     run("create", async () => {
       for (const id of newPick) await setMember(id, name);
-      if (Number(newPrice) > 0) await saveContentPatch({ setPrices: withPrice(name, Number(newPrice)) });
+      await saveContentPatch({ setUnified: withType(name, newUnified), ...(Number(newPrice) > 0 ? { setPrices: withPrice(name, Number(newPrice)) } : {}) });
       await refreshProducts();
-      setNewName(""); setNewPick([]); setNewPrice("");
+      setNewName(""); setNewPick([]); setNewPrice(""); setNewUnified(false);
     }, "הסט נוצר");
   };
 
@@ -117,6 +154,7 @@ export function SetsTab() {
       </div>
       <p style={css("font-size:14px;color:var(--c-ink-mute);margin-bottom:22px;line-height:1.6;")}>
         סט מוצג באתר (בעמוד הבית ובעמוד ״סטים״) כשיש בו לפחות 2 פריטים, מחיר לסט, וכל הפריטים במלאי. כשלקוח מכניס לעגלה את כל פריטי הסט, מחיר הסט מחושב אוטומטית בעגלה ובתשלום.
+        לכל סט בוחרים סוג: <b>ניתן לפירוק</b> (כל פריט נמכר גם בנפרד) או <b>סט אחיד</b> (נמכר רק כסט שלם, והפריטים שלו לא מוצעים למכירה בנפרד).
       </p>
 
       {hidden.length > 0 && (
@@ -181,6 +219,11 @@ export function SetsTab() {
               />
             </div>
 
+            <div style={css("margin-bottom:14px;")}>
+              <div style={css(lbl)}>סוג הסט</div>
+              <SetTypePicker name={`set-type:${s.name}`} value={!!unified[s.name]} onChange={(v) => saveType(s.name, v)} disabled={!!busy} />
+            </div>
+
             <div style={css("display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;")}>
               <div>
                 <label style={css(lbl)}>מחיר הסט (₪)</label>
@@ -188,7 +231,7 @@ export function SetsTab() {
               </div>
               <button type="button" onClick={() => savePrice(s.name)} disabled={!!busy} style={css(btnPrimary + "height:46px;")}>{busy === `price:${s.name}` ? "שומר…" : "שמירת מחיר"}</button>
               <div style={css("font-size:13.5px;color:var(--c-ink-mute);padding-bottom:12px;")}>
-                בנפרד {fmt(regular)}
+                {unified[s.name] ? "סכום מחירי הפריטים" : "בנפרד"} {fmt(regular)}
                 {Number(draft) > 0 && (save > 0
                   ? <span style={css("color:var(--c-success);font-weight:600;")}> · חיסכון ללקוח {fmt(save)}</span>
                   : <span style={css("color:var(--c-danger);")}> · מחיר הסט לא נמוך מהמחיר בנפרד</span>)}
@@ -207,6 +250,10 @@ export function SetsTab() {
         <div style={css("display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:12px;")}>
           <div><label style={css(lbl)}>שם הסט</label><input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="לדוגמה: פרח" style={css(inp)} /></div>
           <div><label style={css(lbl)}>מחיר הסט (₪)</label><input type="number" min="0" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} style={css(inp)} /></div>
+        </div>
+        <div style={css("margin-bottom:12px;")}>
+          <div style={css(lbl)}>סוג הסט</div>
+          <SetTypePicker name="set-type-new" value={newUnified} onChange={setNewUnified} disabled={!!busy} />
         </div>
         <label style={css(lbl)}>פריטים ({newPick.length} נבחרו · בנפרד {fmt(newPick.reduce((a, id) => a + (Number(products.find((p) => String(p.id) === String(id))?.price) || 0), 0))})</label>
         <input

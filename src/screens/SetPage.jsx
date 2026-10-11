@@ -92,7 +92,9 @@ export function SetPage() {
   // No size choice on the set page: each piece goes in with its default size.
   const sizeOf = (m) => (m.sizes && m.sizes[0]) || "יחיד";
   const inStock = members.length > 0 && members.every((m) => Number(m.stock) > 0);
-  const save = set ? set.regular - set.price : 0;
+  // A unified set is sold only whole, so there is no "separately" price to compare with.
+  const unified = !!set?.unified;
+  const save = set && !unified ? set.regular - set.price : 0;
   const pct = set && set.regular > 0 ? Math.round((save / set.regular) * 100) : 0;
   const freeShipFrom = Number(C.freeShipFrom || 500);
   const shipFee = Number(C.shipFee || 39);
@@ -100,7 +102,7 @@ export function SetPage() {
   const path = set ? pathFor("set", { pid: set.name }) : "/סטים";
   useSeoTags({
     title: set ? `${setTitle(set.name)} · ${members.length} תכשיטי כסף 925 · ALFI` : undefined,
-    description: set ? `${setTitle(set.name)}: ${members.map((m) => m.name).join(", ")}. מחיר הסט ${fmt(set.price)} במקום ${fmt(set.regular)}.` : undefined,
+    description: set ? `${setTitle(set.name)}: ${members.map((m) => m.name).join(", ")}. מחיר הסט ${fmt(set.price)}${save > 0 ? ` במקום ${fmt(set.regular)}` : ""}.` : undefined,
     canonical: set ? path : undefined,
     image: members[0]?.image,
     type: "product",
@@ -129,7 +131,9 @@ export function SetPage() {
 
   const [openInfo, setOpenInfo] = useState(null);
   const INFO = [
-    { key: "how", title: "איך עובד מחיר הסט", body: `כשכל ${members.length} פריטי הסט בעגלה, מחיר הסט מחושב אוטומטית בעגלה ובתשלום.` },
+    unified
+      ? { key: "how", title: "איך נמכר הסט", body: `הסט נמכר כיחידה אחת: כל ${members.length} הפריטים נכנסים לעגלה יחד, ואי אפשר לרכוש אותם בנפרד.` }
+      : { key: "how", title: "איך עובד מחיר הסט", body: `כשכל ${members.length} פריטי הסט בעגלה, מחיר הסט מחושב אוטומטית בעגלה ובתשלום. אפשר גם לרכוש כל פריט בנפרד.` },
     { key: "shipping", title: "משלוח והחזרות", body: `משלוח חינם בהזמנה מעל ${fmt(freeShipFrom)} (אחרת ${fmt(shipFee)}). ניתן להחזיר תוך 14 יום מקבלת המשלוח, באריזה המקורית.` },
     { key: "care", title: "טיפוח התכשיט", body: "יש להימנע ממגע עם מים, בשמים וכימיקלים. לאחסן בנפרד, בשקית סגורה, הרחק מאור שמש ישיר." },
   ];
@@ -197,7 +201,7 @@ export function SetPage() {
             {save > 0 && <s style={css("font-size:17px;color:var(--c-ink-faint);")}>{fmt(set.regular)}</s>}
             {save > 0 && <span style={css("font-size:12.5px;font-weight:700;color:var(--c-success);background:var(--c-success-bg);padding:3px 10px;border-radius:100px;")}>חיסכון {fmt(save)} ({pct}%)</span>}
           </div>
-          <div style={css("font-size:13.5px;color:var(--c-ink-mute);margin-bottom:20px;")}>מחיר לכל הסט · בנפרד {fmt(set.regular)}</div>
+          <div style={css("font-size:13.5px;color:var(--c-ink-mute);margin-bottom:20px;")}>{unified ? "מחיר לכל הסט · נמכר כסט שלם בלבד" : `מחיר לכל הסט · בנפרד ${fmt(set.regular)}`}</div>
 
           <div style={css("font-size:12.5px;font-weight:700;color:var(--c-ink-mute);margin-bottom:8px;letter-spacing:.04em;")}>מה בסט</div>
           <ul className="rd-setpage-list">
@@ -209,7 +213,7 @@ export function SetPage() {
                     <span className="rd-setpage-row-img">{m.image ? <img src={m.image} alt="" loading="lazy" decoding="async" /> : null}</span>
                     <span style={css("display:flex;flex-direction:column;gap:2px;min-width:0;")}>
                       <span style={css("font-size:15px;color:var(--c-ink);")}>{m.name}</span>
-                      <span style={css(`font-size:12.5px;color:${out ? "var(--c-danger)" : "var(--c-ink-mute)"};`)}>{out ? "אזל במלאי" : `בנפרד ${fmt(m.price)}`}</span>
+                      <span style={css(`font-size:12.5px;color:${out ? "var(--c-danger)" : "var(--c-ink-mute)"};`)}>{out ? "אזל במלאי" : unified ? m.category : `בנפרד ${fmt(m.price)}`}</span>
                     </span>
                   </button>
                 </li>
@@ -221,7 +225,7 @@ export function SetPage() {
           <div key={piece.id} className="rd-setpage-piece" aria-live="polite">
             <div style={css("display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;")}>
               <h2 className="serif" style={css("margin:0;font-weight:400;font-size:20px;")}>{piece.name}</h2>
-              <a href={pathFor("product", { pid: piece.id, products })} onClick={(e) => { e.preventDefault(); openProduct(piece.id); }} style={css("font-size:13px;color:var(--c-accent-dark);text-decoration:underline;text-underline-offset:3px;")}>לעמוד הפריט</a>
+              {!unified && <a href={pathFor("product", { pid: piece.id, products })} onClick={(e) => { e.preventDefault(); openProduct(piece.id); }} style={css("font-size:13px;color:var(--c-accent-dark);text-decoration:underline;text-underline-offset:3px;")}>לעמוד הפריט</a>}
             </div>
             {piece.description && <p style={css("font-family:var(--font-serif);font-weight:300;font-size:16px;line-height:1.65;color:var(--c-ink-soft);margin:0 0 8px;max-width:46ch;")}>{piece.description}</p>}
             <p style={css("font-size:13.5px;line-height:1.6;color:var(--c-ink-mute);margin:0;")}>{productDetailsText(piece)}</p>

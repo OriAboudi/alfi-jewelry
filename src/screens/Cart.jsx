@@ -2,7 +2,7 @@ import React from "react";
 import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 import { thumb, GRAD_CARD } from "../lib/ui.js";
-import { computeTotals, saleInfo, buildSets, setTitle } from "../lib/pricing.js";
+import { computeTotals, saleInfo, buildSets, setTitle, unifiedSetOf, brokenUnifiedSets, soldAlone } from "../lib/pricing.js";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { CouponInput } from "../components/CouponInput.jsx";
 import { DeliveryMethodPicker } from "../components/DeliveryMethodPicker.jsx";
@@ -24,6 +24,8 @@ export function Cart() {
   // What home delivery costs for this cart — shown on its option.
   const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
   const hasStockIssue = lines.some((l) => l.qty > Number(l.p.stock));
+  // Unified sets the cart holds only part of — they can't be ordered that way.
+  const brokenSets = brokenUnifiedSets(lines, productSets);
 
   // Cart lines need the live catalog (names, prices, stock): until it
   // arrives, show the page's shape — never lines with no name and ₪0.
@@ -51,7 +53,11 @@ export function Cart() {
           <div className="r-cart-grid" style={css("display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:start;")}>
             <div className="glass-card" style={css("padding:40px var(--sp-5) 36px;min-width:0;")}>
               <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:var(--sp-6);")}>עגלת הקניות</h1>
-              {lines.map((l) => (
+              {lines.map((l) => {
+                // A piece of a unified set: − / + / remove act on the whole set.
+                const wholeSet = unifiedSetOf(l.p, productSets);
+                const maxed = wholeSet ? wholeSet.members.some((m) => l.qty >= Number(m.stock)) : l.qty >= Number(l.p.stock);
+                return (
                 <div key={l.id + l.size} style={css("display:flex;gap:16px;padding:22px 0;border-bottom:1px solid var(--c-line);")}>
                   <div className="r-cart-thumb" style={thumb(l.p.image, GRAD_CARD, "width:96px;height:114px;flex:none;border-radius:var(--r-md);")}>
                     {!l.p.image && <div style={css("width:50%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 200deg,#efe9f1,#cfc0d2,#f6f0eb,#c3b6c6,#efe9f1);box-shadow:inset 0 2px 8px rgba(0,0,0,.12);")} />}
@@ -61,6 +67,7 @@ export function Cart() {
                       <div>
                         <div style={css("font-family:var(--font-serif);font-size:18px;margin-bottom:3px;")}>{l.p.name}</div>
                         <div style={css("font-size:13.5px;color:var(--c-ink-mute);")}>{l.p.category} · מידה {l.size} · {l.p.material}</div>
+                        {wholeSet && <div style={css("font-size:12.5px;color:var(--c-accent-dark);font-weight:600;margin-top:4px;")}>חלק מ{setTitle(wholeSet.name)} · נמכר כסט שלם</div>}
                         {Number(l.p.stock) <= 0 ? (
                           <div style={css("font-size:12.5px;color:var(--c-danger);font-weight:600;margin-top:4px;")}>אזל במלאי — יש להסיר מהעגלה</div>
                         ) : l.qty > Number(l.p.stock) && (
@@ -73,13 +80,14 @@ export function Cart() {
                       <div style={css("display:flex;align-items:center;border:1px solid var(--c-line-strong);border-radius:var(--r-sm);overflow:hidden;background:#fff;")}>
                         <button onClick={() => changeQty(l.id, l.size, -1)} className="tap-target" style={css("width:38px;border:none;background:#fff;font-size:18px;cursor:pointer;color:var(--c-ink-mute);")}>−</button>
                         <span style={css("width:38px;text-align:center;font-size:15px;font-weight:600;")}>{l.qty}</span>
-                        <button onClick={() => changeQty(l.id, l.size, 1)} disabled={l.qty >= Number(l.p.stock)} className="tap-target" style={css(`width:38px;border:none;background:#fff;font-size:18px;cursor:pointer;color:var(--c-ink-mute);opacity:${l.qty >= Number(l.p.stock) ? .4 : 1};`)}>+</button>
+                        <button onClick={() => changeQty(l.id, l.size, 1)} disabled={maxed} className="tap-target" style={css(`width:38px;border:none;background:#fff;font-size:18px;cursor:pointer;color:var(--c-ink-mute);opacity:${maxed ? .4 : 1};`)}>+</button>
                       </div>
-                      <button onClick={() => removeItem(l.id, l.size)} className="tap-target" style={css("background:none;border:none;cursor:pointer;font-size:13.5px;color:var(--c-danger);")}>הסרה</button>
+                      <button onClick={() => removeItem(l.id, l.size)} className="tap-target" style={css("background:none;border:none;cursor:pointer;font-size:13.5px;color:var(--c-danger);")}>{wholeSet ? "הסרת הסט" : "הסרה"}</button>
                     </div>
                   </div>
                 </div>
-              ))}
+                );
+              })}
               {Object.values(productSets).map((ps) => {
                 const inCart = ps.members.filter((m) => cart.some((c) => String(c.id) === String(m.id)));
                 const missing = ps.members.filter((m) => !cart.some((c) => String(c.id) === String(m.id)));
@@ -96,7 +104,7 @@ export function Cart() {
               })}
               <BundleNudge
                 eligible={bundleEligible} missing={bundleMissing} sets={bundleSets} discount={bundleDiscount} size={bundleSize} price={bundlePrice}
-                products={products} cartIds={new Set(cart.map((c) => String(c.id)))}
+                products={soldAlone(products, C)} cartIds={new Set(cart.map((c) => String(c.id)))}
                 onAdd={(p) => addToCart(p.id, 1, (p.sizes && p.sizes[0]) || "יחיד")}
                 onOpen={openProduct}
               />
@@ -133,7 +141,10 @@ export function Cart() {
               {totalSaved > 0 && (
                 <div style={css("text-align:center;font-size:13.5px;font-weight:600;color:var(--c-success);background:var(--c-success-bg);border-radius:var(--r-sm);padding:8px 12px;margin:-8px 0 16px;")}>חסכת {fmt(totalSaved)} בהזמנה הזו</div>
               )}
-              <button onClick={goCheckout} disabled={hasStockIssue} className="btn btn-primary btn-block" style={css("margin-bottom:12px;font-size:16px;")}>למעבר לתשלום</button>
+              <button onClick={goCheckout} disabled={hasStockIssue || brokenSets.length > 0} className="btn btn-primary btn-block" style={css("margin-bottom:12px;font-size:16px;")}>למעבר לתשלום</button>
+              {brokenSets.map((bs) => (
+                <div key={bs.name} role="alert" style={css("color:var(--c-danger);font-size:12.5px;text-align:center;margin-bottom:12px;")}>{setTitle(bs.name)} נמכר כסט שלם בלבד: יש להשלים את כל פריטי הסט באותה כמות, או להסיר אותו</div>
+              ))}
               {hasStockIssue && <div style={css("color:var(--c-danger);font-size:12.5px;text-align:center;margin-bottom:12px;")}>יש לעדכן את הכמות בפריטים שאזלו במלאי</div>}
               <button onClick={() => go("catalog")} className="tap-target" style={css("width:100%;background:transparent;border:none;font-size:14.5px;color:var(--c-ink-mute);cursor:pointer;")}>המשך בקניות</button>
             </div>

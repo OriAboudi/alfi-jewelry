@@ -29,7 +29,8 @@ export function SetStack({ set, count = true }) {
  */
 export function SetCard({ set }) {
   const { openSet } = useStore();
-  const save = set.regular - set.price;
+  // No "instead of" price for a unified set: its pieces aren't sold separately.
+  const save = set.unified ? 0 : set.regular - set.price;
   return (
     <a
       href={pathFor("set", { pid: set.name })}
