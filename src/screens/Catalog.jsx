@@ -5,7 +5,7 @@ import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
 import { pathFor, DEAL_FILTER } from "../lib/routes.js";
-import { bundleConfig } from "../lib/pricing.js";
+import { bundleConfig, soldAlone } from "../lib/pricing.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { useEntryState } from "../lib/navMemory.js";
 import { SkeletonCard, LoadingLabel } from "../components/Skeleton.jsx";
@@ -18,7 +18,9 @@ const SORTS = [
 ];
 
 export function Catalog() {
-  const { products, loaded, catFilter, setCatFilter, go, content } = useStore();
+  const { products: allProducts, loaded, catFilter, setCatFilter, go, content } = useStore();
+  // Pieces of a unified set aren't sold one by one — they live on the set's page.
+  const products = soldAlone(allProducts, content);
   const isDeal = catFilter === DEAL_FILTER;
   const deal = bundleConfig(content);
   const dealTitle = `מבצע ${deal.size} ב־₪${deal.price}`;

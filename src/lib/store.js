@@ -15,7 +15,7 @@
  * ========================================================================== */
 import { createClient } from "@supabase/supabase-js";
 import { compressImage } from "./imageCompress.js";
-import { bundleConfig, bundleDiscount, buildSets, setDeal } from "./pricing.js";
+import { bundleConfig, bundleDiscount, buildSets, setDeal, brokenUnifiedSets, setTitle } from "./pricing.js";
 
 const SB_URL = import.meta.env.VITE_SUPABASE_URL || "";
 const SB_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
@@ -414,7 +414,10 @@ const local = {
       const subtotal = verified.reduce((a, it) => a + it.price * it.qty, 0);
       const pickup = deliveryMethod === "pickup";
       const bcfg = bundleConfig(content);
-      const setRes = setDeal(verified, buildSets(products, content));
+      const productSets = buildSets(products, content);
+      const broken = brokenUnifiedSets(verified, productSets)[0];
+      if (broken) throw new Error(`״${setTitle(broken.name)}״ נמכר כסט שלם בלבד — יש להוסיף לעגלה את כל פריטי הסט`);
+      const setRes = setDeal(verified, productSets);
       const set_discount = setRes.discount;
       const left = { ...setRes.used };
       const bundleUnits = verified.flatMap((it) => { if (!it.bundle) return []; const k = String(it.id); const skip = Math.min(it.qty, left[k] || 0); if (skip) left[k] -= skip; return Array(it.qty - skip).fill(it.price); });

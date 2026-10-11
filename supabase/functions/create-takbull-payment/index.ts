@@ -68,6 +68,23 @@ function setDeal(qtyById: Map<string, number>, members: any[], setPrices: Record
   return { discount: Math.round(discount * 100) / 100, used };
 }
 
+// Unified sets (content.setUnified) are sold only whole: the name of a live
+// one the order holds only part of, or null. Mirrors brokenUnifiedSets() in
+// src/lib/pricing.js.
+function brokenUnifiedSet(qtyById: Map<string, number>, members: any[], setPrices: Record<string, unknown>, setUnified: Record<string, unknown>) {
+  const byName: Record<string, any[]> = {};
+  for (const m of members) {
+    const n = String(m.set_name || "").trim();
+    if (n) (byName[n] ||= []).push(m);
+  }
+  for (const [name, ms] of Object.entries(byName)) {
+    if (!setUnified?.[name] || ms.length < 2 || !((Number(setPrices?.[name]) || 0) > 0)) continue;
+    const q = ms.map((m) => qtyById.get(String(m.id)) || 0);
+    if (Math.max(...q) !== Math.min(...q)) return name;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
@@ -164,6 +181,8 @@ Deno.serve(async (req) => {
       const { data: members } = await supabase.from("products").select("id, price, set_name").in("set_name", setNames);
       const qtyById = new Map<string, number>();
       for (const it of verified) qtyById.set(String(it.id), (qtyById.get(String(it.id)) || 0) + it.qty);
+      const broken = brokenUnifiedSet(qtyById, members || [], cfg.setPrices || {}, cfg.setUnified || {});
+      if (broken) throw new PublicError(`״${/^סט(\s|$)/.test(broken) ? broken : "סט " + broken}״ נמכר כסט שלם בלבד — יש להוסיף לעגלה את כל פריטי הסט`);
       const r = setDeal(qtyById, members || [], cfg.setPrices || {});
       set_discount = r.discount; setUsed = r.used;
     }

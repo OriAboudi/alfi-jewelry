@@ -46,8 +46,12 @@ export function setInStock(set) {
 
 // Product sets: products sharing a set_name form a set, priced by the admin
 // in content.setPrices. Only sets with 2+ members and a price are live.
+// A set is one of two types (admin: content.setUnified, { "<set name>": true }):
+// splittable (the default) — every piece is also sold on its own; unified —
+// sold only whole, its pieces can't be bought separately.
 export function buildSets(products, content) {
   const prices = content?.setPrices || {};
+  const unified = content?.setUnified || {};
   const byName = {};
   for (const p of products || []) {
     const name = String(p.set_name || "").trim();
@@ -58,9 +62,36 @@ export function buildSets(products, content) {
     const price = Number(prices[name]) || 0;
     if (members.length < 2 || price <= 0) continue;
     const regular = members.reduce((a, m) => a + (Number(m.price) || 0), 0);
-    sets[name] = { name, price, regular, members, ids: members.map((m) => String(m.id)) };
+    sets[name] = { name, price, regular, members, ids: members.map((m) => String(m.id)), unified: !!unified[name] };
   }
   return sets;
+}
+
+// The live unified set this product is a piece of (null when it is sold on
+// its own). `sets` is buildSets()' result.
+export function unifiedSetOf(product, sets) {
+  const s = (sets || {})[String(product?.set_name || "").trim()];
+  return s && s.unified ? s : null;
+}
+
+// The products shoppers can buy one by one — everything except the pieces
+// of unified sets (those are reached through their set's page).
+export function soldAlone(products, content) {
+  const sets = buildSets(products, content);
+  return (products || []).filter((p) => !unifiedSetOf(p, sets));
+}
+
+// Unified sets the cart holds only part of (its pieces must come in equal
+// quantities). Lines are { id, qty }. Mirrored in create-takbull-payment,
+// which refuses such an order — keep in sync.
+export function brokenUnifiedSets(lines, sets) {
+  const qty = {};
+  for (const l of lines) if (l.id != null) qty[String(l.id)] = (qty[String(l.id)] || 0) + l.qty;
+  return Object.values(sets || {}).filter((s) => {
+    if (!s.unified) return false;
+    const q = s.ids.map((id) => qty[id] || 0);
+    return Math.max(...q) !== Math.min(...q);
+  });
 }
 
 // Set deal: each complete set in the cart (one of every member) costs the

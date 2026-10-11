@@ -3,8 +3,18 @@ import store, { CONFIG_DEFAULTS, BACKEND } from "../lib/store.js";
 import { ADMIN_PATH } from "../lib/adminPath.js";
 import { pathFor, parsePath } from "../lib/routes.js";
 import { initNavMemory, rememberScroll, pushEntry, onPopEntry, restoreScroll } from "../lib/navMemory.js";
+import { buildSets, unifiedSetOf } from "../lib/pricing.js";
 
 initNavMemory();
+
+// A unified set stays whole in the cart: changing or removing one of its
+// pieces does the same to every piece of the set. The ids of the unified
+// set product `id` belongs to, or null.
+function unifiedIds(s, id) {
+  const p = s.products.find((x) => String(x.id) === String(id));
+  const set = unifiedSetOf(p, buildSets(s.products, s.content));
+  return set ? set.ids : null;
+}
 
 // The sign-up coupon is for new visitors only: never for someone signed in,
 // who already placed an order on this device (it's a first-order offer),
@@ -592,7 +602,12 @@ export function StoreProvider({ children }) {
 
   const changeQty = useCallback((id, size, d) => {
     setState((s) => {
-      const cart = s.cart.map((c) => (c.id === id && c.size === size ? { ...c, qty: c.qty + d } : c)).filter((c) => c.qty > 0);
+      const ids = unifiedIds(s, id);
+      const target = (s.cart.find((c) => c.id === id && c.size === size)?.qty || 0) + d;
+      const cart = s.cart.map((c) => (
+        ids && ids.includes(String(c.id)) ? { ...c, qty: target }
+          : c.id === id && c.size === size ? { ...c, qty: c.qty + d } : c
+      )).filter((c) => c.qty > 0);
       saveCart(cart);
       return { cart };
     });
@@ -600,7 +615,8 @@ export function StoreProvider({ children }) {
 
   const removeItem = useCallback((id, size) => {
     setState((s) => {
-      const cart = s.cart.filter((c) => !(c.id === id && c.size === size));
+      const ids = unifiedIds(s, id);
+      const cart = s.cart.filter((c) => !(ids ? ids.includes(String(c.id)) : c.id === id && c.size === size));
       saveCart(cart);
       return { cart };
     });

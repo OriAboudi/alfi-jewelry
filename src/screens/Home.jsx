@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { saleInfo, buildSets, setInStock } from "../lib/pricing.js";
+import { saleInfo, buildSets, setInStock, soldAlone } from "../lib/pricing.js";
 import { SetCard } from "../components/SetCard.jsx";
 import { PriceTag } from "../components/PriceTag.jsx";
 import { GRAD_CARD } from "../lib/ui.js";
@@ -61,7 +61,9 @@ function ProductSlider({ title, mobileTitle, ctaLabel, onCta, products, loading 
 }
 
 export function Home() {
-  const { content: C, products, loaded, go, setCatFilter, openSignupPopup, openProduct, signupCouponAvailable } = useStore();
+  const { content: C, products: allProducts, loaded, go, setCatFilter, openSignupPopup, openProduct, signupCouponAvailable } = useStore();
+  // Pieces of a unified set aren't sold one by one — only inside their set.
+  const products = soldAlone(allProducts, C);
   const [bestSellers, setBestSellers] = React.useState([]);
 
   useSeoTags({
@@ -99,7 +101,8 @@ export function Home() {
   // Real best-sellers (from actual orders) when there are enough of them,
   // otherwise the admin's featured picks — the label says which, truthfully.
   const inStock = (p) => Number(p.stock) > 0;
-  const heroBest = bestSellers.filter(inStock);
+  const best = bestSellers.filter((b) => products.some((p) => p.id === b.id));
+  const heroBest = best.filter(inStock);
   const heroShopIsBest = heroBest.length >= 3;
   const heroShop = (heroShopIsBest ? heroBest : [...featuredList, ...products].filter(inStock))
     .filter((p, i, a) => a.findIndex((x) => x.id === p.id) === i)
@@ -110,8 +113,8 @@ export function Home() {
   // "N for ₪X" deal pieces, shown in a slider right after the promo banner.
   const bundleProducts = products.filter((p) => p.in_bundle && Number(p.stock) > 0);
   // Product sets the admin priced (2+ pieces sharing a set name).
-  const productSets = Object.values(buildSets(products, C)).filter(setInStock);
-  const slider2raw = bestSellers.length ? bestSellers : products.slice(8, 16);
+  const productSets = Object.values(buildSets(allProducts, C)).filter(setInStock);
+  const slider2raw = best.length ? best : products.slice(8, 16);
   const usedIds = new Set(slider1.map((p) => p.id));
   const leftover2 = slider2raw.filter((p) => !usedIds.has(p.id));
   const slider2 = (leftover2.length ? leftover2 : [...products].reverse()).slice(0, 8);

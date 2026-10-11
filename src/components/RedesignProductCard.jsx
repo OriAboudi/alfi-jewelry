@@ -1,6 +1,6 @@
 import React from "react";
 import { css } from "../lib/css.js";
-import { saleInfo, bundleConfig } from "../lib/pricing.js";
+import { saleInfo, bundleConfig, buildSets, unifiedSetOf } from "../lib/pricing.js";
 import { PriceTag } from "./PriceTag.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { slugify } from "../lib/routes.js";
@@ -25,13 +25,16 @@ function tagFor(p, i, content) {
  * related products, Favorites).
  */
 export function RedesignProductCard({ product: p, index = 0 }) {
-  const { openProduct, addToCart, favorites, toggleFavorite, content } = useStore();
+  const { openProduct, openSet, addToCart, favorites, toggleFavorite, content, products } = useStore();
   const outOfStock = Number(p.stock) <= 0;
+  // A piece of a unified set isn't sold on its own: the button opens the set.
+  const wholeSet = unifiedSetOf(p, buildSets(products, content));
   const tag = tagFor(p, index, content);
   const isFav = favorites.includes(p.id);
 
   const quickAdd = (e) => {
     e.stopPropagation();
+    if (wholeSet) return openSet(wholeSet.name);
     if (outOfStock) return;
     addToCart(p.id, 1, (p.sizes && p.sizes[0]) || "יחיד");
   };
@@ -95,11 +98,11 @@ export function RedesignProductCard({ product: p, index = 0 }) {
       </div>
       <button
         onClick={quickAdd}
-        disabled={outOfStock}
+        disabled={outOfStock && !wholeSet}
         className="tap-target rd-add-btn rd-outline"
-        style={css(`margin:8px;font:inherit;letter-spacing:.06em;cursor:${outOfStock ? "default" : "pointer"};opacity:${outOfStock ? .55 : 1};`)}
+        style={css(`margin:8px;font:inherit;letter-spacing:.06em;cursor:${outOfStock && !wholeSet ? "default" : "pointer"};opacity:${outOfStock && !wholeSet ? .55 : 1};`)}
       >
-        {outOfStock ? "אזל במלאי" : "הוספה לסל"}
+        {wholeSet ? "נמכר כסט · לצפייה" : outOfStock ? "אזל במלאי" : "הוספה לסל"}
       </button>
     </div>
   );
