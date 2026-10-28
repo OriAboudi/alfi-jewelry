@@ -12,7 +12,7 @@ import { slugify } from "../lib/routes.js";
 // mockup uses.
 const FALLBACK_TAGS = ["חדש", "מומלץ", "אחרונים"];
 function tagFor(p, i, content) {
-  if (p.in_bundle) { const b = bundleConfig(content); return `${b.size} ב־₪${b.price}`; }
+  if (p.in_bundle) return bundleConfig(content).tag;
   const sale = saleInfo(p);
   if (sale.onSale) return `${sale.percent}% הנחה`;
   if (p.featured) return "חדש";

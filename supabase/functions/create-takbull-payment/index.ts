@@ -29,16 +29,27 @@ const supabase = createClient(
 // (content.pickupAddress). Keep the default in sync with src/lib/delivery.js.
 const DEFAULT_PICKUP_ADDRESS = "דן 13, נהלל";
 
-// "N for ₪X" bundle deal — mirrors bundleDiscount() in src/lib/pricing.js
-// exactly (units grouped most-expensive-first; a set never costs more than
-// its own total). Keep the two in sync.
-function bundleDiscount(unitPrices: number[], size: number, price: number) {
+// The deal on in_bundle products (admin: content.dealType) — mirrors
+// bundleConfig()/bundleDiscount() in src/lib/pricing.js exactly (units
+// grouped most-expensive-first; a set never costs more than its own total).
+// Keep the two in sync.
+function bundleConfig(cfg: any) {
+  const type = ["nForPrice", "buy2get1", "buy1get1", "secondPercent"].includes(cfg.dealType) ? cfg.dealType : "nForPrice";
+  if (type === "buy2get1") return { type, size: 3, price: 0, percent: 100 };
+  if (type === "buy1get1") return { type, size: 2, price: 0, percent: 100 };
+  if (type === "secondPercent") return { type, size: 2, price: 0, percent: Math.min(100, Math.max(1, Math.round(Number(cfg.dealPercent)) || 60)) };
+  return { type, size: Math.max(2, Math.floor(Number(cfg.bundleSize)) || 3), price: Math.max(0, Number(cfg.bundlePrice) || 200), percent: 0 };
+}
+
+function bundleDiscount(unitPrices: number[], deal: { type: string; size: number; price: number; percent: number }) {
+  const { size } = deal;
   const units = unitPrices.map(Number).sort((a, b) => b - a);
   const sets = Math.floor(units.length / size);
   let discount = 0;
   for (let i = 0; i < sets; i++) {
-    const sum = units.slice(i * size, (i + 1) * size).reduce((a, v) => a + v, 0);
-    discount += Math.max(0, sum - price);
+    const group = units.slice(i * size, (i + 1) * size);
+    if (deal.type === "nForPrice") discount += Math.max(0, group.reduce((a, v) => a + v, 0) - deal.price);
+    else discount += (group[size - 1] * deal.percent) / 100;
   }
   return Math.round(discount * 100) / 100;
 }
@@ -170,8 +181,7 @@ Deno.serve(async (req) => {
     const subtotal = verified.reduce((a: number, it: any) => a + it.price * it.qty, 0);
     const freeShipFrom = Number(cfg.freeShipFrom || 500);
     const shipFee = Number(cfg.shipFee || 39);
-    const bundleSize = Math.max(2, Math.floor(Number(cfg.bundleSize)) || 3);
-    const bundlePrice = Math.max(0, Number(cfg.bundlePrice) || 200);
+    const deal = bundleConfig(cfg);
     // 1) complete product sets (needs every member's current price, not
     //    just the ones in the cart), 2) the bundle deal on the remaining units.
     let set_discount = 0;
@@ -193,7 +203,7 @@ Deno.serve(async (req) => {
       if (skip) left[k] -= skip;
       return Array(it.qty - skip).fill(it.price);
     });
-    const bundle_discount = isTest ? 0 : bundleDiscount(bundleUnits, bundleSize, bundlePrice);
+    const bundle_discount = isTest ? 0 : bundleDiscount(bundleUnits, deal);
     // Free-shipping threshold and coupon apply to what the items cost after the deals.
     const itemsTotal = subtotal - set_discount - bundle_discount;
     const shipping = isTest || isPickup ? 0 : (itemsTotal >= freeShipFrom ? 0 : shipFee);

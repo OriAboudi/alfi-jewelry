@@ -186,7 +186,7 @@ export function Product() {
               <PriceTag product={sel} size={22} showPercent={false} />
             )}
             {saleInfo(sel).onSale && <span style={css("font-size:12px;font-weight:700;color:#fff;background:var(--c-accent-fill);padding:3px 10px;border-radius:100px;")}>{saleInfo(sel).percent}% הנחה</span>}
-            {sel.in_bundle && <span style={css("font-size:12px;font-weight:700;color:var(--c-success);background:var(--c-success-bg);padding:3px 10px;border-radius:100px;")}>מבצע {bundleConfig(C).size} ב־₪{bundleConfig(C).price}</span>}
+            {sel.in_bundle && <span style={css("font-size:12px;font-weight:700;color:var(--c-success);background:var(--c-success-bg);padding:3px 10px;border-radius:100px;")}>מבצע {bundleConfig(C).tag}</span>}
             {outOfStock && <span className="badge badge-danger" style={css("font-size:12px;padding:3px 10px;")}>אזל במלאי</span>}
             {!outOfStock && Number(sel.stock) <= 5 && <span className="badge badge-accent" style={css("font-size:12px;padding:3px 10px;")}>{Number(sel.stock) === 1 ? "נותרה יחידה אחת בלבד" : `נותרו ${sel.stock} יחידות בלבד`}</span>}
           </div>

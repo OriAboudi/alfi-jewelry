@@ -53,8 +53,10 @@ export const CONFIG_DEFAULTS = {
   freeShipFrom: 500,
   shipFee: 39,
   pickupAddress: "דן 13, נהלל",
+  dealType: "nForPrice",
   bundleSize: 3,
   bundlePrice: 200,
+  dealPercent: 60,
   lowStockThreshold: 5,
   stockFineThreshold: 10,
   signupCouponPercent: 5,
@@ -431,7 +433,7 @@ const local = {
       const set_discount = setRes.discount;
       const left = { ...setRes.used };
       const bundleUnits = verified.flatMap((it) => { if (!it.bundle) return []; const k = String(it.id); const skip = Math.min(it.qty, left[k] || 0); if (skip) left[k] -= skip; return Array(it.qty - skip).fill(it.price); });
-      const bundle_discount = bundleDiscount(bundleUnits, bcfg.size, bcfg.price).discount;
+      const bundle_discount = bundleDiscount(bundleUnits, bcfg).discount;
       const itemsTotal = subtotal - set_discount - bundle_discount;
       const shipping = pickup ? 0 : (itemsTotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
 

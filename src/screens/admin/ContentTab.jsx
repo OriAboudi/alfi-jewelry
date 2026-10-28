@@ -4,11 +4,13 @@ import { AdminImageField } from "../../components/AdminImageField.jsx";
 import { AdminGalleryField } from "../../components/AdminGalleryField.jsx";
 import { AdminListField } from "../../components/AdminListField.jsx";
 import { useStore } from "../../context/StoreContext.jsx";
-import { Field, Area, lbl, CAT_NAMES } from "./shared.jsx";
+import { Field, Area, lbl, inp, CAT_NAMES } from "./shared.jsx";
+import { bundleConfig, DEAL_TYPES } from "../../lib/pricing.js";
 
 export function ContentTab() {
   const { content: C, cdraft, contentSaved, setCdraft, saveContent , products } = useStore();
   const cd = cdraft || C;
+  const deal = bundleConfig(cd);
   const setNames = Object.values((products || []).reduce((acc, p) => {
     const n = String(p.set_name || "").trim();
     if (n) { acc[n] ||= { name: n, count: 0, regular: 0 }; acc[n].count += 1; acc[n].regular += Number(p.price) || 0; }
@@ -80,11 +82,24 @@ export function ContentTab() {
         <Field label="כותרת" value={cd.banner3Title} onChange={(v) => setCdraft("banner3Title", v)} />
         <Area label="טקסט משנה" value={cd.banner3Subtitle} onChange={(v) => setCdraft("banner3Subtitle", v)} rows={2} />
         <Field label="טקסט כפתור" value={cd.banner3CtaLabel} onChange={(v) => setCdraft("banner3CtaLabel", v)} />
-        <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
-          <Field label="מבצע: מספר תכשיטים" value={cd.bundleSize ?? 3} onChange={(v) => setCdraft("bundleSize", v)} type="number" />
-          <Field label="מבצע: מחיר לסט (₪)" value={cd.bundlePrice ?? 200} onChange={(v) => setCdraft("bundlePrice", v)} type="number" />
+        <div>
+          <label style={css(lbl)}>סוג המבצע הפעיל</label>
+          <select value={deal.type} onChange={(e) => setCdraft("dealType", e.target.value)} style={css(inp + "cursor:pointer;")}>
+            {DEAL_TYPES.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+          </select>
         </div>
-        <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:-8px;")}>סמנו מוצרים כ״משתתף במבצע״ בעריכת מוצר. המחיר מחושב אוטומטית בעגלה ובתשלום.</div>
+        {deal.type === "nForPrice" && (
+          <div className="r-fields2" style={css("display:grid;grid-template-columns:1fr 1fr;gap:16px;")}>
+            <Field label="מבצע: מספר תכשיטים" value={cd.bundleSize ?? 3} onChange={(v) => setCdraft("bundleSize", v)} type="number" />
+            <Field label="מבצע: מחיר לסט (₪)" value={cd.bundlePrice ?? 200} onChange={(v) => setCdraft("bundlePrice", v)} type="number" />
+          </div>
+        )}
+        {deal.type === "secondPercent" && (
+          <Field label="אחוז הנחה על הפריט השני (%)" value={cd.dealPercent ?? 60} onChange={(v) => setCdraft("dealPercent", v)} type="number" />
+        )}
+        <div style={css("font-size:12px;color:var(--c-ink-faint);margin-top:-8px;")}>
+          באתר יוצג: <strong>מבצע {deal.label}</strong> — {deal.pitch} סמנו מוצרים כ״משתתף במבצע״ בעריכת מוצר. המחיר מחושב אוטומטית בעגלה ובתשלום. כשמחליפים מבצע — עדכנו גם את כותרת הבאנר שלמעלה.
+        </div>
         <div style={css("height:1px;background:var(--c-line);margin:6px 0;")} />
         <div>
           <div style={css("font-size:15px;font-weight:700;color:var(--c-accent);margin-bottom:6px;")}>סטים</div>
