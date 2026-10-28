@@ -8,7 +8,9 @@ import { useSeoTags } from "../hooks/useSeoTags.js";
 import { SkeletonText, SkeletonBlock, LoadingLabel } from "../components/Skeleton.jsx";
 
 export function Collections() {
-  const { collections, go, loaded } = useStore();
+  const { collections: all, go, loaded } = useStore();
+  // Collections the admin marked hidden stay in the DB but never reach shoppers.
+  const collections = all.filter((c) => !c.hidden);
 
   useSeoTags({
     title: "קולקציות · ALFI",
