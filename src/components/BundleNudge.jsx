@@ -3,18 +3,18 @@ import { css } from "../lib/css.js";
 import { fmt } from "../lib/format.js";
 
 /**
- * BundleNudge — cart prompt for the "N for ₪X" deal. When the cart has some
+ * BundleNudge — cart prompt for the active deal (bundleConfig). When the cart has some
  * deal items but not a full set, it says how many more are needed and
  * offers deal products to add in one tap. When a set is complete it
  * confirms the deal is applied.
  */
-export function BundleNudge({ eligible, missing, sets, discount, size, price, products, cartIds, onAdd, onOpen }) {
+export function BundleNudge({ eligible, missing, sets, discount, deal, products, cartIds, onAdd, onOpen }) {
   if (!eligible) return null;
   if (!missing) {
     if (!(discount > 0)) return null; // set complete but already cheaper than the deal price
     return (
       <div role="status" style={css("margin-top:18px;padding:14px 16px;border-radius:var(--r-md);background:var(--c-success-bg);color:var(--c-success);font-size:14.5px;font-weight:600;")}>
-        מבצע {size} ב־{fmt(price)} הופעל{sets > 1 ? ` (×${sets})` : ""} ✓
+        מבצע {deal.label} הופעל{sets > 1 ? ` (×${sets})` : ""} ✓
       </div>
     );
   }
@@ -24,7 +24,7 @@ export function BundleNudge({ eligible, missing, sets, discount, size, price, pr
   return (
     <div role="status" style={css("margin-top:18px;padding:16px;border-radius:var(--r-md);border:1.5px dashed var(--c-accent);background:rgba(255,255,255,.55);")}>
       <div style={css("font-size:15px;color:var(--c-ink);line-height:1.5;")}>
-        <strong>עוד {missing === 1 ? "תכשיט אחד" : `${missing} תכשיטים`}</strong> מהמבצע וההזמנה נכנסת ל־<strong>{size} ב־{fmt(price)}</strong>
+        <strong>עוד {missing === 1 ? "תכשיט אחד" : `${missing} תכשיטים`}</strong> מהמבצע <strong>{deal.benefit}</strong>
       </div>
       {picks.length > 0 && (
         <ul className="no-scrollbar" style={css("list-style:none;margin:12px -16px 0;padding:0 16px 2px;display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;")}>

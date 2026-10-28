@@ -56,7 +56,7 @@ export function Checkout() {
     return { ...c, p };
   });
   const productSets = buildSets(products, C);
-  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved, bundleDiscount, bundleSize, bundlePrice, setsApplied } = computeTotals(lines.map((l) => ({ id: l.id, price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty, bundle: !!l.p.in_bundle })), C, couponCode ? couponPercent : 0, deliveryMethod, productSets);
+  const { subtotal, regularSubtotal, saleSavings, shipping, discount, total, totalSaved, bundleDiscount, deal, setsApplied } = computeTotals(lines.map((l) => ({ id: l.id, price: l.p.price, regular: saleInfo(l.p).regular, qty: l.qty, bundle: !!l.p.in_bundle })), C, couponCode ? couponPercent : 0, deliveryMethod, productSets);
   // What home delivery would cost for this cart — shown on its option.
   const deliveryFee = subtotal >= Number(C.freeShipFrom || 500) ? 0 : Number(C.shipFee || 39);
 
@@ -180,7 +180,7 @@ export function Checkout() {
                 <div key={sa.name} style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>{setTitle(sa.name)}{sa.count > 1 ? ` ×${sa.count}` : ""}</span><span>-{fmt(sa.discount)}</span></div>
               ))}
               {bundleDiscount > 0 && (
-                <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>מבצע {bundleSize} ב־{fmt(bundlePrice)}</span><span>-{fmt(bundleDiscount)}</span></div>
+                <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-accent);")}><span>מבצע {deal.label}</span><span>-{fmt(bundleDiscount)}</span></div>
               )}
               <div style={css("display:flex;justify-content:space-between;font-size:14.5px;margin-bottom:10px;color:var(--c-ink-soft);")}><span>{isPickup ? "איסוף עצמי" : "משלוח"}</span><span>{shipping ? fmt(shipping) : "חינם"}</span></div>
           {couponCode && discount > 0 && (

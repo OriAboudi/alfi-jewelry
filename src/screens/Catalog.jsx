@@ -23,7 +23,7 @@ export function Catalog() {
   const products = soldAlone(allProducts, content);
   const isDeal = catFilter === DEAL_FILTER;
   const deal = bundleConfig(content);
-  const dealTitle = `מבצע ${deal.size} ב־₪${deal.price}`;
+  const dealTitle = `מבצע ${deal.label}`;
   // Filters/sort belong to this history entry: open a product, go Back, and
   // the list is exactly as it was (scroll position included, see navMemory).
   const [matFilter, setMatFilter] = useEntryState("cat.material", "הכל");
@@ -64,7 +64,7 @@ export function Catalog() {
   useSeoTags({
     title: isDeal ? `${dealTitle} · ALFI` : isCategory ? `${catFilter} · ALFI` : "כל התכשיטים · ALFI",
     description: isDeal
-      ? `${dealTitle}: בוחרים ${deal.size} תכשיטי כסף מהמבצע ומשלמים ₪${deal.price}.`
+      ? `${dealTitle}: ${deal.pitch}`
       : isCategory
       ? `${catFilter} בכסף סטרלינג 925 מקולקציית ALFI.`
       : "כל תכשיטי הכסף של ALFI במקום אחד — טבעות, שרשראות, עגילים וצמידים בכסף סטרלינג 925.",
@@ -86,7 +86,7 @@ export function Catalog() {
       </div>
       <div style={css("text-align:center;margin-bottom:var(--sp-6);")}>
         <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-display);")}>{catFilter === "הכל" ? "כל התכשיטים" : isDeal ? dealTitle : catFilter}</h1>
-        {isDeal && <p style={css("margin:10px auto 0;font-size:16px;color:var(--c-ink-soft);")}>בוחרים {deal.size} תכשיטים מהמבצע ומשלמים ₪{deal.price} בלבד. המחיר מתעדכן אוטומטית בעגלה.</p>}
+        {isDeal && <p style={css("margin:10px auto 0;font-size:16px;color:var(--c-ink-soft);")}>{deal.pitch} המחיר מתעדכן אוטומטית בעגלה.</p>}
       </div>
       {/* Mobile: every category one swipe away, without opening the filter
           panel. A plain horizontal scroller — no custom gesture, so it never

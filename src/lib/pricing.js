@@ -8,24 +8,47 @@ export function saleInfo(p) {
   return { onSale: true, price, regular, percent: Math.round(((regular - price) / regular) * 100), saved: regular - price };
 }
 
-// "N for ₪X" bundle deal settings (admin: content.bundleSize/bundlePrice).
+// The deal on products marked in_bundle — the admin picks which one is live
+// (content.dealType). Every type groups the eligible units into sets of
+// `size`; what a full set saves depends on the type:
+//   nForPrice     — "N for ₪X": the set costs `price` (content.bundleSize/bundlePrice)
+//   buy2get1      — buy 2, get 1 free: the cheapest of every 3 is free
+//   buy1get1      — buy 1, get 1 free: the cheaper of every 2 is free
+//   secondPercent — buy 1, the second at `percent`% off (content.dealPercent)
+// Mirrored in supabase/functions/create-takbull-payment — keep in sync.
+export const DEAL_TYPES = [
+  { id: "nForPrice", name: "N תכשיטים במחיר קבוע (למשל 3 ב־₪200)" },
+  { id: "buy2get1", name: "קנה 2 קבל 1 מתנה" },
+  { id: "buy1get1", name: "קנה 1 קבל 1 מתנה" },
+  { id: "secondPercent", name: "קנה 1, השני בהנחה (למשל 60%)" },
+];
+
 export function bundleConfig(content) {
+  const type = DEAL_TYPES.some((t) => t.id === content?.dealType) ? content.dealType : "nForPrice";
+  if (type === "buy2get1") return { type, size: 3, price: 0, percent: 100, label: "קנה 2 קבל 1 מתנה", tag: "2+1 מתנה", benefit: "והזול מביניהם מתנה", pitch: "קונים 2 תכשיטים מהמבצע ומקבלים שלישי מתנה (הזול מביניהם)." };
+  if (type === "buy1get1") return { type, size: 2, price: 0, percent: 100, label: "קנה 1 קבל 1 מתנה", tag: "1+1 מתנה", benefit: "והזול מביניהם מתנה", pitch: "קונים תכשיט מהמבצע ומקבלים שני מתנה (הזול מביניהם)." };
+  if (type === "secondPercent") {
+    const percent = Math.min(100, Math.max(1, Math.round(Number(content?.dealPercent)) || 60));
+    return { type, size: 2, price: 0, percent, label: `השני ב־${percent}% הנחה`, tag: `השני ב־${percent}%`, benefit: `והזול מביניהם ב־${percent}% הנחה`, pitch: `קונים 2 תכשיטים מהמבצע והזול מביניהם ב־${percent}% הנחה.` };
+  }
   const size = Math.max(2, Math.floor(Number(content?.bundleSize)) || 3);
   const price = Math.max(0, Number(content?.bundlePrice) || 200);
-  return { size, price };
+  return { type, size, price, percent: 0, label: `${size} ב־₪${price}`, tag: `${size} ב־₪${price}`, benefit: `וההזמנה נכנסת ל־${size} ב־₪${price}`, pitch: `בוחרים ${size} תכשיטים מהמבצע ומשלמים ₪${price} בלבד.` };
 }
 
-// Bundle discount for the eligible units (one entry per unit, its price).
-// Units are grouped most-expensive-first into sets of `size`; each set costs
-// `price` (never more than the set's own total). Mirrored exactly in
+// Deal discount for the eligible units (one entry per unit, its price).
+// Units are grouped most-expensive-first into sets of `cfg.size`; a set
+// never costs more than its own total. Mirrored exactly in
 // supabase/functions/create-takbull-payment/index.ts — keep them in sync.
-export function bundleDiscount(unitPrices, size, price) {
+export function bundleDiscount(unitPrices, cfg) {
+  const { size } = cfg;
   const units = [...unitPrices].map(Number).sort((a, b) => b - a);
   const sets = Math.floor(units.length / size);
   let discount = 0;
   for (let i = 0; i < sets; i++) {
-    const sum = units.slice(i * size, (i + 1) * size).reduce((a, v) => a + v, 0);
-    discount += Math.max(0, sum - price);
+    const group = units.slice(i * size, (i + 1) * size);
+    if (cfg.type === "nForPrice") discount += Math.max(0, group.reduce((a, v) => a + v, 0) - cfg.price);
+    else discount += (group[size - 1] * cfg.percent) / 100;
   }
   const rest = units.length % size;
   return { discount: Math.round(discount * 100) / 100, sets, eligible: units.length, missing: units.length && rest ? size - rest : 0 };
@@ -121,7 +144,7 @@ export function setDeal(lines, sets) {
 // computed server-side in supabase/functions/create-takbull-payment — this
 // just keeps the client-side previews from drifting out of sync with each
 // other. Lines are { price, qty, regular?, bundle? } where regular is the
-// pre-sale price and bundle marks a product in the "N for ₪X" deal.
+// pre-sale price and bundle marks a product in the deal (bundleConfig).
 // deliveryMethod "pickup" (self pickup) is always free — same rule as the
 // server. Order of application (same on the server): bundle deal → free-
 // shipping threshold and coupon on what the items cost after the deal.
@@ -140,7 +163,7 @@ export function computeTotals(lines, content, couponPercent = 0, deliveryMethod 
     if (skip) left[id] -= skip;
     return Array(Math.max(0, l.qty - skip)).fill(l.price);
   });
-  const bundle = bundleDiscount(units, cfg.size, cfg.price);
+  const bundle = bundleDiscount(units, cfg);
   const itemsTotal = subtotal - setRes.discount - bundle.discount;
   const shipping = deliveryMethod === "pickup" ? 0 : (itemsTotal >= Number(content.freeShipFrom || 500) ? 0 : Number(content.shipFee || 39));
   const discount = couponPercent > 0 ? Math.round(itemsTotal * couponPercent) / 100 : 0;
@@ -148,7 +171,7 @@ export function computeTotals(lines, content, couponPercent = 0, deliveryMethod 
   return {
     subtotal, regularSubtotal, saleSavings, shipping, discount, total,
     bundleDiscount: bundle.discount, bundleSets: bundle.sets, bundleEligible: bundle.eligible, bundleMissing: bundle.missing,
-    bundleSize: cfg.size, bundlePrice: cfg.price,
+    bundleSize: cfg.size, bundlePrice: cfg.price, deal: cfg,
     setDiscount: setRes.discount, setsApplied: setRes.applied,
     totalSaved: saleSavings + setRes.discount + bundle.discount + discount,
   };
