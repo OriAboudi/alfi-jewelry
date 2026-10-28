@@ -46,6 +46,7 @@ async function main() {
 
   let products = [];
   let setPrices = {};
+  let hiddenPages = [];
   if (url && key) {
     try {
       const supabase = createClient(url, key);
@@ -54,6 +55,7 @@ async function main() {
       products = data || [];
       const { data: content } = await supabase.from("content").select("data").eq("id", 1).maybeSingle();
       setPrices = content?.data?.setPrices || {};
+      hiddenPages = content?.data?.hiddenPages || [];
     } catch (e) {
       console.warn("[sitemap] Supabase fetch failed, writing static-only sitemap:", e.message);
     }
@@ -69,11 +71,16 @@ async function main() {
   for (const p of products) { const n = String(p.set_name || "").trim(); if (n) setCounts[n] = (setCounts[n] || 0) + 1; }
   const setPages = Object.keys(setCounts).filter((n) => setCounts[n] >= 2 && Number(setPrices[n]) > 0).map((n) => `/סט/${slugify(n)}`);
 
-  const allUrls = [...staticPages, ...categoryPages, ...productPages, ...setPages];
+  // Pages the admin hid (content.hiddenPages, keys from HIDEABLE_PAGES in src/lib/routes.js).
+  const HIDEABLE_PATHS = { collections: "/קולקציות", sets: "/סטים", deal: "/מבצע", story: "/הסיפור-שלנו", contact: "/צור-קשר", shipping: "/משלוחים-והחזרות" };
+  const hiddenPaths = new Set(hiddenPages.map((k) => HIDEABLE_PATHS[k]));
+  const shownStatic = staticPages.filter((p) => !hiddenPaths.has(p));
+
+  const allUrls = [...shownStatic, ...categoryPages, ...productPages, ...setPages];
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${allUrls.map(urlEntry).join("\n")}\n</urlset>\n`;
 
   writeFileSync("public/sitemap.xml", xml, "utf8");
-  console.log(`[sitemap] wrote public/sitemap.xml with ${allUrls.length} URLs (${staticPages.length} static, ${categoryPages.length} categories, ${productPages.length} products, ${setPages.length} sets).`);
+  console.log(`[sitemap] wrote public/sitemap.xml with ${allUrls.length} URLs (${shownStatic.length} static, ${categoryPages.length} categories, ${productPages.length} products, ${setPages.length} sets).`);
 }
 
 main().catch((e) => {

@@ -11,7 +11,7 @@ import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { store } from "../lib/store.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
-import { pathFor, DEAL_FILTER } from "../lib/routes.js";
+import { pathFor, DEAL_FILTER, pageHidden } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { Reveal } from "../components/Reveal.jsx";
 import { SkeletonText, SkeletonBlock, SkeletonCard, LoadingLabel } from "../components/Skeleton.jsx";
@@ -130,7 +130,9 @@ export function Home() {
 
   const goCat = (c) => go("catalog", c);
   const goCatalog = () => go("catalog");
-  const goDeal = () => go("catalog", DEAL_FILTER);
+  // Pages the admin hid (admin → "עמודים באתר") get no links from here.
+  const shown = (key) => !pageHidden(C, key);
+  const goDeal = () => (shown("deal") ? go("catalog", DEAL_FILTER) : goCatalog());
 
   return (
     <div>
@@ -175,7 +177,9 @@ export function Home() {
                 (linking to the collections), not a boxed label above the H1. */}
             {C.heroBadge && (
               <div className={`rd-hero-note${heroShop.length >= 3 ? " rd-hero-note--shop" : ""}`}>
-                <a href={pathFor("collections")} onClick={(e) => { e.preventDefault(); go("collections"); }}>{C.heroBadge}</a>
+                {shown("collections")
+                  ? <a href={pathFor("collections")} onClick={(e) => { e.preventDefault(); go("collections"); }}>{C.heroBadge}</a>
+                  : <span>{C.heroBadge}</span>}
               </div>
             )}
             {heroShop.length >= 3 && (
@@ -263,7 +267,7 @@ export function Home() {
       </Reveal>
 
       {/* SETS — pieces sold together at a set price; each card opens the set's page */}
-      {productSets.length > 0 && (
+      {productSets.length > 0 && shown("sets") && (
         <Reveal as="section" className="rd-slider-max" style={css("padding:36px 0 40px;display:flex;flex-direction:column;gap:18px;")}>
           <div className="glass rd-slider-head" style={css("display:flex;justify-content:space-between;align-items:center;")}>
             <h2 className="serif rd-slider-title" style={css("margin:0;font-weight:300;")}>סטים במחיר מיוחד</h2>
@@ -324,7 +328,7 @@ export function Home() {
         <div className="glass-strong rd-story-box">
           <div style={css("display:flex;flex-direction:column;gap:24px;")}>
             <h2 className="serif rd-story-h2" style={css("margin:0;font-weight:300;")}>כל תכשיט<br />מתחיל באהבה</h2>
-            <a href={pathFor("story")} onClick={(e) => { e.preventDefault(); go("story"); }} style={css("align-self:flex-start;cursor:pointer;font-size:15px;border-bottom:1px solid var(--ink);padding:10px 0 4px;")}>לסיפור המלא</a>
+            {shown("story") && <a href={pathFor("story")} onClick={(e) => { e.preventDefault(); go("story"); }} style={css("align-self:flex-start;cursor:pointer;font-size:15px;border-bottom:1px solid var(--ink);padding:10px 0 4px;")}>לסיפור המלא</a>}
           </div>
           <div style={css("display:flex;flex-direction:column;gap:28px;")}>
             {!loaded ? <SkeletonText lines={3} height={15} /> : C.aboutText && <p className="rd-story-p" style={css("margin:0;color:var(--text-body);")}>{C.aboutText}</p>}

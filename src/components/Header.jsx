@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { SearchOverlay } from "./SearchOverlay.jsx";
-import { pathFor, DEAL_FILTER } from "../lib/routes.js";
+import { pathFor, DEAL_FILTER, pageHidden } from "../lib/routes.js";
 import { bundleConfig } from "../lib/pricing.js";
 
 // The 4 categories now live under a "קטגוריות" dropdown (desktop) /
@@ -69,6 +69,8 @@ export function Header() {
     go(target);
   };
 
+  const shown = (key) => !pageHidden(content, key);
+
   const isCatActive = (cat) => screen === "catalog" && catFilter === cat;
   const isCatsActive = screen === "catalog" && catFilter !== DEAL_FILTER;
   const isSetsActive = screen === "sets";
@@ -134,10 +136,10 @@ export function Header() {
                 </div>
               )}
             </div>
-            <a href={pathFor("sets")} {...asButton(goSets)} aria-current={isSetsActive ? "page" : undefined} style={css("cursor:pointer;")}>סטים</a>
-            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton(goDeal)} aria-current={isDealActive ? "page" : undefined} style={css("cursor:pointer;")}>מבצעים</a>
-            <a href={pathFor("collections")} {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>
-            <a href={pathFor("story")} {...asButton(goStory)} aria-current={isStoryActive ? "page" : undefined} style={css("cursor:pointer;")}>הסיפור</a>
+            {shown("sets") && <a href={pathFor("sets")} {...asButton(goSets)} aria-current={isSetsActive ? "page" : undefined} style={css("cursor:pointer;")}>סטים</a>}
+            {shown("deal") && <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton(goDeal)} aria-current={isDealActive ? "page" : undefined} style={css("cursor:pointer;")}>מבצעים</a>}
+            {shown("collections") && <a href={pathFor("collections")} {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>}
+            {shown("story") && <a href={pathFor("story")} {...asButton(goStory)} aria-current={isStoryActive ? "page" : undefined} style={css("cursor:pointer;")}>הסיפור</a>}
           </nav>
           <span
             {...asButton(() => navigate("home"))}
@@ -202,15 +204,15 @@ export function Header() {
                 ))}
               </div>
             )}
-            <a href={pathFor("sets")} {...asButton(goSets)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>סטים</a>
-            <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton(goDeal)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--c-accent-dark);font-weight:600;font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>מבצעים<span style={css("font-size:13px;font-weight:400;")}>{deal.tag}</span></a>
-            <a href={pathFor("collections")} {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>
-            <a href={pathFor("story")} {...asButton(goStory)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>הסיפור</a>
+            {shown("sets") && <a href={pathFor("sets")} {...asButton(goSets)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>סטים</a>}
+            {shown("deal") && <a href={pathFor("catalog", { catFilter: DEAL_FILTER })} {...asButton(goDeal)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--c-accent-dark);font-weight:600;font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>מבצעים<span style={css("font-size:13px;font-weight:400;")}>{deal.tag}</span></a>}
+            {shown("collections") && <a href={pathFor("collections")} {...asButton(goCollections)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>קולקציות</a>}
+            {shown("story") && <a href={pathFor("story")} {...asButton(goStory)} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>הסיפור</a>}
             <span {...asButton(() => navigate("favorites"))} className="tap-target" style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;justify-content:space-between;")}>
               מועדפים
               {favoritesCount > 0 && <span style={css("font-size:13px;color:var(--text-muted);")}>{favoritesCount}</span>}
             </span>
-            <a href={pathFor("contact")} {...asButton((e) => { e.preventDefault(); navigate("contact"); })} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>צור קשר</a>
+            {shown("contact") && <a href={pathFor("contact")} {...asButton((e) => { e.preventDefault(); navigate("contact"); })} style={css("padding:15px 2px;border-bottom:1px solid rgba(58,45,61,.12);cursor:pointer;color:var(--ink);font-size:16px;min-height:var(--tap);display:flex;align-items:center;")}>צור קשר</a>}
 
             {/* Account — its own block at the end of the menu. */}
             {authReady && (customer ? (

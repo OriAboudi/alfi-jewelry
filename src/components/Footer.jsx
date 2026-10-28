@@ -3,7 +3,7 @@ import { css } from "../lib/css.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { CONTACT } from "../lib/contact.js";
 import { WhatsAppIcon, EmailIcon, InstagramIcon } from "./ContactIcons.jsx";
-import { pathFor } from "../lib/routes.js";
+import { pathFor, pageHidden } from "../lib/routes.js";
 
 // Reset-styled <a>/<button> — real link/button semantics mean native
 // keyboard support (Tab + Enter/Space) for free.
@@ -12,10 +12,10 @@ const colHeading = "font-weight:600;color:var(--cream);";
 const colList = "display:flex;flex-direction:column;gap:12px;font-size:15px;color:inherit;";
 
 // Desktop's "שירות"/mobile's "שירות לקוחות" column.
-function ServiceList({ go, textStyle }) {
+function ServiceList({ go, textStyle, showShipping }) {
   return (
     <>
-      <a href={pathFor("shipping")} onClick={(e) => { e.preventDefault(); go("shipping"); }} style={css(linkBtn + textStyle)}>משלוחים והחזרות</a>
+      {showShipping && <a href={pathFor("shipping")} onClick={(e) => { e.preventDefault(); go("shipping"); }} style={css(linkBtn + textStyle)}>משלוחים והחזרות</a>}
       <a href={pathFor("privacy")} onClick={(e) => { e.preventDefault(); go("privacy"); }} style={css(linkBtn + textStyle)}>מדיניות פרטיות</a>
       <a href={pathFor("accessibility")} onClick={(e) => { e.preventDefault(); go("accessibility"); }} style={css(linkBtn + textStyle)}>הצהרת נגישות</a>
     </>
@@ -41,7 +41,9 @@ function ContactList({ textStyle }) {
 }
 
 export function Footer() {
-  const { go, setCatFilter } = useStore();
+  const { go, setCatFilter, content } = useStore();
+  const showShipping = !pageHidden(content, "shipping");
+  const showContact = !pageHidden(content, "contact");
   const goCat = (c) => (e) => { e.preventDefault(); go("catalog", c); };
   const goPage = (screen) => (e) => { e.preventDefault(); go(screen); };
   const [openSection, setOpenSection] = useState(null);
@@ -85,7 +87,7 @@ export function Footer() {
           </div>
           <div style={css(colList)}>
             <strong style={css(colHeading)}>שירות</strong>
-            <ServiceList go={go} textStyle={desktopLinkStyle} />
+            <ServiceList go={go} textStyle={desktopLinkStyle} showShipping={showShipping} />
           </div>
           <div style={css(colList)}>
             <strong style={css(colHeading)}>צרי קשר</strong>
@@ -95,7 +97,7 @@ export function Footer() {
         <div style={css("font-size:13px;color:#C3B3C4;border-top:1px solid var(--divider-dark);padding-top:24px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;")}>
           <span>© ALFI · תכשיטי כסף סטרלינג 925 לאישה</span>
           <span style={css("display:flex;flex-wrap:wrap;gap:16px;")}>
-            <a href={pathFor("contact")} onClick={goPage("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</a>
+            {showContact && <a href={pathFor("contact")} onClick={goPage("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</a>}
             <a href={pathFor("privacy")} onClick={goPage("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</a>
             <a href={pathFor("terms")} onClick={goPage("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</a>
           </span>
@@ -114,12 +116,12 @@ export function Footer() {
               <a href={pathFor("catalog", { catFilter: "צמידים" })} onClick={goCat("צמידים")} style={css(linkBtn + "color:var(--cream);")}>צמידים</a>
             </>
           ))}
-          {accordionRow("service", "שירות לקוחות", <ServiceList go={go} textStyle={mobileLinkStyle} />)}
+          {accordionRow("service", "שירות לקוחות", <ServiceList go={go} textStyle={mobileLinkStyle} showShipping={showShipping} />)}
           {accordionRow("contact", "צרי קשר", <ContactList textStyle={mobileLinkStyle} />)}
         </div>
         <div style={css("font-size:12px;color:#C3B3C4;")}>© ALFI · תכשיטי כסף סטרלינג 925 לאישה</div>
         <div style={css("display:flex;flex-wrap:wrap;gap:16px;font-size:12px;")}>
-          <a href={pathFor("contact")} onClick={goPage("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</a>
+          {showContact && <a href={pathFor("contact")} onClick={goPage("contact")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>צור קשר</a>}
           <a href={pathFor("privacy")} onClick={goPage("privacy")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>מדיניות פרטיות</a>
           <a href={pathFor("terms")} onClick={goPage("terms")} style={css(linkBtn + "width:auto;color:#C3B3C4;")}>תנאי שימוש</a>
         </div>

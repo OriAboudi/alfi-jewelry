@@ -9,6 +9,7 @@ import { ProductsTab } from "./ProductsTab.jsx";
 import { CollectionsTab } from "./CollectionsTab.jsx";
 import { SetsTab } from "./SetsTab.jsx";
 import { ContentTab } from "./ContentTab.jsx";
+import { PagesTab } from "./PagesTab.jsx";
 import { CouponsTab } from "./CouponsTab.jsx";
 import { OrdersTab } from "./OrdersTab.jsx";
 import { UsersTab } from "./UsersTab.jsx";
@@ -22,6 +23,7 @@ const ADMIN_TABS = [
   ["sets", "סטים"],
   ["collections", "קולקציות"],
   ["content", "תוכן האתר"],
+  ["pages", "עמודים באתר"],
   ["coupons", "קופונים"],
   ["orders", "הזמנות"],
   ["users", "משתמשים"],
@@ -36,6 +38,7 @@ const TAB_COMPONENTS = {
   sets: SetsTab,
   collections: CollectionsTab,
   content: ContentTab,
+  pages: PagesTab,
   coupons: CouponsTab,
   orders: OrdersTab,
   users: UsersTab,
