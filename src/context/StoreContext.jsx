@@ -283,10 +283,10 @@ export function StoreProvider({ children }) {
     if (path && path !== currentPath()) pushEntry(path, opts);
   }, []);
 
-  const go = useCallback((screen, catFilter, extra) => {
+  const go = useCallback((screen, catFilter, extra, opts) => {
     const patch = { ...(screen === "catalog" ? { screen, catFilter: catFilter || "הכל" } : { screen }), ...extra, contentSaved: false };
     scrollTop();
-    pushFor(patch);
+    pushFor(patch, opts);
     setState(patch);
   }, [setState, pushFor]);
 

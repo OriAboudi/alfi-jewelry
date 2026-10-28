@@ -4,7 +4,7 @@ import { fmt } from "../lib/format.js";
 import { RedesignProductCard } from "../components/RedesignProductCard.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
-import { pathFor, DEAL_FILTER } from "../lib/routes.js";
+import { pathFor, DEAL_FILTER, pageHidden } from "../lib/routes.js";
 import { bundleConfig, soldAlone } from "../lib/pricing.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { useEntryState } from "../lib/navMemory.js";
@@ -92,7 +92,7 @@ export function Catalog() {
           panel. A plain horizontal scroller — no custom gesture, so it never
           fights the system back-swipe. */}
       <div className="cat-chips" role="group" aria-label="קטגוריות">
-        {["הכל", ...cats, ...(products.some((p) => p.in_bundle) ? [DEAL_FILTER] : [])].map((c) => (
+        {["הכל", ...cats, ...(products.some((p) => p.in_bundle) && !pageHidden(content, "deal") ? [DEAL_FILTER] : [])].map((c) => (
           <button key={c} type="button" className="cat-chip" aria-pressed={catFilter === c} onClick={() => setCatFilter(c)}>
             {c === "הכל" ? "הכל" : c === DEAL_FILTER ? dealTitle : c}
           </button>

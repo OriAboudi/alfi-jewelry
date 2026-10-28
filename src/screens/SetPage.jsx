@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { css } from "../lib/css.js";
 import { fmt, productDetailsText } from "../lib/format.js";
 import { buildSets, setTitle, setInStock } from "../lib/pricing.js";
-import { pathFor, slugify } from "../lib/routes.js";
+import { pathFor, slugify, pageHidden } from "../lib/routes.js";
 import { useStore } from "../context/StoreContext.jsx";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 
@@ -138,11 +138,12 @@ export function SetPage() {
     { key: "care", title: "טיפוח התכשיט", body: "יש להימנע ממגע עם מים, בשמים וכימיקלים. לאחסן בנפרד, בשקית סגורה, הרחק מאור שמש ישיר." },
   ];
 
+  const setsShown = !pageHidden(C, "sets");
   const crumbs = (
     <nav aria-label="ניווט" style={css("font-size:13px;color:var(--c-ink-faint);display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:var(--tap);margin-bottom:var(--sp-4);")}>
       <a href={pathFor("home")} onClick={(e) => { e.preventDefault(); go("home"); }}>בית</a>
-      <span aria-hidden="true">/</span>
-      <a href={pathFor("sets")} onClick={(e) => { e.preventDefault(); go("sets"); }}>סטים</a>
+      {setsShown && <><span aria-hidden="true">/</span>
+      <a href={pathFor("sets")} onClick={(e) => { e.preventDefault(); go("sets"); }}>סטים</a></>}
       {set && <><span aria-hidden="true">/</span><span aria-current="page">{setTitle(set.name)}</span></>}
     </nav>
   );
@@ -158,7 +159,7 @@ export function SetPage() {
             <>
               <h1 style={css("font-family:var(--font-serif);font-weight:300;font-size:var(--fs-h1);margin-bottom:12px;")}>הסט לא נמצא</h1>
               <p style={css("color:var(--c-ink-mute);margin-bottom:24px;")}>ייתכן שהוא כבר לא זמין באתר.</p>
-              <button type="button" onClick={() => go("sets")} className="btn btn-primary">לכל הסטים</button>
+              <button type="button" onClick={() => go(setsShown ? "sets" : "home")} className="btn btn-primary">{setsShown ? "לכל הסטים" : "לעמוד הבית"}</button>
             </>
           )}
         </div>

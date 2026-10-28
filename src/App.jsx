@@ -1,5 +1,6 @@
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import { css } from "./lib/css.js";
+import { pageKeyFor, pageHidden } from "./lib/routes.js";
 import { useStore } from "./context/StoreContext.jsx";
 import { Header } from "./components/Header.jsx";
 import { Footer } from "./components/Footer.jsx";
@@ -57,6 +58,8 @@ const SCREENS = {
   admin: Admin,
 };
 
+const NoScreen = () => null;
+
 const CHROMELESS = new Set(["admin", "admin-login"]);
 
 // The floral painting itself is now two fixed (not background-attachment:
@@ -68,7 +71,14 @@ const PAGE_BG =
   "min-height:100vh;font-weight:400;line-height:1.65;-webkit-font-smoothing:antialiased;";
 
 export default function App() {
-  const { screen, go, loadError, loadSiteData } = useStore();
+  const { screen, catFilter, content, loaded, go, loadError, loadSiteData } = useStore();
+
+  // A page the admin hid (admin → "עמודים באתר") is never shown: its URL is
+  // replaced with home. Until the site data says what's hidden, a hideable
+  // page renders nothing rather than flashing a page that may be hidden.
+  const pageKey = pageKeyFor(screen, catFilter);
+  const blocked = pageHidden(content, pageKey);
+  useEffect(() => { if (blocked) go("home", undefined, undefined, { replace: true }); }, [blocked, go]);
 
   // The admin login gate is a full-bleed page with its own layout (no
   // header/footer) and keeps the old plain background — admin is an
@@ -83,7 +93,7 @@ export default function App() {
     );
   }
 
-  const Screen = SCREENS[screen] || Home;
+  const Screen = (pageKey && (!loaded || blocked)) ? NoScreen : SCREENS[screen] || Home;
   const showChrome = !CHROMELESS.has(screen);
 
   return (

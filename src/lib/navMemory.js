@@ -52,7 +52,10 @@ export function rememberScroll() {
 
 // carryUi: the new entry starts with the current one's UI state (a
 // category switch inside the catalog keeps the sort/material filters).
-export function pushEntry(path, { carryUi = false } = {}) {
+export function pushEntry(path, { carryUi = false, replace = false } = {}) {
+  // Swap the current entry's URL in place (e.g. leaving a hidden page), so
+  // Back doesn't return to it.
+  if (replace) { window.history.replaceState(window.history.state, "", path); return; }
   if (savedForKey !== activeKey) rememberScroll();
   const d = (window.history.state?.d || 0) + 1;
   const prevUi = activeKey && mem[activeKey]?.ui;

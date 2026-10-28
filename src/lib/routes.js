@@ -68,6 +68,32 @@ export function pathFor(screen, ctx = {}) {
   }
 }
 
+// Pages the admin can hide from the storefront (admin → "עמודים באתר").
+// Stored as content.hiddenPages (array of keys). A hidden page loses every
+// link to it and its URL falls back to home. Not offered: home/catalog/
+// product/cart/checkout (the buying flow), favorites, and the legal pages
+// (privacy, terms, accessibility statement) the site must always show.
+// "sets" is only the sets list — a set's own page stays reachable, since a
+// unified set's pieces open it to be bought.
+export const HIDEABLE_PAGES = [
+  { key: "collections", label: "קולקציות", path: "/קולקציות" },
+  { key: "sets", label: "סטים", path: "/סטים" },
+  { key: "deal", label: "מבצעים", path: "/מבצע" },
+  { key: "story", label: "הסיפור שלנו", path: "/הסיפור-שלנו" },
+  { key: "contact", label: "צור קשר", path: "/צור-קשר" },
+  { key: "shipping", label: "משלוחים והחזרות", path: "/משלוחים-והחזרות" },
+];
+
+// The hideable page a screen belongs to, or null if it can't be hidden.
+export function pageKeyFor(screen, catFilter) {
+  if (screen === "catalog") return catFilter === DEAL_FILTER ? "deal" : null;
+  return HIDEABLE_PAGES.some((p) => p.key === screen) ? screen : null;
+}
+
+export function pageHidden(content, key) {
+  return !!key && (content?.hiddenPages || []).includes(key);
+}
+
 const STATIC_ROUTES = {
   "/": { screen: "home" },
   "/קטלוג": { screen: "catalog", catFilter: "הכל" },
