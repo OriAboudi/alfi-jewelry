@@ -8,7 +8,7 @@ import { Field, Area, Overlay, OverlayHeader, lbl, inp, CAT_NAMES } from "./shar
 
 export function CollectionsTab() {
   const {
-    collections, draftCol, newCollection, editCollection, deleteCollection, setDraftCol, saveCol, cancelCol,
+    collections, draftCol, newCollection, editCollection, deleteCollection, toggleCollectionHidden, setDraftCol, saveCol, cancelCol,
   } = useStore();
 
   return (
@@ -22,7 +22,8 @@ export function CollectionsTab() {
           <div style={thumb(c.image, GRAD_CARD, "width:60px;height:48px;flex:none;border-radius:10px;")}>
             {!c.image && <Disc style="width:50%;aspect-ratio:1;" />}
           </div>
-          <div style={css("flex:1;")}><div style={css("font-family:var(--font-serif);font-size:17px;")}>{c.title}</div><div style={css("font-size:13px;color:var(--c-ink-mute);")}>{c.subtitle}{c.category_filter ? ` · מסונן: ${c.category_filter}` : ""}</div></div>
+          <div style={css("flex:1;")}><div style={css("font-family:var(--font-serif);font-size:17px;")}>{c.title}{c.hidden && <span style={css("margin-inline-start:10px;font-family:var(--font-sans);font-size:12px;font-weight:600;padding:3px 10px;border-radius:var(--r-pill);background:var(--c-line-soft);color:var(--c-ink-mute);vertical-align:middle;")}>מוסתרת מהאתר</span>}</div><div style={css("font-size:13px;color:var(--c-ink-mute);")}>{c.subtitle}{c.category_filter ? ` · מסונן: ${c.category_filter}` : ""}</div></div>
+          <button onClick={() => toggleCollectionHidden(c)} title={c.hidden ? "להציג את הקולקציה באתר" : "להסתיר את הקולקציה מהאתר"} style={css("padding:8px 14px;background:none;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:9px;font-size:13.5px;cursor:pointer;")}>{c.hidden ? "הצגה באתר" : "הסתרה"}</button>
           <button onClick={() => editCollection(c)} style={css("padding:8px 16px;background:var(--c-line-soft);color:var(--c-ink);border:none;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;")}>עריכה</button>
           <button onClick={() => deleteCollection(c.id)} style={css("padding:8px 14px;background:none;color:var(--c-danger);border:1px solid var(--c-line-strong);border-radius:9px;font-size:13.5px;cursor:pointer;")}>מחיקה</button>
         </div>
@@ -48,6 +49,9 @@ export function CollectionsTab() {
               </select>
             </div>
             <Area label="תיאור" value={draftCol.description} onChange={(v) => setDraftCol("description", v)} />
+            <label style={css("display:flex;align-items:center;gap:10px;font-size:15px;cursor:pointer;")}>
+              <input type="checkbox" checked={!!draftCol.hidden} onChange={(e) => setDraftCol("hidden", e.target.checked)} style={css("width:18px;height:18px;accent-color:var(--c-accent);cursor:pointer;")} />הסתרה מהאתר (הקולקציה לא תוצג ללקוחות)
+            </label>
             <div style={css("display:flex;gap:12px;margin-top:8px;")}>
               <button onClick={saveCol} style={css("flex:1;padding:14px;background:var(--c-accent-fill);color:#fff;border:none;border-radius:11px;font-size:15.5px;font-weight:600;cursor:pointer;")}>שמירה</button>
               <button onClick={cancelCol} style={css("padding:14px 24px;background:#fff;color:var(--c-ink);border:1px solid var(--c-line-strong);border-radius:11px;font-size:15px;cursor:pointer;")}>ביטול</button>

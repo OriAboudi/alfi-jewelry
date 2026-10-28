@@ -728,6 +728,8 @@ export function StoreProvider({ children }) {
   const saveCol = useCallback(async () => {
     const d = { ...ref.current.draftCol };
     const payload = { title: d.title, subtitle: d.subtitle, image: d.image, description: d.description, category_filter: d.category_filter || null };
+    // Only sent once set, so saving still works before add-collection-hidden.sql is run.
+    if (d.hidden !== undefined) payload.hidden = !!d.hidden;
     try {
       if (d._new) await store.collections.create(payload);
       else await store.collections.update(d.id, payload);
@@ -738,6 +740,9 @@ export function StoreProvider({ children }) {
   const deleteCollection = useCallback(async (id) => {
     if (!confirm("למחוק את הקולקציה?")) return;
     try { await store.collections.remove(id); await refreshCollections(); } catch { alert("מחיקה נכשלה"); }
+  }, [refreshCollections]);
+  const toggleCollectionHidden = useCallback(async (c) => {
+    try { await store.collections.update(c.id, { hidden: !c.hidden }); await refreshCollections(); } catch (e) { alert("עדכון נכשל: " + e.message); }
   }, [refreshCollections]);
 
   /* ---------- admin: content ---------- */
@@ -847,7 +852,7 @@ export function StoreProvider({ children }) {
     setAdminField, submitAdminLogin, logout,
     setQty, setSize, setCatFilter,
     setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
-    newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection,
+    newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection, toggleCollectionHidden,
     setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
     openSignupPopup, closeSignupPopup, continueFromSignupPopup, offerSignupBeforePayment, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
     openAuth, closeAuth, switchToSignIn, switchToSignup, requestLoginCode, verifyLoginCode, refreshAccountOrders, loadSiteData,

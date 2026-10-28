@@ -33,6 +33,7 @@ create table if not exists collections (
   subtitle    text not null default '',
   description text not null default '',
   image       text not null default '',
+  hidden      boolean not null default false,
   created_at  timestamptz default now()
 );
 
