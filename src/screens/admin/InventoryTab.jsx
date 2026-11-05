@@ -1,8 +1,11 @@
 import React from "react";
+import { createPortal } from "react-dom";
+import "../../styles/restock.css";
 import { css } from "../../lib/css.js";
+import { fmtDate } from "../../lib/format.js";
 import { useStore } from "../../context/StoreContext.jsx";
 import { store } from "../../lib/store.js";
-import { CORE_CAT_NAMES, stockTier, TIER_LABEL, TIER_COLOR } from "./shared.jsx";
+import { CAT_NAMES, CORE_CAT_NAMES, stockTier, TIER_LABEL, TIER_COLOR } from "./shared.jsx";
 
 const SEVERITY = { out: 0, critical: 1, warning: 2, ok: 3 };
 
@@ -12,6 +15,7 @@ export function InventoryTab() {
   const fine = Number(content.stockFineThreshold ?? 10);
   const [stockEdits, setStockEdits] = React.useState({});
   const [busyId, setBusyId] = React.useState(null);
+  const [showDoc, setShowDoc] = React.useState(false);
 
   const withTier = products.map((p) => ({ ...p, tier: stockTier(p.stock, { fine, low }) }));
 
@@ -67,7 +71,10 @@ export function InventoryTab() {
 
   return (
     <div>
-      <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:24px;margin-bottom:20px;")}>מלאי</h2>
+      <div style={css("display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px;")}>
+        <h2 style={css("font-family:var(--font-serif);font-weight:400;font-size:24px;")}>מלאי</h2>
+        <button type="button" className="rs-btn rs-btn-accent" disabled={!products.length} onClick={() => setShowDoc(true)}>ייצוא מלאי ל‑PDF</button>
+      </div>
 
       {/* TOP STATS */}
       <div className="r-grid4" style={css("display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px;")}>
@@ -127,6 +134,166 @@ export function InventoryTab() {
           <span style={css(`font-size:11.5px;font-weight:600;padding:4px 10px;border-radius:100px;background:${TIER_COLOR[p.tier].bg};color:${TIER_COLOR[p.tier].fg};white-space:nowrap;`)}>{p.tier === "ok" ? "תקין" : TIER_LABEL[p.tier]}</span>
         </div>
       ))}
+
+      {showDoc && <InventoryDoc products={withTier} onClose={() => setShowDoc(false)} />}
     </div>
+  );
+}
+
+// Printable stock report — same look as the restock documents (restock.css):
+// every product with its photo and current quantity, grouped by category with
+// a subtotal per category, then a summary of units per category and status.
+// "הדפסה" opens the browser's print dialog, where "Save as PDF" makes the file.
+function InventoryDoc({ products, onClose }) {
+  const sheet = React.useRef(null);
+  const today = new Date();
+  const title = "דוח מלאי";
+
+  React.useEffect(() => {
+    const prevOverflow = document.body.style.overflow;
+    const prevTitle = document.title;
+    document.body.style.overflow = "hidden";
+    document.body.classList.add("rs-printing");
+    // The print dialog offers the page title as the PDF's file name.
+    document.title = `ALFI ${title} ${today.toISOString().slice(0, 10)}`;
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.body.classList.remove("rs-printing");
+      document.title = prevTitle;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [onClose]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Print only once every photo has loaded, so none comes out blank.
+  const print = async () => {
+    const imgs = [...(sheet.current?.querySelectorAll("img") || [])];
+    await Promise.all(imgs.map((img) => (img.complete ? null : new Promise((done) => { img.onload = img.onerror = done; }))));
+    window.print();
+  };
+
+  const NO_CAT = "ללא קטגוריה";
+  const stockOf = (p) => Number(p.stock) || 0;
+  const catOf = (p) => p.category || NO_CAT;
+  const extraCats = [...new Set(products.map(catOf))].filter((c) => !CAT_NAMES.includes(c));
+  const groups = [...CAT_NAMES, ...extraCats].map((cat) => {
+    const rows = products.filter((p) => catOf(p) === cat).sort((a, b) => (a.name || "").localeCompare(b.name || "", "he"));
+    const tiers = { ok: 0, warning: 0, critical: 0, out: 0 };
+    rows.forEach((p) => { tiers[p.tier]++; });
+    return { cat, rows, units: rows.reduce((a, p) => a + stockOf(p), 0), tiers };
+  }).filter((g) => g.rows.length);
+
+  const units = groups.reduce((a, g) => a + g.units, 0);
+  const tierTotals = { ok: 0, warning: 0, critical: 0, out: 0 };
+  groups.forEach((g) => { for (const t in tierTotals) tierTotals[t] += g.tiers[t]; });
+  const shortageCount = tierTotals.warning + tierTotals.critical + tierTotals.out;
+  let row = 0;
+
+  return createPortal(
+    <div className="rs-print" role="dialog" aria-modal="true" aria-label={title} dir="rtl">
+      <div className="rs-print-bar">
+        <p>בחלון ההדפסה בחרו ביעד ״שמירה כ‑PDF״ כדי לקבל קובץ.</p>
+        <div>
+          <button type="button" className="rs-btn rs-btn-light" onClick={print}>הדפסה / שמירה כ‑PDF</button>
+          <button type="button" className="rs-btn rs-btn-line" onClick={onClose}>סגירה</button>
+        </div>
+      </div>
+
+      <div className="rs-sheet" ref={sheet}>
+        <div className="rs-doc-head">
+          <div className="rs-doc-title">{title}<small>מצב המלאי הנוכחי</small></div>
+          <div className="rs-doc-brand">ALFI<small>JEWELRY</small></div>
+        </div>
+        <div className="rs-doc-meta">
+          <span><b>תאריך:</b> <bdi>{fmtDate(today.toISOString())}</bdi></span>
+          <span><b>מוצרים:</b> <bdi>{products.length}</bdi></span>
+          <span><b>יחידות במלאי:</b> <bdi>{units}</bdi></span>
+          {shortageCount > 0 && <span><b>מוצרים בחוסר:</b> <bdi>{shortageCount}</bdi></span>}
+        </div>
+
+        <table className="rs-table">
+          <thead>
+            <tr><th className="rs-num">#</th><th>תמונה</th><th>מוצר</th><th className="rs-c">סטטוס</th><th className="rs-c">כמות במלאי</th></tr>
+          </thead>
+          <tbody>
+            {groups.map((g) => (
+              <React.Fragment key={g.cat}>
+                <tr className="rs-group"><td colSpan={5}>{g.cat} ({g.rows.length})</td></tr>
+                {g.rows.map((p) => (
+                  <tr key={p.id}>
+                    <td className="rs-num">{++row}</td>
+                    <td className="rs-ph">
+                      <div className="rs-doc-photos is-compact">
+                        {p.image ? <img src={p.image} alt="" /> : <span>אין תמונה</span>}
+                      </div>
+                    </td>
+                    <td>
+                      <div className="rs-doc-item">
+                        {p.name}
+                        <small>{[p.category, p.material, p.set_name ? `סט: ${p.set_name}` : ""].filter(Boolean).join(" · ")}</small>
+                      </div>
+                    </td>
+                    <td className="rs-c">
+                      <span className="inv-doc-tier" style={{ background: TIER_COLOR[p.tier].bg, color: TIER_COLOR[p.tier].fg }}>{TIER_LABEL[p.tier]}</span>
+                    </td>
+                    <td className="rs-c rs-qty" style={p.tier === "ok" ? undefined : { color: TIER_COLOR[p.tier].fg }}>{stockOf(p)}</td>
+                  </tr>
+                ))}
+                <tr className="rs-subtotal">
+                  <td colSpan={4}>סה״כ {g.cat}</td>
+                  <td className="rs-c">{g.units}</td>
+                </tr>
+              </React.Fragment>
+            ))}
+          </tbody>
+        </table>
+
+        <div className="inv-doc-summary">
+          <div className="inv-doc-summary-title">סיכום מלאי לפי קטגוריה</div>
+          <table className="rs-table">
+            <thead>
+              <tr>
+                <th>קטגוריה</th>
+                <th className="rs-c">מוצרים</th>
+                <th className="rs-c">תקין</th>
+                <th className="rs-c">מלאי נמוך</th>
+                <th className="rs-c">מלאי קריטי</th>
+                <th className="rs-c">אזל</th>
+                <th className="rs-c">יחידות</th>
+              </tr>
+            </thead>
+            <tbody>
+              {groups.map((g) => (
+                <tr key={g.cat}>
+                  <td><b>{g.cat}</b></td>
+                  <td className="rs-c">{g.rows.length}</td>
+                  <td className="rs-c">{g.tiers.ok || "—"}</td>
+                  <td className="rs-c">{g.tiers.warning || "—"}</td>
+                  <td className="rs-c">{g.tiers.critical || "—"}</td>
+                  <td className="rs-c">{g.tiers.out || "—"}</td>
+                  <td className="rs-c"><b>{g.units}</b></td>
+                </tr>
+              ))}
+              <tr className="rs-subtotal">
+                <td>סה״כ</td>
+                <td className="rs-c">{products.length}</td>
+                <td className="rs-c">{tierTotals.ok}</td>
+                <td className="rs-c">{tierTotals.warning}</td>
+                <td className="rs-c">{tierTotals.critical}</td>
+                <td className="rs-c">{tierTotals.out}</td>
+                <td className="rs-c">{units}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div className="rs-doc-total">
+          <span>סה״כ במלאי · {products.length} מוצרים</span>
+          <span className="rs-doc-sums"><span>יחידות <strong>{units}</strong></span></span>
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 }
