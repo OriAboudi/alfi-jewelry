@@ -4,6 +4,7 @@ import { ADMIN_PATH } from "../lib/adminPath.js";
 import { pathFor, parsePath } from "../lib/routes.js";
 import { initNavMemory, rememberScroll, pushEntry, onPopEntry, restoreScroll } from "../lib/navMemory.js";
 import { buildSets, unifiedSetOf } from "../lib/pricing.js";
+import { campaignConfig } from "../lib/campaign.js";
 
 initNavMemory();
 
@@ -181,6 +182,11 @@ export function StoreProvider({ children }) {
       signupPopupOpen: false,
       signupPopupPendingCheckout: false,
       signupPopupPrefill: null, // { name, email, phone } from the checkout form
+      // Seasonal campaign pop-up (Black Friday…) — see CampaignModal.jsx.
+      // campaignPreview: the admin's unsaved draft, shown from the admin tab.
+      campaignModalOpen: false,
+      campaignPreview: null,
+      campaignTick: 0,
       myOrders: loadMyOrders(),
     };
   });
@@ -438,7 +444,7 @@ export function StoreProvider({ children }) {
   const shouldOfferSignupPopup = useCallback((atCheckout = false) => {
     const s = ref.current;
     if (typeof window === "undefined" || isAdminPath()) return false;
-    if (!s.authReady || s.authDialog || s.signupPopupOpen) return false;
+    if (!s.authReady || s.authDialog || s.signupPopupOpen || s.campaignModalOpen) return false;
     if (!atCheckout && (authOpenedRef.current || NO_SIGNUP_POPUP_SCREENS.has(s.screen))) return false;
     return signupCouponEligible(s);
   }, []);
@@ -480,6 +486,29 @@ export function StoreProvider({ children }) {
     setState({ signupPopupOpen: false, signupPopupPendingCheckout: false, signupPopupPrefill: null });
     if (proceed) proceed();
   }, [setState]);
+
+  /* ---------- seasonal campaign pop-up ----------
+     Never over the sign-up / sign-in dialogs, and the sign-up pop-up won't
+     open over it (shouldOfferSignupPopup). preview: the admin tab's unsaved
+     draft settings, shown exactly as the storefront would. */
+  const openCampaignModal = useCallback((preview = null) => {
+    const s = ref.current;
+    if (!preview && (s.signupPopupOpen || s.authDialog)) return false;
+    setState({ campaignModalOpen: true, campaignPreview: preview });
+    return true;
+  }, [setState]);
+  const closeCampaignModal = useCallback(() => setState({ campaignModalOpen: false, campaignPreview: null }), [setState]);
+
+  // Re-render exactly when a scheduled campaign starts or a live one ends,
+  // so it appears/disappears on time without a reload.
+  useEffect(() => {
+    const cfg = campaignConfig(state.content);
+    const at = cfg.status === "scheduled" ? cfg.startAt : cfg.status === "live" ? cfg.endAt : null;
+    if (!at) return undefined;
+    const ms = Math.min(at - Date.now() + 250, 2 ** 31 - 1);
+    const t = setTimeout(() => setState((s) => ({ campaignTick: s.campaignTick + 1 })), Math.max(0, ms));
+    return () => clearTimeout(t);
+  }, [state.content, state.campaignTick, setState]);
 
   /* ---------- customer account (Supabase Auth, emailed one-time code) -----
      One account = the same orders and favorites on every device. The dialog
@@ -679,7 +708,7 @@ export function StoreProvider({ children }) {
   /* ---------- admin: products ---------- */
   const refreshProducts = useCallback(async () => { setState({ products: await store.products.list() }); }, [setState]);
   const setTab = useCallback((t) => {
-    setState((s) => (t === "content" ? { adminTab: t, contentSaved: false, cdraft: { ...s.content } } : { adminTab: t, contentSaved: false }));
+    setState((s) => (t === "content" || t === "campaign" ? { adminTab: t, contentSaved: false, cdraft: { ...s.content } } : { adminTab: t, contentSaved: false }));
     if (t === "users") {
       store.users.list().then((users) => setState({ users })).catch(() => {});
     }
@@ -844,6 +873,7 @@ export function StoreProvider({ children }) {
     // The signed-in shopper (never the admin session).
     customer: state.user && state.user.role !== "admin" ? state.user : null,
     signupCouponAvailable: signupCouponEligible(state),
+    campaign: campaignConfig(state.content),
     cartCount: state.cart.reduce((a, c) => a + c.qty, 0),
     favoritesCount: state.favorites.length,
     // actions
@@ -854,6 +884,7 @@ export function StoreProvider({ children }) {
     setTab, newProduct, editProduct, setDraft, cancelDraft, saveDraft, deleteProduct, refreshProducts,
     newCollection, editCollection, setDraftCol, cancelCol, saveCol, deleteCollection, toggleCollectionHidden,
     setCdraft, saveContent, saveContentPatch, setOrderStatus, uploadImage, startCheckout, createTestPayment, refreshOrder,
+    openCampaignModal, closeCampaignModal,
     openSignupPopup, closeSignupPopup, continueFromSignupPopup, offerSignupBeforePayment, submitSignup, applyCoupon, removeCoupon, viewOrder, customerLogout,
     openAuth, closeAuth, switchToSignIn, switchToSignup, requestLoginCode, verifyLoginCode, refreshAccountOrders, loadSiteData,
   };
