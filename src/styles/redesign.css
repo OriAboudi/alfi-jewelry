@@ -717,16 +717,9 @@ html.a11y-contrast .rd-order-brand { background: #fff; box-shadow: inset 0 0 0 1
 
 /* ---------- ALFI logo (src/components/BrandLogo.jsx) ----------
    Gold artwork from the brand's embossed logo, as transparent images. */
-.alfi-lockup { display: inline-flex; align-items: center; gap: 10px; line-height: 0; }
-.alfi-lockup img { display: block; }
-.alfi-lockup-mono { width: auto; height: 58px; }
-.alfi-lockup-text { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.alfi-lockup-word { width: 118px; height: auto; }
-.alfi-lockup-tag { width: 92px; height: auto; }
+.alfi-lockup { display: block; width: auto; height: 70px; }
 .alfi-logo-full { display: block; width: auto; height: auto; }
-/* Phones: monogram + ALFI only, sized for the 64px bar. */
-.alfi-lockup--compact .alfi-lockup-mono { height: 42px; }
-.alfi-lockup--compact .alfi-lockup-word { width: 86px; height: auto; }
-.alfi-lockup--compact { gap: 7px; }
+/* Phones: sized for the 64px bar. */
+.alfi-lockup--compact { height: 46px; }
 .rd-footer-logo { height: 150px; }
 .rd-footer-logo--m { height: 120px; }
