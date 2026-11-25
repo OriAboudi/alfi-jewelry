@@ -43,17 +43,8 @@
   45%, 55% { opacity: .95; transform: scale(1) rotate(20deg); }
 }
 
-.bf-wordmark {
-  position: relative;
-  padding-top: 34px;
-  text-align: center;
-  font-family: "Frank Ruhl Libre", Georgia, serif;
-  font-size: 24px;
-  letter-spacing: .34em;
-  padding-left: .34em;
-  color: var(--bf-ink);
-  direction: ltr;
-}
+.bf-wordmark { position: relative; display: flex; justify-content: center; padding-top: 34px; }
+.bf-wordmark .alfi-logo-full { height: 104px; }
 
 /* RTL: flex-start is the right edge — the text block hugs the right, as on the visual. */
 .bf-poster-text { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: right; }
@@ -228,7 +219,8 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
   scrollbar-width: none;
 }
 .bf-modal-scroll::-webkit-scrollbar { display: none; }
-.bf-modal .bf-wordmark { padding-top: 26px; font-size: 22px; animation: bf-rise .6s .05s cubic-bezier(.2, .8, .2, 1) both; }
+.bf-modal .bf-wordmark { padding-top: 22px; animation: bf-rise .6s .05s cubic-bezier(.2, .8, .2, 1) both; }
+.bf-modal .bf-wordmark .alfi-logo-full { height: 84px; }
 .bf-modal .bf-poster-text { margin-top: auto; padding: 20px 22px 12px; animation: bf-rise .7s .15s cubic-bezier(.2, .8, .2, 1) both; }
 .bf-modal .bf-title-poster { font-size: 54px; }
 .bf-modal .bf-line { font-size: 19px; }
@@ -271,7 +263,8 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
     padding: 0 clamp(40px, 8vw, 150px);
     box-sizing: border-box;
   }
-  .bf-modal .bf-wordmark { grid-column: 1 / -1; padding-top: 40px; font-size: 26px; }
+  .bf-modal .bf-wordmark { grid-column: 1 / -1; padding-top: 30px; }
+  .bf-modal .bf-wordmark .alfi-logo-full { height: 132px; }
   .bf-modal .bf-poster-text { grid-column: 1; grid-row: 2; align-self: center; margin: 0; padding: 32px 0 48px; }
   .bf-modal .bf-title-poster { font-size: clamp(72px, 8.4vw, 132px); }
   .bf-modal .bf-rule { width: 140px; margin: 26px 0 22px; margin-inline-start: 60px; }
@@ -290,7 +283,8 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
 }
 @media (min-width: 768px) and (max-height: 760px) {
   .bf-modal .bf-title-poster { font-size: clamp(60px, 6.6vw, 92px); }
-  .bf-modal .bf-wordmark { padding-top: 24px; }
+  .bf-modal .bf-wordmark { padding-top: 18px; }
+  .bf-modal .bf-wordmark .alfi-logo-full { height: 96px; }
   .bf-modal .bf-poster-text { padding: 12px 0 24px; }
   .bf-modal .bf-rule { margin: 18px 0 14px; margin-inline-start: 60px; }
   .bf-modal .bf-pill { margin-top: 18px; }

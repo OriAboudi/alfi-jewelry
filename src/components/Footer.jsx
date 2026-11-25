@@ -4,6 +4,7 @@ import { useStore } from "../context/StoreContext.jsx";
 import { CONTACT } from "../lib/contact.js";
 import { WhatsAppIcon, EmailIcon, InstagramIcon } from "./ContactIcons.jsx";
 import { pathFor, pageHidden } from "../lib/routes.js";
+import { BrandLogo } from "./BrandLogo.jsx";
 
 // Reset-styled <a>/<button> — real link/button semantics mean native
 // keyboard support (Tab + Enter/Space) for free.
@@ -77,7 +78,7 @@ export function Footer() {
       {/* ---- Desktop (>=768px) ---- */}
       <div className="rd-footer-desktop" style={css("padding:72px 64px 40px;flex-direction:column;gap:48px;")}>
         <div style={css("display:grid;grid-template-columns:repeat(4, minmax(0, 1fr));gap:40px;")}>
-          <div className="serif" style={css("font-size:36px;letter-spacing:.42em;color:var(--cream);")}>ALFI</div>
+          <div role="img" aria-label="ALFI Silver Jewelry"><BrandLogo variant="full" className="rd-footer-logo" /></div>
           <div style={css(colList)}>
             <strong style={css(colHeading)}>חנות</strong>
             <a href={pathFor("catalog", { catFilter: "טבעות" })} onClick={goCat("טבעות")} style={css(linkBtn)}>טבעות</a>
@@ -106,7 +107,7 @@ export function Footer() {
 
       {/* ---- Mobile (<768px) — real accordions, not the mockup's static "+" ---- */}
       <div className="rd-footer-mobile" style={css("padding:44px 24px 32px;flex-direction:column;gap:28px;")}>
-        <div className="serif" style={css("font-size:30px;letter-spacing:.36em;color:var(--cream);")}>ALFI</div>
+        <div role="img" aria-label="ALFI Silver Jewelry"><BrandLogo variant="full" className="rd-footer-logo rd-footer-logo--m" /></div>
         <div>
           {accordionRow("shop", "חנות", (
             <>

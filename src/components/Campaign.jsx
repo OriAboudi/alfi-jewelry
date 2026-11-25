@@ -6,6 +6,7 @@ import { saleInfo, soldAlone } from "../lib/pricing.js";
 import { PriceTag } from "./PriceTag.jsx";
 import { CardSlider } from "./CardSlider.jsx";
 import { RedesignProductCard } from "./RedesignProductCard.jsx";
+import { BrandLogo } from "./BrandLogo.jsx";
 import {
   previewConfig, campaignProducts, timeLeft,
   campaignSeen, markCampaignSeen, campaignFabHidden, hideCampaignFab,
@@ -274,7 +275,7 @@ export function CampaignModal() {
       <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="bf-modal-title" dir="rtl" className="bf-modal" onClick={(e) => e.stopPropagation()}>
         <Satin image={cfg.image} />
         <div className="bf-modal-scroll">
-        <div className="bf-wordmark" aria-hidden="true">ALFI</div>
+        <div className="bf-wordmark" aria-hidden="true"><BrandLogo variant="full" eager /></div>
         {!cfg.image && <ProductCards items={items.slice(0, 3)} interactive={false} className="bf-pcards-stack" />}
         <div className="bf-poster-text">
           <Title text={cfg.title} id="bf-modal-title" className="bf-title-poster" />
