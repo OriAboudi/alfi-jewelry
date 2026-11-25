@@ -4,6 +4,7 @@ import { saleInfo, bundleConfig, buildSets, unifiedSetOf } from "../lib/pricing.
 import { PriceTag } from "./PriceTag.jsx";
 import { useStore } from "../context/StoreContext.jsx";
 import { slugify } from "../lib/routes.js";
+import { isCampaignProduct } from "../lib/campaign.js";
 
 // No "tag" field exists on products (see design-handoff/HANDOFF.md's
 // "missing data" note) — deterministic, not random, so it doesn't flicker
@@ -25,11 +26,13 @@ function tagFor(p, i, content) {
  * related products, Favorites).
  */
 export function RedesignProductCard({ product: p, index = 0 }) {
-  const { openProduct, openSet, addToCart, favorites, toggleFavorite, content, products } = useStore();
+  const { openProduct, openSet, addToCart, favorites, toggleFavorite, content, products, campaign } = useStore();
   const outOfStock = Number(p.stock) <= 0;
   // A piece of a unified set isn't sold on its own: the button opens the set.
   const wholeSet = unifiedSetOf(p, buildSets(products, content));
   const tag = tagFor(p, index, content);
+  // Live campaign: the discounted pieces wear its black badge.
+  const bfTag = campaign.active && campaign.showBadges && isCampaignProduct(p);
   const isFav = favorites.includes(p.id);
 
   const quickAdd = (e) => {
@@ -75,7 +78,11 @@ export function RedesignProductCard({ product: p, index = 0 }) {
             תמונת מוצר
           </div>
         )}
-        <span style={css("position:absolute;top:14px;right:14px;font-size:12px;letter-spacing:.12em;background:rgba(246,240,235,.92);padding:6px 12px;")}>{tag}</span>
+        {bfTag ? (
+          <span className="bf-tag"><span className="bf-tag-label">{campaign.badgeLabel}</span>{tag}</span>
+        ) : (
+          <span style={css("position:absolute;top:14px;right:14px;font-size:12px;letter-spacing:.12em;background:rgba(246,240,235,.92);padding:6px 12px;")}>{tag}</span>
+        )}
         {/* Desktop-only per spec. Real favorite toggle, localStorage-backed
             (StoreContext's toggleFavorite/favorites — no accounts/backend
             field, same model as the cart). */}

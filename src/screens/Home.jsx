@@ -14,6 +14,7 @@ import { CAT_NAMES as BASE_CATS } from "../lib/categories.js";
 import { pathFor, DEAL_FILTER, pageHidden } from "../lib/routes.js";
 import { useSeoTags } from "../hooks/useSeoTags.js";
 import { Reveal } from "../components/Reveal.jsx";
+import { CampaignHome } from "../components/Campaign.jsx";
 import { SkeletonText, SkeletonBlock, SkeletonCard, LoadingLabel } from "../components/Skeleton.jsx";
 // Fixed order for the homepage's 2x2 collections grid, per reference site.
 const HOME_TILE_CATS = ["טבעות", "שרשראות", "עגילים", "צמידים"];
@@ -136,6 +137,9 @@ export function Home() {
 
   return (
     <div>
+      {/* Seasonal campaign (Black Friday…) — only while the admin has one
+          live; see the admin "קמפיין" tab. */}
+      <CampaignHome />
       {/* HERO — real headline + CTA panel over the image, using content
           fields that already existed in the data (authHeadline/heroBadge/
           heroCtaLabel) but were never wired to any screen. This is also the

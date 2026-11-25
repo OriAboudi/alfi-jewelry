@@ -5,6 +5,7 @@ import { StoreProvider } from "./context/StoreContext.jsx";
 import "./styles/base.css";
 import "./styles/utilities.css";
 import "./styles/redesign.css";
+import "./styles/campaign.css";
 import "./index.css";
 import "./styles/a11y.css";
 import { applyA11y } from "./components/AccessibilityMenu.jsx";

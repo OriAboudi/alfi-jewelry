@@ -10,6 +10,7 @@ import { CollectionsTab } from "./CollectionsTab.jsx";
 import { SetsTab } from "./SetsTab.jsx";
 import { ContentTab } from "./ContentTab.jsx";
 import { PagesTab } from "./PagesTab.jsx";
+import { CampaignTab } from "./CampaignTab.jsx";
 import { CouponsTab } from "./CouponsTab.jsx";
 import { OrdersTab } from "./OrdersTab.jsx";
 import { UsersTab } from "./UsersTab.jsx";
@@ -24,6 +25,7 @@ const ADMIN_TABS = [
   ["collections", "קולקציות"],
   ["content", "תוכן האתר"],
   ["pages", "עמודים באתר"],
+  ["campaign", "קמפיין"],
   ["coupons", "קופונים"],
   ["orders", "הזמנות"],
   ["users", "משתמשים"],
@@ -39,6 +41,7 @@ const TAB_COMPONENTS = {
   collections: CollectionsTab,
   content: ContentTab,
   pages: PagesTab,
+  campaign: CampaignTab,
   coupons: CouponsTab,
   orders: OrdersTab,
   users: UsersTab,

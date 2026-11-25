@@ -6,6 +6,7 @@ import { Header } from "./components/Header.jsx";
 import { Footer } from "./components/Footer.jsx";
 import { SignupCouponPopup } from "./components/SignupCouponPopup.jsx";
 import { AuthDialog } from "./components/AuthDialog.jsx";
+import { CampaignBar, CampaignModal, CampaignFab } from "./components/Campaign.jsx";
 import { Home } from "./screens/Home.jsx";
 import { Catalog } from "./screens/Catalog.jsx";
 import { Product } from "./screens/Product.jsx";
@@ -111,6 +112,7 @@ export default function App() {
           redesign.css has no width cap.) */}
       <div style={css("position:relative;z-index:1;")}>
         {showChrome && <Header />}
+        {showChrome && <CampaignBar />}
         {/* The site data couldn't be fetched: say so plainly (and offer a
             retry) instead of rendering an empty-looking shop. */}
         {showChrome && loadError && (
@@ -127,6 +129,9 @@ export default function App() {
         {showChrome && <Footer />}
         {showChrome && <SignupCouponPopup />}
         {showChrome && <AuthDialog />}
+        {showChrome && <CampaignFab />}
+        {/* Also in admin: the campaign tab previews the pop-up from there. */}
+        <CampaignModal />
         {showChrome && <AccessibilityMenu go={go} />}
       </div>
     </div>
