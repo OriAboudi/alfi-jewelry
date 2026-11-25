@@ -180,7 +180,7 @@ export function Header() {
             ><MenuIcon /></button>
             <button onClick={() => setSearchOpen(true)} aria-label="חיפוש" className="tap-target" style={css(iconBtnMobile)}><SearchIcon size={21} /></button>
           </div>
-          <a href="/" {...asButton((e) => { e.preventDefault(); navigate("home"); })} aria-label="ALFI — לעמוד הבית" style={css("justify-self:center;cursor:pointer;display:flex;")}><BrandLogo tagline={false} className="alfi-lockup--compact" eager /></a>
+          <a href="/" {...asButton((e) => { e.preventDefault(); navigate("home"); })} aria-label="ALFI — לעמוד הבית" style={css("justify-self:center;cursor:pointer;display:flex;")}><BrandLogo className="alfi-lockup--compact" eager /></a>
           <div style={css("display:flex;justify-content:flex-end;")}>
             <span {...asButton(accountAction)} className="tap-target" aria-label={accountLabel} style={css(`position:relative;${iconBtnMobile}`)}>
               <PersonIcon size={21} />
