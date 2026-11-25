@@ -497,7 +497,11 @@ export function StoreProvider({ children }) {
     setState({ campaignModalOpen: true, campaignPreview: preview });
     return true;
   }, [setState]);
-  const closeCampaignModal = useCallback(() => setState({ campaignModalOpen: false, campaignPreview: null }), [setState]);
+  const campaignClosedAtRef = useRef(0);
+  const closeCampaignModal = useCallback(() => {
+    campaignClosedAtRef.current = Date.now();
+    setState({ campaignModalOpen: false, campaignPreview: null });
+  }, [setState]);
 
   // Re-render exactly when a scheduled campaign starts or a live one ends,
   // so it appears/disappears on time without a reload.
@@ -576,7 +580,21 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     if (typeof window === "undefined" || isAdminPath()) return undefined;
     const delay = Number(ref.current.content?.signupPopupDelaySeconds || 10) * 1000;
-    const t = setTimeout(() => maybeOfferSignupPopup(), delay);
+    // One pop-up at a time, with a breather in between: while the campaign
+    // pop-up is open, or for 20s after it closed, the sign-up offer waits
+    // (re-checking, at most a few times) instead of being skipped or
+    // landing right on top of it.
+    let t;
+    let tries = 0;
+    const attempt = () => {
+      const sinceCampaign = Date.now() - campaignClosedAtRef.current;
+      if ((ref.current.campaignModalOpen || sinceCampaign < 20000) && tries++ < 6) {
+        t = setTimeout(attempt, ref.current.campaignModalOpen ? 5000 : 20000 - sinceCampaign);
+        return;
+      }
+      maybeOfferSignupPopup();
+    };
+    t = setTimeout(attempt, delay);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

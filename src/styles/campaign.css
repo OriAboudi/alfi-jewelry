@@ -1,128 +1,160 @@
 /* =============================================================================
  *  ALFI · Seasonal campaign (Black Friday) — src/components/Campaign.jsx
- *  Silver on near-black plum: the one time the site leaves cream. The silver
- *  is the product itself (sterling 925), the black is the occasion. The plum
- *  glow keeps it ALFI rather than a generic discount store.
+ *  The brand's own campaign visual carried onto the site: ivory satin, a
+ *  dark high-contrast serif title, a hairline rule, a soft Hebrew line with
+ *  ♡, an outlined translucent pill. Quiet luxury, not a discount store —
+ *  the "black" is only in the title's ink.
  * ========================================================================== */
 :root {
-  --bf-black: #141015;
-  --bf-black-2: #1d1720;
-  --bf-line: rgba(232, 226, 236, .16);
-  --bf-text: #ece7ef;
-  --bf-mute: #b5abb9;
-  --bf-silver: linear-gradient(100deg, #8f8996 0%, #f5f2f7 20%, #aaa4b1 38%, #ffffff 50%, #9c96a4 64%, #ebe7ee 82%, #8f8996 100%);
+  --bf-ink: #2b2420;
+  --bf-ink-soft: #4a3f39;
+  --bf-mute: #7a6b62;
+  --bf-line: rgba(43, 36, 32, .22);
+  --bf-ivory: #f5efe8;
+  --bf-display: "Bodoni Moda", "Frank Ruhl Libre", Georgia, serif;
+  /* Satin: diagonal light/shade bands over a warm ivory base, with two soft
+     highlights — reads as draped silk without needing a photo. */
+  --bf-satin:
+    radial-gradient(120% 70% at 88% 6%, rgba(255, 255, 255, .9), transparent 55%),
+    radial-gradient(90% 80% at 6% 96%, rgba(255, 255, 255, .55), transparent 60%),
+    linear-gradient(118deg, #e6dbcf 0%, #f6f0ea 17%, #ded1c3 31%, #f3ece4 45%, #e3d7ca 57%, #f7f2ec 70%, #dccfc0 84%, #efe7de 100%);
 }
 
-.bf-silver {
-  background: var(--bf-silver);
-  background-size: 250% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  -webkit-text-fill-color: transparent;
-  animation: bf-shimmer 7s linear infinite;
+/* ---------- shared surfaces ---------- */
+.bf-satin, .bf-photo, .bf-veil, .bf-glints { position: absolute; inset: 0; pointer-events: none; }
+.bf-satin {
+  background: var(--bf-satin);
+  background-size: 140% 140%;
+  animation: bf-drape 18s ease-in-out infinite alternate;
 }
-@keyframes bf-shimmer { from { background-position: 100% 0; } to { background-position: -150% 0; } }
-
-/* Faint twinkling points of light — silver catching the light. */
-.bf-sparkles {
+@keyframes bf-drape { from { background-position: 0% 30%; } to { background-position: 100% 70%; } }
+.bf-photo { width: 100%; height: 100%; object-fit: cover; }
+/* Over a photo: ivory haze toward the text corner so the ink stays legible. */
+.bf-veil { background: linear-gradient(0deg, rgba(245, 239, 232, .7) 0%, rgba(245, 239, 232, 0) 55%); }
+.bf-satin + .bf-veil { display: none; }
+.bf-glints svg {
   position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(1.5px 1.5px at 12% 22%, rgba(255,255,255,.9), transparent 60%),
-    radial-gradient(1px 1px at 28% 78%, rgba(255,255,255,.7), transparent 60%),
-    radial-gradient(1.5px 1.5px at 47% 14%, rgba(255,255,255,.8), transparent 60%),
-    radial-gradient(1px 1px at 66% 62%, rgba(255,255,255,.7), transparent 60%),
-    radial-gradient(2px 2px at 83% 30%, rgba(255,255,255,.85), transparent 60%),
-    radial-gradient(1px 1px at 92% 84%, rgba(255,255,255,.6), transparent 60%);
-  animation: bf-twinkle 4.5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, .9));
+  animation: bf-glint 4.2s ease-in-out infinite;
+  opacity: 0;
 }
-@keyframes bf-twinkle { from { opacity: .35; } to { opacity: 1; } }
+@keyframes bf-glint {
+  0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); }
+  45%, 55% { opacity: .95; transform: scale(1) rotate(20deg); }
+}
 
-.bf-eyebrow {
-  font-size: 12.5px;
-  letter-spacing: .28em;
-  color: var(--bf-mute);
-}
-.bf-title {
-  margin: 0;
+.bf-wordmark {
+  position: relative;
+  padding-top: 34px;
+  text-align: center;
   font-family: "Frank Ruhl Libre", Georgia, serif;
-  font-weight: 500;
-  line-height: .92;
-  letter-spacing: .02em;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+  font-size: 24px;
+  letter-spacing: .34em;
+  padding-left: .34em;
+  color: var(--bf-ink);
   direction: ltr;
 }
-.bf-title-xl { font-size: clamp(46px, 7vw, 76px); }
-.bf-title-xxl { font-size: clamp(54px, 9vw, 120px); }
-.bf-headline { margin: 0; font-size: 24px; font-weight: 300; color: var(--bf-text); line-height: 1.3; }
-.bf-headline-lg { font-size: clamp(24px, 2.4vw, 32px); }
-.bf-sub { margin: 0; font-size: 15.5px; line-height: 1.65; color: var(--bf-mute); max-width: 44ch; }
-.bf-chip {
-  display: inline-flex;
-  align-items: center;
-  height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--bf-line);
-  font-size: 13.5px;
-  color: var(--bf-text);
-  letter-spacing: .04em;
-}
 
-/* Silver button: the one bright object on the black. */
-.bf-btn {
-  position: relative;
+/* RTL: flex-start is the right edge — the text block hugs the right, as on the visual. */
+.bf-poster-text { position: relative; display: flex; flex-direction: column; align-items: flex-start; text-align: right; }
+.bf-title {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-family: var(--bf-display);
+  font-weight: 400;
+  line-height: .95;
+  letter-spacing: -.01em;
+  color: var(--bf-ink);
+  direction: ltr;
+}
+.bf-title-poster { font-size: clamp(50px, 6.2vw, 66px); }
+.bf-title-home { font-size: clamp(56px, 7.4vw, 104px); }
+/* The hairline under the title, centred on the title block. */
+.bf-rule { display: block; width: 104px; height: 1px; background: var(--bf-ink); opacity: .55; margin: 18px 0 16px; margin-inline-start: 40px; }
+.bf-line {
+  margin: 0;
+  max-width: 17em;
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--bf-ink-soft);
+}
+.bf-line-lg { font-size: clamp(21px, 2vw, 26px); }
+.bf-sub { margin: 10px 0 0; max-width: 34ch; font-size: 15px; line-height: 1.65; color: var(--bf-mute); }
+.bf-note { margin: 10px 0 0; font-size: 13.5px; letter-spacing: .04em; color: var(--bf-ink-soft); }
+
+/* The outlined, translucent pill — "27.11 ←". */
+.bf-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  height: 54px;
+  min-height: 46px;
   padding: 0 30px;
-  background: var(--bf-silver);
-  background-size: 250% 100%;
-  color: #17121a;
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: .06em;
+  margin-top: 22px;
+  border: 1px solid rgba(43, 36, 32, .5);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--bf-ink);
+  font-family: "Frank Ruhl Libre", Georgia, serif;
+  font-size: 17px;
+  letter-spacing: .04em;
   text-decoration: none;
-  overflow: hidden;
-  transition: transform .18s var(--ease, ease), box-shadow .18s var(--ease, ease);
-  animation: bf-shimmer 7s linear infinite;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
+  white-space: nowrap;
+  transition: background-color .2s var(--ease, ease), gap .2s var(--ease, ease), transform .15s var(--ease, ease);
 }
-.bf-btn:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(0, 0, 0, .45); }
-.bf-btn:active { transform: scale(.98); }
-.bf-btn:focus-visible, .bf-bar:focus-visible, .bf-fab button:focus-visible, .bf-close:focus-visible, .bf-quiet:focus-visible {
-  outline: 2px solid #fff;
+.bf-pill:hover { background: rgba(255, 255, 255, .72); gap: 16px; }
+.bf-pill:active { transform: scale(.98); }
+.bf-pill:focus-visible, .bf-bar:focus-visible, .bf-fab button:focus-visible, .bf-close:focus-visible, .bf-quiet:focus-visible, .bf-pcard:focus-visible {
+  outline: 2px solid var(--bf-ink);
   outline-offset: 3px;
 }
+.bf-quiet { margin-top: 6px; background: none; border: 0; padding: 8px 4px; font: inherit; font-size: 13.5px; color: var(--bf-mute); cursor: pointer; min-height: 44px; }
+.bf-quiet:hover { color: var(--bf-ink); }
 
-/* ---------- countdown ---------- */
-.bf-cd { display: flex; align-items: flex-start; gap: 8px; direction: rtl; }
-.bf-cd-cell { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.bf-cd-num {
-  min-width: 2.1em;
-  padding: .28em .2em;
-  text-align: center;
-  font-family: "Frank Ruhl Libre", Georgia, serif;
-  font-variant-numeric: tabular-nums;
-  color: #fff;
-  background: rgba(255, 255, 255, .06);
-  border: 1px solid var(--bf-line);
-  line-height: 1;
-}
-.bf-cd-label { font-size: 11.5px; letter-spacing: .12em; color: var(--bf-mute); }
-.bf-cd-colon { color: var(--bf-mute); line-height: 1; padding-top: .35em; }
+/* ---------- countdown: thin numerals between hairlines ---------- */
+.bf-poster-cd { margin-top: 18px; display: flex; flex-direction: column; align-items: flex-start; }
+.bf-cd-head { font-size: 12.5px; letter-spacing: .08em; color: var(--bf-mute); margin-bottom: 8px; }
+.bf-cd { display: flex; direction: rtl; }
+.bf-cd-cell { display: flex; flex-direction: column; align-items: center; min-width: 3.1em; padding: 0 .55em; }
+.bf-cd-cell + .bf-cd-cell { border-inline-start: 1px solid var(--bf-line); }
+.bf-cd-num { font-family: var(--bf-display); font-variant-numeric: tabular-nums lining-nums; color: var(--bf-ink); line-height: 1.05; }
+.bf-cd-label { font-size: 11px; letter-spacing: .1em; color: var(--bf-mute); margin-top: 3px; }
 .bf-cd-md .bf-cd-num { font-size: 26px; }
-.bf-cd-md .bf-cd-colon { font-size: 22px; }
-.bf-cd-lg .bf-cd-num { font-size: clamp(28px, 3.2vw, 40px); }
-.bf-cd-lg .bf-cd-colon { font-size: clamp(22px, 2.6vw, 32px); }
-.bf-cd-head { display: block; font-size: 13px; color: var(--bf-mute); margin-bottom: 10px; letter-spacing: .06em; }
+.bf-cd-lg .bf-cd-num { font-size: clamp(28px, 3vw, 38px); }
 .bf-cd-sm { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
-.bf-cd-sm small { font-size: .8em; opacity: .75; margin-inline-start: 1px; }
+.bf-cd-sm small { font-size: .8em; opacity: .7; margin-inline-start: 1px; }
+
+/* ---------- frosted product cards (with a chevron) ---------- */
+.bf-pcards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.bf-pcard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px 8px 8px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, .8);
+  box-shadow: 0 8px 24px rgba(74, 58, 46, .1);
+  color: var(--bf-ink);
+  text-decoration: none;
+  transition: transform .25s var(--ease, ease), background-color .25s var(--ease, ease);
+}
+a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .7); }
+.bf-pcard-img { flex: none; width: 64px; height: 64px; border-radius: 12px; overflow: hidden; background: #fff; }
+.bf-pcard-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.bf-pcard-text { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.bf-pcard-name { font-family: "Frank Ruhl Libre", Georgia, serif; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bf-pcard-pct { position: absolute; top: 6px; right: 6px; padding: 2px 7px; border-radius: 999px; background: var(--bf-ivory); color: var(--bf-ink); font-size: 11px; font-weight: 600; direction: ltr; unicode-bidi: isolate; box-shadow: 0 1px 3px rgba(43, 36, 32, .15); }
+.bf-pcard-go { flex: none; color: var(--bf-ink-soft); display: flex; }
 
 /* ---------- 1. top strip ---------- */
 .bf-bar {
@@ -131,32 +163,31 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 16px;
   min-height: 44px;
-  padding: 8px 20px;
-  background: radial-gradient(ellipse at 50% -80%, rgba(122, 92, 134, .55), transparent 70%), var(--bf-black);
-  color: var(--bf-text);
+  padding: 7px 20px;
+  background: var(--bf-satin);
+  color: var(--bf-ink);
   font-size: 14px;
   text-decoration: none;
-  overflow: hidden;
-  border-bottom: 1px solid rgba(255, 255, 255, .08);
+  border-bottom: 1px solid rgba(43, 36, 32, .1);
 }
-.bf-bar-title { font-family: "Frank Ruhl Libre", Georgia, serif; font-weight: 500; font-size: 16px; letter-spacing: .14em; white-space: nowrap; }
-.bf-bar-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--bf-mute); flex: none; }
-.bf-bar-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bf-bar-cd { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px; border: 1px solid var(--bf-line); white-space: nowrap; }
+.bf-bar-title { font-family: var(--bf-display); font-size: 16px; letter-spacing: .16em; white-space: nowrap; }
+.bf-bar-rule { width: 28px; height: 1px; background: var(--bf-ink); opacity: .45; flex: none; }
+.bf-bar-text { font-family: "Frank Ruhl Libre", Georgia, serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--bf-ink-soft); }
+.bf-bar-cd { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; color: var(--bf-ink-soft); }
 .bf-bar-cd-label { color: var(--bf-mute); font-size: 12.5px; }
-.bf-bar-cta { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; border-bottom: 1px solid currentColor; white-space: nowrap; transition: gap .18s var(--ease, ease); }
-.bf-bar:hover .bf-bar-cta { gap: 10px; }
+.bf-bar-cta { display: inline-flex; align-items: center; gap: 8px; padding: 4px 14px; border: 1px solid rgba(43, 36, 32, .4); border-radius: 999px; background: rgba(255, 255, 255, .4); white-space: nowrap; font-family: "Frank Ruhl Libre", Georgia, serif; transition: background-color .2s var(--ease, ease); }
+.bf-bar:hover .bf-bar-cta { background: rgba(255, 255, 255, .75); }
 @media (max-width: 767px) {
-  .bf-bar { gap: 10px; font-size: 13px; padding: 8px 12px; justify-content: space-between; }
-  .bf-bar-dot, .bf-bar-text, .bf-bar-cd-label { display: none; }
+  .bf-bar { gap: 10px; font-size: 13px; padding: 7px 12px; justify-content: space-between; }
+  .bf-bar-rule, .bf-bar-text, .bf-bar-cd-label { display: none; }
   .bf-bar-title { font-size: 14px; letter-spacing: .1em; }
-  .bf-bar-cd { padding: 2px 8px; }
+  .bf-bar-cta { padding: 3px 11px; }
   .bf-bar-cta svg { display: none; }
 }
 
-/* ---------- 2. full-screen takeover ---------- */
+/* ---------- 2. pop-up: the poster ---------- */
 .bf-modal-overlay {
   position: fixed;
   inset: 0;
@@ -165,117 +196,69 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(10, 7, 11, .72);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
-  animation: bf-fade .3s ease both;
+  background: rgba(58, 45, 40, .38);
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+  animation: bf-fade .35s ease both;
 }
 .bf-modal {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  width: min(980px, 100%);
-  min-height: min(600px, calc(100dvh - 48px));
-  max-height: calc(100dvh - 48px);
-  background: radial-gradient(ellipse at 100% 0%, rgba(122, 92, 134, .38), transparent 60%), var(--bf-black);
-  color: var(--bf-text);
-  box-shadow: 0 40px 120px rgba(0, 0, 0, .6);
-  border: 1px solid rgba(255, 255, 255, .08);
+  width: min(460px, 100%);
+  height: min(730px, calc(100dvh - 48px));
   overflow: hidden;
-  animation: bf-rise .45s cubic-bezier(.2, .8, .2, 1) both;
+  background: var(--bf-ivory);
+  border-radius: 6px;
+  box-shadow: 0 40px 100px rgba(58, 42, 34, .35);
+  animation: bf-rise .5s cubic-bezier(.2, .8, .2, 1) both;
 }
-@keyframes bf-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes bf-rise { from { opacity: 0; transform: translateY(18px) scale(.98); } to { opacity: 1; transform: none; } }
-.bf-modal-body {
+/* The satin stays put; only the content scrolls if a short screen needs it. */
+.bf-modal-scroll {
   position: relative;
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 16px;
-  padding: 56px 48px 40px;
   overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
 }
-.bf-modal-body > *:not(.bf-sparkles) { position: relative; }
-.bf-modal-cd { margin-top: 4px; }
-.bf-modal-cta { margin-top: 8px; min-width: 240px; }
-.bf-quiet { background: none; border: 0; padding: 8px 2px; font: inherit; font-size: 13.5px; color: var(--bf-mute); cursor: pointer; min-height: 44px; }
-.bf-quiet:hover { color: var(--bf-text); }
+.bf-modal-scroll::-webkit-scrollbar { display: none; }
+@keyframes bf-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bf-rise { from { opacity: 0; transform: translateY(16px) scale(.985); } to { opacity: 1; transform: none; } }
+.bf-modal .bf-poster-text { margin-top: auto; padding: 28px 34px 18px; }
+/* RTL: flex-end is the left — the cards sit opposite the text, like the visual's jewellery. */
+.bf-pcards-stack { position: relative; align-self: flex-end; width: 200px; margin: 24px 22px 0; }
+.bf-pcards-stack .bf-pcard-img { width: 52px; height: 52px; }
+.bf-pcards-stack .bf-pcard-name { font-size: 13.5px; }
 .bf-close {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 12px;
+  left: 12px;
   width: 44px;
   height: 44px;
   border: 0;
   border-radius: 50%;
-  background: rgba(20, 16, 21, .55);
-  color: #fff;
-  font-size: 26px;
+  background: rgba(255, 255, 255, .55);
+  color: var(--bf-ink);
+  font-size: 24px;
   line-height: 1;
   cursor: pointer;
   z-index: 2;
 }
-.bf-close:hover { background: rgba(20, 16, 21, .85); }
-@media (max-width: 767px) {
-  .bf-modal-overlay { padding: 0; align-items: stretch; }
-  .bf-modal {
-    grid-template-columns: 1fr;
-    grid-template-rows: 34vh 1fr;
-    width: 100%;
-    min-height: 100dvh;
-    max-height: 100dvh;
-    border: 0;
-  }
-  .bf-modal-body { padding: 26px 22px calc(22px + env(safe-area-inset-bottom, 0px)); gap: 12px; justify-content: flex-start; }
-  .bf-modal-cta { width: 100%; }
-  .bf-quiet { align-self: center; }
-  .bf-headline { font-size: 21px; }
-  .bf-cd-md .bf-cd-num { font-size: 22px; }
-  .bf-close { top: calc(10px + env(safe-area-inset-top, 0px)); }
+.bf-close:hover { background: rgba(255, 255, 255, .85); }
+.bf-pcards-stack li:nth-child(3) { display: none; }
+@media (max-height: 640px) {
+  .bf-pcards-stack { display: none; }
 }
-
-/* Visual side (image or mosaic of the real discounted pieces). */
-.bf-visual { position: relative; overflow: hidden; background: var(--bf-black-2); min-height: 100%; }
-.bf-visual-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.bf-visual-shade { position: absolute; inset: 0; background: linear-gradient(270deg, rgba(20, 16, 21, .55), transparent 45%); }
-.bf-visual-empty { display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 45%, rgba(122, 92, 134, .45), transparent 60%), var(--bf-black-2); }
-.bf-visual-mark { font-family: "Frank Ruhl Libre", Georgia, serif; font-size: clamp(140px, 20vw, 260px); font-weight: 300; line-height: 1; }
-.bf-mosaic { display: grid; gap: 2px; background: var(--bf-black); }
-.bf-mosaic-2 { grid-template-rows: 1fr 1fr; }
-.bf-mosaic-3 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-.bf-mosaic-3 .bf-mosaic-tile:first-child { grid-row: span 2; }
-.bf-mosaic-4 { grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-.bf-mosaic-tile { position: relative; display: block; overflow: hidden; min-height: 120px; color: inherit; text-decoration: none; }
-.bf-mosaic-tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: transform .6s cubic-bezier(.2, .8, .2, 1); }
-a.bf-mosaic-tile:hover img { transform: scale(1.04); }
-.bf-mosaic-pct {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  padding: 5px 10px;
-  background: var(--bf-black);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: .06em;
-  direction: ltr;
-  unicode-bidi: isolate;
+@media (max-width: 560px) {
+  .bf-modal-overlay { padding: 0; }
+  .bf-modal { width: 100%; height: 100dvh; border-radius: 0; }
+  .bf-modal .bf-poster-text { padding: 20px 24px calc(14px + env(safe-area-inset-bottom, 0px)); }
+  .bf-wordmark { padding-top: calc(26px + env(safe-area-inset-top, 0px)); font-size: 22px; }
+  .bf-pcards-stack { margin: 20px 16px 0; width: 186px; }
+  .bf-close { top: calc(12px + env(safe-area-inset-top, 0px)); }
+  .bf-title-poster { font-size: 54px; }
+  .bf-line { font-size: 19px; }
 }
-.bf-mosaic-cap {
-  position: absolute;
-  inset: auto 0 0 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 8px;
-  padding: 26px 14px 12px;
-  background: linear-gradient(0deg, rgba(20, 16, 21, .85), transparent);
-  color: #fff;
-  font-size: 15px;
-}
-.bf-mosaic-cap > .serif { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bf-mosaic-cap * { color: #fff !important; }
 
 /* ---------- 3. floating reminder ---------- */
 .bf-fab {
@@ -285,79 +268,58 @@ a.bf-mosaic-tile:hover img { transform: scale(1.04); }
   z-index: 84;
   display: flex;
   align-items: stretch;
-  background: var(--bf-black);
-  border: 1px solid rgba(255, 255, 255, .14);
-  box-shadow: 0 14px 40px rgba(20, 16, 21, .45);
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bf-satin);
+  border: 1px solid rgba(43, 36, 32, .18);
+  box-shadow: 0 12px 34px rgba(58, 42, 34, .22);
   animation: bf-rise .4s cubic-bezier(.2, .8, .2, 1) both;
 }
-.bf-fab-main {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  padding: 9px 14px 9px 10px;
-  border: 0;
-  background: transparent;
-  color: var(--bf-text);
-  font: inherit;
-  cursor: pointer;
-  min-height: 52px;
-}
-.bf-fab-title { font-family: "Frank Ruhl Libre", Georgia, serif; font-weight: 500; font-size: 14px; letter-spacing: .12em; }
-.bf-fab-cd { font-size: 13px; color: var(--bf-text); }
-.bf-fab-x { width: 36px; border: 0; border-inline-start: 1px solid var(--bf-line); background: transparent; color: var(--bf-mute); font-size: 20px; cursor: pointer; }
-.bf-fab-x:hover { color: #fff; }
+.bf-fab-main { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 8px 18px 8px 10px; border: 0; background: transparent; color: var(--bf-ink); font: inherit; cursor: pointer; min-height: 52px; justify-content: center; }
+.bf-fab-title { font-family: var(--bf-display); font-size: 14px; letter-spacing: .12em; }
+.bf-fab-cd { font-size: 12.5px; color: var(--bf-ink-soft); }
+.bf-fab-x { width: 40px; border: 0; border-inline-start: 1px solid var(--bf-line); background: transparent; color: var(--bf-mute); font-size: 19px; cursor: pointer; }
+.bf-fab-x:hover { color: var(--bf-ink); }
 
-/* ---------- 4. home hero ---------- */
-.bf-home {
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(ellipse at 85% 0%, rgba(122, 92, 134, .45), transparent 55%),
-    radial-gradient(ellipse at 0% 100%, rgba(255, 255, 255, .05), transparent 50%),
-    var(--bf-black);
-  color: var(--bf-text);
-}
+/* ---------- 4. home band ---------- */
+.bf-home { position: relative; }
+.bf-home-stage { position: relative; overflow: hidden; background: var(--bf-ivory); }
 .bf-home-grid {
   position: relative;
   display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  gap: 56px;
+  grid-template-columns: 1fr minmax(260px, 340px);
+  gap: 64px;
+  align-items: center;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 72px 64px;
-  align-items: stretch;
+  padding: 80px 72px;
+  min-height: 520px;
+  box-sizing: border-box;
 }
-.bf-home-text { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 20px; }
-.bf-home-cd { margin-top: 6px; }
-.bf-home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 20px; margin-top: 8px; }
-.bf-home .bf-visual { min-height: 440px; border: 1px solid rgba(255, 255, 255, .08); }
-.bf-home-rail { position: relative; padding: 0 0 64px; }
-.bf-home-rail-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  max-width: 1280px;
-  margin: 0 auto 18px;
-  padding: 0 64px;
-}
-.bf-home-rail-head h3 { margin: 0; font-size: 26px; font-weight: 300; color: var(--bf-text); }
-.bf-home-rail-head a { display: inline-flex; align-items: center; gap: 8px; color: var(--bf-text); font-size: 15px; letter-spacing: .06em; border-bottom: 1px solid currentColor; padding-bottom: 2px; text-decoration: none; }
-.bf-home-rail .rd-card { border-color: rgba(255, 255, 255, .12); }
+.bf-home-text { align-self: center; }
+.bf-home-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; }
+.bf-home-actions .bf-note { margin: 22px 0 0; }
+.bf-pcards-home { align-self: center; }
+/* With the admin's photo: text on the right, the photo's jewellery shows on the left. */
+.bf-home-photo .bf-veil { background: linear-gradient(270deg, rgba(245, 239, 232, .82) 0%, rgba(245, 239, 232, .4) 45%, rgba(245, 239, 232, 0) 70%); }
+.bf-home-photo .bf-home-grid { grid-template-columns: 1fr; }
+.bf-home-rail { padding: 40px 0 48px; background: linear-gradient(180deg, rgba(245, 239, 232, .9), rgba(245, 239, 232, 0)); }
+.bf-home-rail-head { display: flex; justify-content: space-between; align-items: baseline; max-width: 1280px; margin: 0 auto 18px; padding: 0 72px; box-sizing: border-box; }
+.bf-home-rail-head h3 { margin: 0; font-family: "Frank Ruhl Libre", Georgia, serif; font-weight: 300; font-size: 26px; color: var(--bf-ink); }
+.bf-home-rail-head a { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border: 1px solid rgba(43, 36, 32, .4); border-radius: 999px; color: var(--bf-ink); font-size: 14.5px; text-decoration: none; }
 @media (max-width: 1023px) {
-  .bf-home-grid { grid-template-columns: 1fr; gap: 32px; padding: 44px 22px; }
-  .bf-home .bf-visual { min-height: 0; aspect-ratio: 4 / 3; order: -1; }
-  .bf-home-rail-head { padding: 0 22px; }
-  .bf-home-rail { padding-bottom: 44px; }
+  .bf-home-grid { grid-template-columns: 1fr; gap: 28px; padding: 52px 24px 44px; min-height: 0; }
+  .bf-pcards-home { flex-direction: row; overflow-x: auto; scroll-snap-type: x mandatory; padding: 4px 2px 10px; margin: 0 -24px; padding-inline: 24px; scrollbar-width: none; }
+  .bf-pcards-home::-webkit-scrollbar { display: none; }
+  .bf-pcards-home li { flex: none; width: 236px; scroll-snap-align: start; }
+  .bf-home-rail-head { padding: 0 24px; }
+  .bf-home-photo .bf-veil { background: linear-gradient(0deg, rgba(245, 239, 232, .85) 0%, rgba(245, 239, 232, .3) 60%, rgba(245, 239, 232, 0) 85%); }
+  .bf-home-photo .bf-home-grid { min-height: 560px; align-items: end; }
 }
-@media (max-width: 767px) {
-  .bf-home-actions .bf-btn { width: 100%; }
-  .bf-cd-lg .bf-cd-num { font-size: 26px; }
-}
-/* Admin preview: a scaled-down, non-interactive copy. */
-.bf-home-preview .bf-home-grid { padding: 36px 32px; gap: 28px; }
-.bf-home-preview .bf-title-xxl { font-size: 56px; }
-.bf-home-preview .bf-visual { min-height: 280px; }
+/* Admin preview: a smaller, non-interactive copy. */
+.bf-home-preview .bf-home-grid { padding: 40px 36px; gap: 32px; min-height: 0; grid-template-columns: 1fr 240px; }
+.bf-home-preview .bf-title-home { font-size: 60px; }
+.bf-home-preview .bf-cd-lg .bf-cd-num { font-size: 26px; }
 
 /* ---------- 5. product-card badge ---------- */
 .bf-tag {
@@ -368,17 +330,19 @@ a.bf-mosaic-tile:hover img { transform: scale(1.04); }
   flex-direction: column;
   align-items: flex-start;
   gap: 1px;
-  padding: 6px 11px 7px;
-  background: var(--bf-black);
-  color: #fff;
+  padding: 6px 12px 7px;
+  background: rgba(245, 239, 232, .94);
+  border: 1px solid rgba(43, 36, 32, .2);
+  border-radius: 14px;
+  color: var(--bf-ink);
   font-size: 12px;
-  letter-spacing: .08em;
+  letter-spacing: .06em;
   line-height: 1.2;
 }
-.bf-tag-label { font-family: "Frank Ruhl Libre", Georgia, serif; font-size: 9.5px; letter-spacing: .2em; direction: ltr; }
+.bf-tag-label { font-family: var(--bf-display); font-size: 10px; letter-spacing: .18em; direction: ltr; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bf-silver, .bf-btn, .bf-sparkles { animation: none; }
-  .bf-modal, .bf-modal-overlay, .bf-fab { animation: none; }
-  .bf-mosaic-tile img, .bf-btn { transition: none; }
+  .bf-satin, .bf-glints svg, .bf-modal, .bf-modal-overlay, .bf-fab { animation: none; }
+  .bf-glints svg { opacity: .7; }
+  .bf-pill, .bf-pcard { transition: none; }
 }
