@@ -187,7 +187,9 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
   .bf-bar-cta svg { display: none; }
 }
 
-/* ---------- 2. pop-up: the poster ---------- */
+/* ---------- 2. pop-up: the poster, a large window over most of the page ----------
+   A little of the (dimmed) site stays visible around it, so it reads as a
+   window that can be closed, not a page the visitor landed on. */
 .bf-modal-overlay {
   position: fixed;
   inset: 0;
@@ -195,22 +197,26 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
-  background: rgba(58, 45, 40, .38);
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
-  animation: bf-fade .35s ease both;
+  padding: calc(12px + env(safe-area-inset-top, 0px)) 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: rgba(58, 45, 40, .42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: bf-fade .4s ease both;
 }
 .bf-modal {
   position: relative;
-  width: min(460px, 100%);
-  height: min(730px, calc(100dvh - 48px));
+  width: 100%;
+  height: 100%;
+  max-width: 1240px;
+  max-height: 860px;
   overflow: hidden;
   background: var(--bf-ivory);
-  border-radius: 6px;
-  box-shadow: 0 40px 100px rgba(58, 42, 34, .35);
+  border-radius: 18px;
+  box-shadow: 0 40px 120px rgba(40, 28, 22, .38);
   animation: bf-rise .5s cubic-bezier(.2, .8, .2, 1) both;
 }
+@keyframes bf-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bf-rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 /* The satin stays put; only the content scrolls if a short screen needs it. */
 .bf-modal-scroll {
   position: relative;
@@ -222,20 +228,25 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
   scrollbar-width: none;
 }
 .bf-modal-scroll::-webkit-scrollbar { display: none; }
-@keyframes bf-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes bf-rise { from { opacity: 0; transform: translateY(16px) scale(.985); } to { opacity: 1; transform: none; } }
-.bf-modal .bf-poster-text { margin-top: auto; padding: 28px 34px 18px; }
+.bf-modal .bf-wordmark { padding-top: 26px; font-size: 22px; animation: bf-rise .6s .05s cubic-bezier(.2, .8, .2, 1) both; }
+.bf-modal .bf-poster-text { margin-top: auto; padding: 20px 22px 12px; animation: bf-rise .7s .15s cubic-bezier(.2, .8, .2, 1) both; }
+.bf-modal .bf-title-poster { font-size: 54px; }
+.bf-modal .bf-line { font-size: 19px; }
 /* RTL: flex-end is the left — the cards sit opposite the text, like the visual's jewellery. */
-.bf-pcards-stack { position: relative; align-self: flex-end; width: 200px; margin: 24px 22px 0; }
+.bf-pcards-stack { position: relative; align-self: flex-end; width: 186px; margin: 20px 16px 0; }
+.bf-pcards-stack li { animation: bf-rise .6s cubic-bezier(.2, .8, .2, 1) both; }
+.bf-pcards-stack li:nth-child(1) { animation-delay: .25s; }
+.bf-pcards-stack li:nth-child(2) { animation-delay: .35s; }
+.bf-pcards-stack li:nth-child(3) { animation-delay: .45s; display: none; }
 .bf-pcards-stack .bf-pcard-img { width: 52px; height: 52px; }
 .bf-pcards-stack .bf-pcard-name { font-size: 13.5px; }
 .bf-close {
   position: absolute;
   top: 12px;
   left: 12px;
-  width: 44px;
-  height: 44px;
-  border: 0;
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(43, 36, 32, .2);
   border-radius: 50%;
   background: rgba(255, 255, 255, .55);
   color: var(--bf-ink);
@@ -245,19 +256,46 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
   z-index: 2;
 }
 .bf-close:hover { background: rgba(255, 255, 255, .85); }
-.bf-pcards-stack li:nth-child(3) { display: none; }
-@media (max-height: 640px) {
+@media (max-width: 767px) and (max-height: 640px) {
   .bf-pcards-stack { display: none; }
 }
-@media (max-width: 560px) {
-  .bf-modal-overlay { padding: 0; }
-  .bf-modal { width: 100%; height: 100dvh; border-radius: 0; }
-  .bf-modal .bf-poster-text { padding: 20px 24px calc(14px + env(safe-area-inset-bottom, 0px)); }
-  .bf-wordmark { padding-top: calc(26px + env(safe-area-inset-top, 0px)); font-size: 22px; }
-  .bf-pcards-stack { margin: 20px 16px 0; width: 186px; }
-  .bf-close { top: calc(12px + env(safe-area-inset-top, 0px)); }
-  .bf-title-poster { font-size: 54px; }
-  .bf-line { font-size: 19px; }
+/* Tablet/desktop: a full-page composition — ALFI on top, the title block on
+   the right, the product cards opposite it on the left. */
+@media (min-width: 768px) {
+  .bf-modal-overlay { padding: 4vh 4vw; }
+  .bf-modal-scroll {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+    grid-template-rows: auto 1fr;
+    column-gap: clamp(40px, 7vw, 140px);
+    padding: 0 clamp(40px, 8vw, 150px);
+    box-sizing: border-box;
+  }
+  .bf-modal .bf-wordmark { grid-column: 1 / -1; padding-top: 40px; font-size: 26px; }
+  .bf-modal .bf-poster-text { grid-column: 1; grid-row: 2; align-self: center; margin: 0; padding: 32px 0 48px; }
+  .bf-modal .bf-title-poster { font-size: clamp(72px, 8.4vw, 132px); }
+  .bf-modal .bf-rule { width: 140px; margin: 26px 0 22px; margin-inline-start: 60px; }
+  .bf-modal .bf-line { font-size: clamp(22px, 2vw, 28px); }
+  .bf-modal .bf-note { font-size: 15px; }
+  .bf-modal .bf-pill { min-height: 54px; padding: 0 38px; font-size: 19px; margin-top: 28px; }
+  .bf-modal .bf-cd-md .bf-cd-num { font-size: 36px; }
+  .bf-modal .bf-cd-label { font-size: 12px; }
+  .bf-modal .bf-poster-cd { margin-top: 26px; }
+  .bf-pcards-stack { grid-column: 2; grid-row: 2; align-self: center; width: 100%; margin: 0; gap: 16px; }
+  .bf-pcards-stack li:nth-child(3) { display: block; }
+  .bf-pcards-stack .bf-pcard { padding: 10px 14px 10px 10px; border-radius: 22px; }
+  .bf-pcards-stack .bf-pcard-img { width: 78px; height: 78px; border-radius: 14px; }
+  .bf-pcards-stack .bf-pcard-name { font-size: 16px; }
+  .bf-close { top: 20px; left: 20px; }
+}
+@media (min-width: 768px) and (max-height: 760px) {
+  .bf-modal .bf-title-poster { font-size: clamp(60px, 6.6vw, 92px); }
+  .bf-modal .bf-wordmark { padding-top: 24px; }
+  .bf-modal .bf-poster-text { padding: 12px 0 24px; }
+  .bf-modal .bf-rule { margin: 18px 0 14px; margin-inline-start: 60px; }
+  .bf-modal .bf-pill { margin-top: 18px; }
+  .bf-modal .bf-poster-cd { margin-top: 16px; }
+  .bf-modal .bf-cd-md .bf-cd-num { font-size: 30px; }
 }
 
 /* ---------- 3. floating reminder ---------- */
@@ -342,7 +380,7 @@ a.bf-pcard:hover { transform: translateY(-2px); background: rgba(255, 255, 255, 
 .bf-tag-label { font-family: var(--bf-display); font-size: 10px; letter-spacing: .18em; direction: ltr; }
 
 @media (prefers-reduced-motion: reduce) {
-  .bf-satin, .bf-glints svg, .bf-modal, .bf-modal-overlay, .bf-fab { animation: none; }
+  .bf-satin, .bf-glints svg, .bf-modal, .bf-modal-overlay, .bf-fab, .bf-modal .bf-wordmark, .bf-modal .bf-poster-text, .bf-pcards-stack li { animation: none; }
   .bf-glints svg { opacity: .7; }
   .bf-pill, .bf-pcard { transition: none; }
 }

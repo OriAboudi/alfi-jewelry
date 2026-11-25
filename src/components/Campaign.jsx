@@ -252,6 +252,13 @@ export function CampaignModal() {
   }, [loaded, campaign.active, campaign.showModal, campaign.key, campaign.modalFrequency, campaign.modalDelay, screen, campaignModalOpen, signupPopupOpen, authDialog, openCampaignModal]);
 
   const panelRef = useDialog(campaignModalOpen, closeCampaignModal, { initialFocus: ".bf-modal-cta" });
+  // It covers the whole page: the page behind it doesn't scroll meanwhile.
+  useEffect(() => {
+    if (!campaignModalOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [campaignModalOpen]);
   if (!campaignModalOpen) return null;
 
   const teaser = cfg.phase === "teaser";
