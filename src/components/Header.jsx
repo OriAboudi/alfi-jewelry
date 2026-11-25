@@ -4,6 +4,7 @@ import { useStore } from "../context/StoreContext.jsx";
 import { SearchOverlay } from "./SearchOverlay.jsx";
 import { pathFor, DEAL_FILTER, pageHidden } from "../lib/routes.js";
 import { bundleConfig } from "../lib/pricing.js";
+import { BrandLogo } from "./BrandLogo.jsx";
 
 // The 4 categories now live under a "קטגוריות" dropdown (desktop) /
 // accordion (mobile menu), next to "סטים" and "מבצעים".
@@ -141,11 +142,12 @@ export function Header() {
             {shown("collections") && <a href={pathFor("collections")} {...asButton(goCollections)} aria-current={isCollectionsActive ? "page" : undefined} style={css("cursor:pointer;")}>קולקציות</a>}
             {shown("story") && <a href={pathFor("story")} {...asButton(goStory)} aria-current={isStoryActive ? "page" : undefined} style={css("cursor:pointer;")}>הסיפור</a>}
           </nav>
-          <span
-            {...asButton(() => navigate("home"))}
-            className="serif"
-            style={css("justify-self:center;cursor:pointer;font-size:34px;font-weight:400;letter-spacing:.42em;padding-right:.42em;color:var(--ink);")}
-          >ALFI</span>
+          <a
+            href="/"
+            {...asButton((e) => { e.preventDefault(); navigate("home"); })}
+            aria-label="ALFI — לעמוד הבית"
+            style={css("justify-self:center;cursor:pointer;display:flex;")}
+          ><BrandLogo eager /></a>
           <div style={css("display:flex;gap:8px;justify-content:flex-start;flex-direction:row-reverse;align-items:center;")}>
             <span {...asButton(() => navigate("cart"))} className={`tap-target${cartBump ? " cart-bump" : ""}`} aria-label={`סל קניות, ${cartCount} פריטים`} style={css(`position:relative;${iconBtnDesktop}`)}>
               <CartIcon />
@@ -178,7 +180,7 @@ export function Header() {
             ><MenuIcon /></button>
             <button onClick={() => setSearchOpen(true)} aria-label="חיפוש" className="tap-target" style={css(iconBtnMobile)}><SearchIcon size={21} /></button>
           </div>
-          <span {...asButton(() => navigate("home"))} className="serif" style={css("justify-self:center;cursor:pointer;font-size:26px;letter-spacing:.36em;padding-right:.36em;color:var(--ink);")}>ALFI</span>
+          <a href="/" {...asButton((e) => { e.preventDefault(); navigate("home"); })} aria-label="ALFI — לעמוד הבית" style={css("justify-self:center;cursor:pointer;display:flex;")}><BrandLogo tagline={false} className="alfi-lockup--compact" eager /></a>
           <div style={css("display:flex;justify-content:flex-end;")}>
             <span {...asButton(accountAction)} className="tap-target" aria-label={accountLabel} style={css(`position:relative;${iconBtnMobile}`)}>
               <PersonIcon size={21} />

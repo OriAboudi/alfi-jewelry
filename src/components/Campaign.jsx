@@ -6,22 +6,26 @@ import { saleInfo, soldAlone } from "../lib/pricing.js";
 import { PriceTag } from "./PriceTag.jsx";
 import { CardSlider } from "./CardSlider.jsx";
 import { RedesignProductCard } from "./RedesignProductCard.jsx";
+import { BrandLogo } from "./BrandLogo.jsx";
 import {
-  campaignConfig, campaignProducts, timeLeft,
-  campaignSeenToday, markCampaignSeen, campaignFabHidden, hideCampaignFab,
+  previewConfig, campaignProducts, timeLeft,
+  campaignSeen, markCampaignSeen, campaignFabHidden, hideCampaignFab,
 } from "../lib/campaign.js";
 
 /**
- * Seasonal campaign (Black Friday…) — silver on black, the one moment the
- * site leaves its cream/plum palette. Five placements, each switchable in
- * the admin "קמפיין" tab:
- *   CampaignBar   — slim strip under the header, every storefront page
- *   CampaignModal — full-screen takeover, opens by itself once a day
- *   CampaignFab   — floating reminder (bottom-right) after the pop-up closed
- *   CampaignHome  — black hero section at the top of the home page
+ * Seasonal campaign (Black Friday…) in the brand's own campaign look:
+ * ivory satin, a dark high-contrast serif title, a hairline rule, a soft
+ * Hebrew line with ♡ and an outlined pill button — the ALFI Instagram
+ * campaign visual, carried onto the site. Placements (each switchable in
+ * the admin "קמפיין" tab):
+ *   CampaignBar   — slim satin strip under the header
+ *   CampaignModal — the campaign poster as a pop-up (full screen on phones)
+ *   CampaignFab   — small floating reminder after the pop-up closed
+ *   CampaignHome  — satin band at the top of the home page
  *   (card badges live in RedesignProductCard)
- * Settings and copy: src/lib/campaign.js. It never changes prices — it
- * points at the sale prices and deal that already exist.
+ * Before the start date (if the admin keeps the teaser on) everything shows
+ * the teaser: "27.11 ←" and a countdown to the start.
+ * Settings and copy: src/lib/campaign.js. It never changes prices.
  */
 
 // Pages where nothing of the campaign opens or floats by itself: around
@@ -31,6 +35,20 @@ const QUIET_SCREENS = new Set(["checkout", "confirm", "payment-failed", "status"
 const NO_FAB_SCREENS = new Set([...QUIET_SCREENS, "product", "cart", "set"]);
 
 /* ---------- shared bits ---------- */
+
+// The campaign title face (a Didone, like the campaign visual). Loaded only
+// once a campaign is actually on screen — never part of the normal page.
+let fontRequested = false;
+function useCampaignFont(on) {
+  useEffect(() => {
+    if (!on || fontRequested || typeof document === "undefined") return;
+    fontRequested = true;
+    const l = document.createElement("link");
+    l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,400;6..96,500&display=swap";
+    document.head.appendChild(l);
+  }, [on]);
+}
 
 function useNow(enabled, ms = 1000) {
   const [now, setNow] = useState(() => Date.now());
@@ -44,17 +62,11 @@ function useNow(enabled, ms = 1000) {
 
 const pad = (n) => String(n).padStart(2, "0");
 
-export function Countdown({ endAt, size = "md", className = "" }) {
-  const now = useNow(!!endAt);
-  const t = timeLeft(endAt, now);
+export function Countdown({ to, size = "md", className = "" }) {
+  const now = useNow(!!to);
+  const t = timeLeft(to, now);
   if (!t) return null;
-  const parts = [
-    ...(t.days > 0 ? [[t.days, t.days === 1 ? "יום" : "ימים"]] : []),
-    [t.hours, "שעות"],
-    [t.minutes, "דקות"],
-    [t.seconds, "שניות"],
-  ];
-  const spoken = `נותרו ${t.days > 0 ? `${t.days} ימים, ` : ""}${t.hours} שעות ו־${t.minutes} דקות`;
+  const spoken = `${t.days > 0 ? `${t.days} ימים, ` : ""}${t.hours} שעות ו־${t.minutes} דקות`;
   if (size === "sm") {
     return (
       <span className={`bf-cd-sm ${className}`} role="timer" aria-label={spoken}>
@@ -65,32 +77,53 @@ export function Countdown({ endAt, size = "md", className = "" }) {
       </span>
     );
   }
+  const parts = [
+    ...(t.days > 0 ? [[t.days, t.days === 1 ? "יום" : "ימים"]] : []),
+    [t.hours, "שעות"],
+    [t.minutes, "דקות"],
+    [t.seconds, "שניות"],
+  ];
   return (
     <div className={`bf-cd bf-cd-${size} ${className}`} role="timer" aria-label={spoken}>
-      {parts.map(([v, label], i) => (
-        <React.Fragment key={label}>
-          {i > 0 && <span className="bf-cd-colon" aria-hidden="true">:</span>}
-          <span className="bf-cd-cell" aria-hidden="true">
-            <span className="bf-cd-num">{pad(v)}</span>
-            <span className="bf-cd-label">{label}</span>
-          </span>
-        </React.Fragment>
+      {parts.map(([v, label]) => (
+        <span key={label} className="bf-cd-cell" aria-hidden="true">
+          <span className="bf-cd-num">{pad(v)}</span>
+          <span className="bf-cd-label">{label}</span>
+        </span>
       ))}
     </div>
   );
 }
 
 const Arrow = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6" /></svg>
+  <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M20 12H4M10 6l-6 6 6 6" /></svg>
+);
+const Chevron = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
 );
 
-// Where the campaign's button leads. Falls back to the whole catalog when
-// the target page is hidden (admin "עמודים באתר"), or for "deal" when no
-// product is in the deal (an empty deal page sells nothing).
+// Little four-point glints, like light catching a stone.
+const GLINTS = [[14, 18, 14], [78, 12, 10], [86, 46, 16], [22, 58, 9], [60, 30, 8]];
+function Glints() {
+  return (
+    <span className="bf-glints" aria-hidden="true">
+      {GLINTS.map(([x, y, s], i) => (
+        <svg key={i} viewBox="0 0 20 20" width={s} height={s} style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${i * 0.9}s` }}>
+          <path d="M10 0C10.6 6.2 13.8 9.4 20 10 13.8 10.6 10.6 13.8 10 20 9.4 13.8 6.2 10.6 0 10 6.2 9.4 9.4 6.2 10 0Z" fill="#fff" />
+        </svg>
+      ))}
+    </span>
+  );
+}
+
+// Where the campaign's button leads. The teaser goes to the jewellery
+// (the sale isn't on yet). Falls back to the whole catalog when the target
+// page is hidden (admin "עמודים באתר"), or for "deal" when no product is
+// in the deal — an empty deal page sells nothing.
 function useCampaignNav(cfg) {
   const { go, products, content } = useStore();
   const hasDeal = (products || []).some((p) => p.in_bundle && Number(p.stock) > 0);
-  const unusable = pageHidden(content, cfg.ctaTarget) || (cfg.ctaTarget === "deal" && !hasDeal);
+  const unusable = cfg.phase === "teaser" || pageHidden(content, cfg.ctaTarget) || (cfg.ctaTarget === "deal" && !hasDeal);
   const target = unusable ? "catalog" : cfg.ctaTarget;
   const href = target === "deal" ? pathFor("catalog", { catFilter: DEAL_FILTER })
     : target === "sets" ? pathFor("sets")
@@ -105,24 +138,73 @@ function useCampaignNav(cfg) {
   return { href, navigate };
 }
 
-function useMaxSale() {
+function useCampaignItems() {
   const { products, content } = useStore();
-  return soldAlone(products || [], content)
-    .filter((p) => Number(p.stock) > 0)
-    .reduce((m, p) => Math.max(m, saleInfo(p).percent), 0);
+  return campaignProducts(soldAlone(products || [], content));
 }
 
-// "BLACK FRIDAY" as two stacked words when it has two, in shimmering silver.
-function SilverTitle({ text, as: Tag = "div", className = "", id }) {
+function maxSaleOf(items) {
+  return items.reduce((m, p) => Math.max(m, saleInfo(p).percent), 0);
+}
+
+// Teaser: the start date on the pill ("27.11"); sale: the admin's label.
+function ctaText(cfg) {
+  return cfg.phase === "teaser" && cfg.startLabel ? cfg.startLabel : cfg.ctaLabel;
+}
+
+// "BLACK FRIDAY" stacked one word per line, as on the campaign visual.
+function Title({ text, id, className = "" }) {
   const words = String(text).trim().split(/\s+/);
   return (
-    <Tag id={id} className={`bf-title ${className}`} dir="auto">
-      {words.length === 2 ? <><span className="bf-silver">{words[0]}</span><span className="bf-silver">{words[1]}</span></> : <span className="bf-silver">{text}</span>}
-    </Tag>
+    <h2 id={id} className={`bf-title ${className}`} dir="auto">
+      {words.map((w, i) => <span key={i}>{w}</span>)}
+    </h2>
   );
 }
 
-const Sparkles = () => <span className="bf-sparkles" aria-hidden="true" />;
+// Frosted product cards with a chevron — real discounted pieces.
+function ProductCards({ items, interactive, className = "" }) {
+  const { openProduct, products } = useStore();
+  if (!items.length) return null;
+  return (
+    <ul className={`bf-pcards ${className}`}>
+      {items.map((p) => {
+        const s = saleInfo(p);
+        const inner = (
+          <>
+            <span className="bf-pcard-img">{p.image && <img src={p.image} alt="" loading="lazy" decoding="async" />}</span>
+            <span className="bf-pcard-text">
+              <span className="bf-pcard-name">{p.name}</span>
+              <PriceTag product={p} size={13} showPercent={false} />
+            </span>
+            {s.onSale && <span className="bf-pcard-pct">-{s.percent}%</span>}
+            <span className="bf-pcard-go"><Chevron /></span>
+          </>
+        );
+        return (
+          <li key={p.id}>
+            {interactive ? (
+              <a href={pathFor("product", { pid: p.id, products })} onClick={(e) => { e.preventDefault(); openProduct(p.id); }} className="bf-pcard">{inner}</a>
+            ) : (
+              <span className="bf-pcard">{inner}</span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+// The satin surface (or the admin's own campaign photo) + glints.
+function Satin({ image }) {
+  return (
+    <>
+      {image ? <img className="bf-photo" src={image} alt="" decoding="async" /> : <span className="bf-satin" aria-hidden="true" />}
+      <span className="bf-veil" aria-hidden="true" />
+      <Glints />
+    </>
+  );
+}
 
 /* ---------- 1. top strip ---------- */
 
@@ -130,106 +212,85 @@ export function CampaignBar({ cfg: cfgProp, preview = false }) {
   const { campaign, screen, loaded } = useStore();
   const cfg = cfgProp || campaign;
   const { href, navigate } = useCampaignNav(cfg);
+  useCampaignFont(cfg.active || preview);
   if (!preview && (!loaded || !cfg.active || !cfg.showBar || QUIET_SCREENS.has(screen))) return null;
+  const teaser = cfg.phase === "teaser";
   return (
     <a
       href={href}
       onClick={(e) => { e.preventDefault(); if (!preview) navigate(); }}
       className="bf-bar"
-      aria-label={`${cfg.title}: ${cfg.barText}. ${cfg.ctaLabel}`}
+      aria-label={`${cfg.title}: ${cfg.barText}. ${teaser ? `מתחילים ב־${cfg.startLabel}` : cfg.ctaLabel}`}
     >
-      <Sparkles />
-      <span className="bf-bar-title bf-silver" dir="ltr">{cfg.title}</span>
-      <span className="bf-bar-dot" aria-hidden="true" />
+      <span className="bf-bar-title" dir="ltr">{cfg.title}</span>
+      <span className="bf-bar-rule" aria-hidden="true" />
       <span className="bf-bar-text">{cfg.barText}</span>
-      {cfg.endAt && <span className="bf-bar-cd"><span className="bf-bar-cd-label">נגמר בעוד</span><Countdown endAt={cfg.endAt} size="sm" /></span>}
-      <span className="bf-bar-cta">{cfg.ctaLabel}<Arrow /></span>
+      {cfg.countdownTo && <span className="bf-bar-cd"><span className="bf-bar-cd-label">{teaser ? "מתחילים בעוד" : "נגמר בעוד"}</span><Countdown to={cfg.countdownTo} size="sm" /></span>}
+      <span className="bf-bar-cta">{teaser ? cfg.startLabel : cfg.ctaLabel}<Arrow /></span>
     </a>
   );
 }
 
-/* ---------- 2. full-screen takeover ---------- */
-
-// Visual side of the pop-up / home section: the admin's image, or else a
-// mosaic of the real discounted pieces (never a stock picture).
-function CampaignVisual({ cfg, items, interactive = false }) {
-  const { openProduct, products } = useStore();
-  if (cfg.image) {
-    return <div className="bf-visual bf-visual-img"><img src={cfg.image} alt="" decoding="async" /><span className="bf-visual-shade" /></div>;
-  }
-  const tiles = items.filter((p) => p.image).slice(0, 4);
-  if (tiles.length < 2) {
-    return (
-      <div className="bf-visual bf-visual-empty" aria-hidden="true">
-        <Sparkles />
-        <span className="bf-visual-mark bf-silver">%</span>
-      </div>
-    );
-  }
-  return (
-    <div className={`bf-visual bf-mosaic bf-mosaic-${tiles.length}`}>
-      {tiles.map((p) => {
-        const s = saleInfo(p);
-        const inner = (
-          <>
-            <img src={p.image} alt={interactive ? p.name : ""} loading="lazy" decoding="async" />
-            {s.onSale && <span className="bf-mosaic-pct">-{s.percent}%</span>}
-            {interactive && <span className="bf-mosaic-cap"><span className="serif">{p.name}</span><PriceTag product={p} size={13} showPercent={false} /></span>}
-          </>
-        );
-        return interactive ? (
-          <a key={p.id} href={pathFor("product", { pid: p.id, products })} onClick={(e) => { e.preventDefault(); openProduct(p.id); }} className="bf-mosaic-tile">{inner}</a>
-        ) : (
-          <span key={p.id} className="bf-mosaic-tile">{inner}</span>
-        );
-      })}
-    </div>
-  );
-}
+/* ---------- 2. pop-up: the campaign poster ---------- */
 
 export function CampaignModal() {
-  const { campaign, campaignModalOpen, campaignPreview, openCampaignModal, closeCampaignModal, loaded, screen, isAdmin, products, content, signupPopupOpen, authDialog } = useStore();
-  const previewCfg = campaignPreview ? { ...campaignConfig(campaignPreview), active: true, status: "live" } : null;
-  const cfg = previewCfg || campaign;
+  const { campaign, campaignModalOpen, campaignPreview, openCampaignModal, closeCampaignModal, loaded, screen, signupPopupOpen, authDialog } = useStore();
+  const cfg = campaignPreview ? previewConfig(campaignPreview.content, campaignPreview.phase) : campaign;
   const { href, navigate } = useCampaignNav(cfg);
-  const maxSale = useMaxSale();
-  const items = campaignProducts(soldAlone(products || [], content));
+  const items = useCampaignItems();
+  useCampaignFont(campaign.active || campaignModalOpen);
 
-  // Opens by itself once a day per campaign, a few seconds into the visit,
-  // on browse pages only, never to the signed-in admin.
+  // Opens by itself a few seconds into a visit — once per visit or once a
+  // day (admin setting) per campaign phase — on browse pages only.
   useEffect(() => {
-    if (!loaded || isAdmin || !campaign.active || !campaign.showModal) return undefined;
+    if (!loaded || !campaign.active || !campaign.showModal) return undefined;
     if (QUIET_SCREENS.has(screen) || campaignModalOpen || signupPopupOpen || authDialog) return undefined;
-    if (campaignSeenToday(campaign.key)) return undefined;
+    if (campaignSeen(campaign.key, campaign.modalFrequency)) return undefined;
     const t = setTimeout(() => {
       if (openCampaignModal()) markCampaignSeen(campaign.key);
     }, campaign.modalDelay * 1000);
     return () => clearTimeout(t);
-  }, [loaded, isAdmin, campaign.active, campaign.showModal, campaign.key, campaign.modalDelay, screen, campaignModalOpen, signupPopupOpen, authDialog, openCampaignModal]);
+  }, [loaded, campaign.active, campaign.showModal, campaign.key, campaign.modalFrequency, campaign.modalDelay, screen, campaignModalOpen, signupPopupOpen, authDialog, openCampaignModal]);
 
   const panelRef = useDialog(campaignModalOpen, closeCampaignModal, { initialFocus: ".bf-modal-cta" });
+  // It covers the whole page: the page behind it doesn't scroll meanwhile.
+  useEffect(() => {
+    if (!campaignModalOpen) return undefined;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [campaignModalOpen]);
   if (!campaignModalOpen) return null;
 
+  const teaser = cfg.phase === "teaser";
+  const maxSale = teaser ? 0 : maxSaleOf(items);
   const shop = (e) => {
     e.preventDefault();
     closeCampaignModal();
-    if (!previewCfg) navigate();
+    if (!campaignPreview) navigate();
   };
 
   return (
     <div className="bf-modal-overlay" onClick={closeCampaignModal}>
       <div ref={panelRef} role="dialog" aria-modal="true" aria-labelledby="bf-modal-title" dir="rtl" className="bf-modal" onClick={(e) => e.stopPropagation()}>
-        <CampaignVisual cfg={cfg} items={items} />
-        <div className="bf-modal-body">
-          <Sparkles />
-          <span className="bf-eyebrow">ALFI · לזמן מוגבל</span>
-          <SilverTitle text={cfg.title} as="h2" id="bf-modal-title" className="bf-title-xl" />
-          <p className="serif bf-headline">{cfg.headline}</p>
-          {cfg.subtitle && <p className="bf-sub">{cfg.subtitle}</p>}
-          {maxSale > 0 && <span className="bf-chip">עד {maxSale}% הנחה על פריטים נבחרים</span>}
-          {cfg.endAt && <div className="bf-modal-cd"><span className="bf-cd-head">המבצע נגמר בעוד</span><Countdown endAt={cfg.endAt} size="md" /></div>}
-          <a href={href} onClick={shop} className="bf-btn bf-modal-cta">{cfg.ctaLabel}<Arrow /></a>
+        <Satin image={cfg.image} />
+        <div className="bf-modal-scroll">
+        <div className="bf-wordmark" aria-hidden="true"><BrandLogo variant="full" eager /></div>
+        {!cfg.image && <ProductCards items={items.slice(0, 3)} interactive={false} className="bf-pcards-stack" />}
+        <div className="bf-poster-text">
+          <Title text={cfg.title} id="bf-modal-title" className="bf-title-poster" />
+          <span className="bf-rule" aria-hidden="true" />
+          <p className="bf-line">{cfg.headline}</p>
+          {maxSale > 0 && <p className="bf-note">עד {maxSale}% הנחה על פריטים נבחרים</p>}
+          <a href={href} onClick={shop} className="bf-pill bf-modal-cta" aria-label={teaser ? `מתחילים ב־${cfg.startLabel} — לתכשיטים` : undefined}>{ctaText(cfg)}<Arrow /></a>
+          {cfg.countdownTo && (
+            <div className="bf-poster-cd">
+              <span className="bf-cd-head">{teaser ? "מתחילים בעוד" : "המבצע נגמר בעוד"}</span>
+              <Countdown to={cfg.countdownTo} size="md" />
+            </div>
+          )}
           <button type="button" onClick={closeCampaignModal} className="bf-quiet">אולי אחר כך</button>
+        </div>
         </div>
         <button type="button" onClick={closeCampaignModal} aria-label="סגירה" className="bf-close"><span aria-hidden="true">×</span></button>
       </div>
@@ -249,10 +310,11 @@ export function CampaignFab() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     if (!cfg.active) return undefined;
-    if (!cfg.showModal || campaignSeenToday(cfg.key)) { setReady(true); return undefined; }
-    const iv = setInterval(() => { if (campaignSeenToday(cfg.key)) setReady(true); }, 1000);
+    const seen = () => campaignSeen(cfg.key, cfg.modalFrequency);
+    if (!cfg.showModal || seen()) { setReady(true); return undefined; }
+    const iv = setInterval(() => { if (seen()) setReady(true); }, 1000);
     return () => clearInterval(iv);
-  }, [cfg.active, cfg.showModal, cfg.key, campaignModalOpen]);
+  }, [cfg.active, cfg.showModal, cfg.key, cfg.modalFrequency, campaignModalOpen]);
 
   if (!loaded || !cfg.active || !cfg.showFab || hidden || !ready) return null;
   if (campaignModalOpen || signupPopupOpen || authDialog || NO_FAB_SCREENS.has(screen)) return null;
@@ -261,45 +323,54 @@ export function CampaignFab() {
   return (
     <div className="bf-fab" role="complementary" aria-label={cfg.title}>
       <button type="button" onClick={open} className="bf-fab-main">
-        <span className="bf-fab-title bf-silver" dir="ltr">{cfg.title}</span>
-        {cfg.endAt ? <Countdown endAt={cfg.endAt} size="sm" className="bf-fab-cd" /> : <span className="bf-fab-cd">{cfg.ctaLabel}</span>}
+        <span className="bf-fab-title" dir="ltr">{cfg.title}</span>
+        {cfg.countdownTo ? <Countdown to={cfg.countdownTo} size="sm" className="bf-fab-cd" /> : <span className="bf-fab-cd">{ctaText(cfg)}</span>}
       </button>
       <button type="button" onClick={() => { hideCampaignFab(cfg.key); setHiddenKey(cfg.key); }} aria-label="הסתרת תזכורת המבצע" className="bf-fab-x"><span aria-hidden="true">×</span></button>
     </div>
   );
 }
 
-/* ---------- 4. home page hero ---------- */
+/* ---------- 4. home page band ---------- */
 
 export function CampaignHome({ cfg: cfgProp, preview = false }) {
-  const { campaign, products, content, loaded } = useStore();
+  const { campaign, loaded } = useStore();
   const cfg = cfgProp || campaign;
   const { href, navigate } = useCampaignNav(cfg);
-  const maxSale = useMaxSale();
+  const items = useCampaignItems();
+  useCampaignFont(cfg.active || preview);
   if (!preview && (!loaded || !cfg.active || !cfg.showHome)) return null;
-  const items = campaignProducts(soldAlone(products || [], content));
+  const teaser = cfg.phase === "teaser";
+  const maxSale = teaser ? 0 : maxSaleOf(items);
 
   return (
-    <section className={`bf-home${preview ? " bf-home-preview" : ""}`} aria-labelledby="bf-home-title">
-      <Sparkles />
-      <div className="bf-home-grid">
-        <div className="bf-home-text">
-          <span className="bf-eyebrow">ALFI · לזמן מוגבל</span>
-          <SilverTitle text={cfg.title} as="h2" id="bf-home-title" className="bf-title-xxl" />
-          <p className="serif bf-headline bf-headline-lg">{cfg.headline}</p>
-          {cfg.subtitle && <p className="bf-sub">{cfg.subtitle}</p>}
-          {cfg.endAt && <div className="bf-home-cd"><span className="bf-cd-head">המבצע נגמר בעוד</span><Countdown endAt={cfg.endAt} size="lg" /></div>}
-          <div className="bf-home-actions">
-            <a href={href} onClick={(e) => { e.preventDefault(); if (!preview) navigate(); }} className="bf-btn">{cfg.ctaLabel}<Arrow /></a>
-            {maxSale > 0 && <span className="bf-chip">עד {maxSale}% הנחה על פריטים נבחרים</span>}
+    <section className={`bf-home${preview ? " bf-home-preview" : ""}${cfg.image ? " bf-home-photo" : ""}`} aria-labelledby={preview ? undefined : "bf-home-title"}>
+      <div className="bf-home-stage">
+        <Satin image={cfg.image} />
+        <div className="bf-home-grid">
+          <div className="bf-poster-text bf-home-text">
+            <Title text={cfg.title} id={preview ? undefined : "bf-home-title"} className="bf-title-home" />
+            <span className="bf-rule" aria-hidden="true" />
+            <p className="bf-line bf-line-lg">{cfg.headline}</p>
+            {cfg.subtitle && <p className="bf-sub">{cfg.subtitle}</p>}
+            <div className="bf-home-actions">
+              <a href={href} onClick={(e) => { e.preventDefault(); if (!preview) navigate(); }} className="bf-pill">{ctaText(cfg)}<Arrow /></a>
+              {maxSale > 0 && <span className="bf-note">עד {maxSale}% הנחה על פריטים נבחרים</span>}
+            </div>
+            {cfg.countdownTo && (
+              <div className="bf-poster-cd">
+                <span className="bf-cd-head">{teaser ? "מתחילים בעוד" : "המבצע נגמר בעוד"}</span>
+                <Countdown to={cfg.countdownTo} size="lg" />
+              </div>
+            )}
           </div>
+          {!cfg.image && <ProductCards items={items.slice(0, 3)} interactive={!preview} className="bf-pcards-home" />}
         </div>
-        <CampaignVisual cfg={cfg} items={items} interactive={!preview} />
       </div>
-      {!preview && items.length > 4 && (
+      {!preview && !teaser && items.length > 3 && (
         <div className="bf-home-rail">
           <div className="bf-home-rail-head">
-            <h3 className="serif">כל הפריטים במבצע</h3>
+            <h3>כל הפריטים במבצע <span aria-hidden="true">♡</span></h3>
             <a href={href} onClick={(e) => { e.preventDefault(); navigate(); }}>לכולם<Arrow /></a>
           </div>
           <CardSlider>
